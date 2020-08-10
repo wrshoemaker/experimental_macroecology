@@ -1,82 +1,14 @@
 from __future__ import division
-import os, sys, signal
+import os, sys
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import cm
 
 import scipy.stats as stats
-from scipy import optimize
-from scipy.stats import itemfreq, gamma
+from scipy.stats import gamma
 
-from macroeco_distributions import pln, pln_solver, pln_ll
 from macroecotools import obs_pred_rsquare
-
-mydir = os.path.expanduser("~/GitHub/experimental_macroecology")
-
-metadata_path = mydir + '/data/metadata.csv'
-otu_path = mydir + '/data/otu_table.csv'
-
-carbons = ['Glucose', 'Citrate', 'Leucine']
-
-
-def get_s_by_s(carbon, transfer=12):
-
-    otu = open(mydir + '/data/otu_table.csv')
-    otu_first_line = otu.readline()
-    otu_first_line = otu_first_line.strip().split(',')
-
-    communities = []
-
-    comm_rep_list = []
-
-    for line in open(metadata_path):
-        line = line.strip().split(',')
-        if line[-3].strip() == carbon:
-            if line[-1].strip() == str(transfer):
-                communities.append(line[0].strip())
-
-                comm_rep_list.append(line[-5]+ '_' + line[-4] )
-
-
-    communities_idx = [otu_first_line.index(community) for community in communities]
-    s_by_s = []
-    species = []
-
-    for line in otu:
-        line = line.strip().split(',')
-        line_idx = [int(line[i]) for i in communities_idx]
-
-        if sum(line_idx) == 0:
-            continue
-
-        s_by_s.append(line_idx)
-        species.append(line[0])
-
-    s_by_s_np = np.asarray(s_by_s)
-
-    return s_by_s_np, species, comm_rep_list
-
-
-def get_time_by_species_matrix(comm,rep):
-
-    otu = open(mydir + '/data/otu_table.csv')
-    otu_first_line = otu.readline()
-    otu_first_line = otu_first_line.strip().split(',')
-
-    communities = []
-
-    #print(otu_first_line)
-
-    for line in open(metadata_path):
-        line = line.strip().split(',')
-        #if line[-3].strip() == carbon:
-            #if line[-1].strip() == str(transfer):
-            #    communities.append(line[0].strip())
-
-    #range(1, 13)
-
-
-
+import utils
 
 def plot_afd(n_bins=50):
 
@@ -117,7 +49,7 @@ def plot_afd(n_bins=50):
     ax.set_xlabel('Rescaled log relative\naverage abundance', fontsize=12)
     ax.set_ylabel('Probability density', fontsize=12)
 
-    fig_name = mydir + '/figs/AFD.pdf'
+    fig_name = utils.directory + '/figs/AFD.pdf'
     fig.savefig(fig_name, format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
     plt.close()
 
@@ -208,7 +140,7 @@ def plot_taylors(slope_null=2):
     fig.text(0.02, 0.3, "No zeros", va='center', fontweight='bold',rotation='vertical', fontsize=16)
 
     fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(mydir + "/figs/taylors_law.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/taylors_law.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
@@ -268,182 +200,12 @@ def plot_N_Nmax():
 
 
     fig.subplots_adjust(wspace=0.3)
-    fig.savefig(mydir + "/figs/N_Nmax.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/N_Nmax.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
 
-class lognorm:
 
-    def __init__(self, obs):
-        self.obs = obs
-
-
-    def ppoints(self, n):
-        """ numpy analogue or `R`'s `ppoints` function
-            see details at http://stat.ethz.ch/R-manual/R-patched/library/stats/html/ppoints.html
-            :param n: array type or number
-            Obtained from: http://stackoverflow.com/questions/20292216/imitating-ppoints-r-function-in-python
-            on 5 April 2016
-            """
-        if n < 10:
-            a = 3/8
-        else:
-            a = 1/2
-
-        try:
-            n = np.float(len(n))
-        except TypeError:
-            n = np.float(n)
-        return (np.arange(n) + 1 - a)/(n + 1 - 2*a)
-
-
-
-    def get_rad_pln(self, S, mu, sigma, lower_trunc = True):
-        """Obtain the predicted RAD from a Poisson lognormal distribution"""
-        abundance = list(np.empty([S]))
-        rank = range(1, int(S) + 1)
-        cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
-        j = 0
-        cdf_cum = 0
-        i = 1
-        while j < S:
-            cdf_cum += pln.pmf(i, mu, sigma, lower_trunc)
-            while cdf_cum >= cdf_obs[j]:
-                abundance[j] = i
-                j += 1
-                if j == S:
-                    abundance.reverse()
-                    return abundance
-            i += 1
-
-
-    def get_rad_from_obs(self):
-        mu, sigma = pln_solver(self.obs)
-        pred_rad = self.get_rad_pln(len(self.obs), mu, sigma)
-
-        return (pred_rad, mu, sigma)
-
-
-
-class TimeoutException(Exception):   # Custom exception class
-    pass
-
-
-def fit_sad():
-
-    for carbon_idx, carbon in enumerate(carbons):
-
-        sys.stdout.write("Fitting lognormal for %s communities...\n" % (carbon))
-
-        s_by_s, species, comm_rep_list = get_s_by_s(carbon)
-
-        data = []
-
-        obs_list = []
-        pred_list = []
-
-        N_communities = s_by_s.shape[1]
-        for sad in s_by_s.T:
-            sys.stdout.write("%d communities to go!\n" % (N_communities))
-            N_communities -= 1
-
-            sad = sad[sad>0]
-            sad.sort()
-            sad = sad[::-1]
-            if len(sad) < 10:
-                continue
-
-            N = sum(sad)
-            S = len(sad)
-            Nmax = max(sad)
-
-            lognorm_pred = lognorm(sad)
-            sad_predicted, mu, sigma = lognorm_pred.get_rad_from_obs()
-            pln_Nmax = max(sad_predicted)
-
-            ll = pln_ll(sad, mu, sigma)
-            r2 = obs_pred_rsquare(np.log10(sad), np.log10(sad_predicted))
-
-            data.append([str(N),str(S),str(Nmax),str(pln_Nmax),str(ll),str(r2)])
-
-            obs_list.extend(sad)
-            pred_list.extend(sad_predicted)
-
-
-        df_sad_out = open((mydir + '/data/pln_sad_counts_%s.csv') % (carbon) , 'w')
-        df_sad_out.write(','.join(['Observed','Predicted']) + '\n')
-        for i in range(len(obs_list)):
-            df_sad_out.write(','.join([str(obs_list[i]), str(pred_list[i])]) + '\n')
-        df_sad_out.close()
-
-
-        df_out = open((mydir + '/data/pln_sad_%s.csv') % (carbon) , 'w')
-        df_out.write(','.join(['N','S','Nmax', 'pln_Nmax', 'll','r2_mod']) + '\n')
-        for i in range(len(data)):
-            df_out.write(','.join(data[i]) + '\n')
-        df_out.close()
-
-
-
-
-def count_pts_within_radius(x, y, radius, logscale=0):
-    """Count the number of points within a fixed radius in 2D space"""
-    #todo: see if we can improve performance using KDTree.query_ball_point
-    #http://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.query_ball_point.html
-    #instead of doing the subset based on the circle
-    unique_points = set([(x[i], y[i]) for i in range(len(x))])
-    count_data = []
-    logx, logy, logr = np.log10(x), np.log10(y), np.log10(radius)
-    for a, b in unique_points:
-        if logscale == 1:
-            loga, logb = np.log10(a), np.log10(b)
-            num_neighbors = len(x[((logx - loga) ** 2 +
-                                   (logy - logb) ** 2) <= logr ** 2])
-        else:
-            num_neighbors = len(x[((x - a) ** 2 + (y - b) ** 2) <= radius ** 2])
-        count_data.append((a, b, num_neighbors))
-    return count_data
-
-
-
-def plot_color_by_pt_dens(x, y, radius, loglog=0, plot_obj=None):
-    """Plot bivariate relationships with large n using color for point density
-
-    Inputs:
-    x & y -- variables to be plotted
-    radius -- the linear distance within which to count points as neighbors
-    loglog -- a flag to indicate the use of a loglog plot (loglog = 1)
-
-    The color of each point in the plot is determined by the logarithm (base 10)
-    of the number of points that occur with a given radius of the focal point,
-    with hotter colors indicating more points. The number of neighboring points
-    is determined in linear space regardless of whether a loglog plot is
-    presented.
-    """
-    plot_data = count_pts_within_radius(x, y, radius, loglog)
-    sorted_plot_data = np.array(sorted(plot_data, key=lambda point: point[2]))
-    #print(sorted_plot_data)
-    #color_range = np.sqrt(sorted_plot_data[:, 2])
-    #print(color_range)
-    #color_range = color_range / max(color_range)
-
-    #colors = [ cm.YlOrRd(x) for x in color_range ]
-
-    if plot_obj == None:
-        plot_obj = plt.axes()
-
-    if loglog == 1:
-        plot_obj.set_xscale('log')
-        plot_obj.set_yscale('log')
-        plot_obj.scatter(sorted_plot_data[:, 0], sorted_plot_data[:, 1],
-                         c = np.sqrt(sorted_plot_data[:, 2]), edgecolors='none')
-        plot_obj.set_xlim(min(x) * 0.5, max(x) * 2)
-        plot_obj.set_ylim(min(y) * 0.5, max(y) * 2)
-    else:
-        plot_obj.scatter(sorted_plot_data[:, 0], sorted_plot_data[:, 1],
-                    c = np.log10(sorted_plot_data[:, 2]), edgecolors='none')
-    return plot_obj
 
 
 def plot_pln():
@@ -456,7 +218,7 @@ def plot_pln():
         obs = []
         pred = []
 
-        fileeee = open(mydir+('/data/pln_sad_counts_%s.csv') % (carbon) )
+        fileeee = open(utils.directory+('/data/pln_sad_counts_%s.csv') % (carbon) )
         fileeee_first_line = fileeee.readline()
         for line in fileeee:
             line=line.strip().split(',')
@@ -473,7 +235,7 @@ def plot_pln():
         fileeee.close()
 
         # get mean r2
-        fileeee_r2 = open(mydir+('/data/pln_sad_%s.csv') % (carbon))
+        fileeee_r2 = open(utils.directory+('/data/pln_sad_%s.csv') % (carbon))
         fileeee_r2_first_line = fileeee_r2.readline()
         r2_list = []
         for line in fileeee_r2:
@@ -502,14 +264,15 @@ def plot_pln():
 
 
     fig.subplots_adjust(wspace=0.3)
-    fig.savefig(mydir + "/figs/obs_pred_lognorm.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/obs_pred_lognorm.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
+
 
 
 def examine_cv(taxonomic_level):
     taxonomic_level_dict = {'genus':-1, 'family':-2, 'order':-3, 'class':-4}
     esv_genus_map = {}
-    taxonomy = open(mydir+'/data/taxonomy.csv')
+    taxonomy = open(utils.directory+'/data/taxonomy.csv')
     taxonomy_fitst_line = taxonomy.readline()
     for line in taxonomy:
         line = line.strip().split(',')
@@ -611,7 +374,7 @@ def examine_cv(taxonomic_level):
     ax.set_xlabel('Transfer', fontsize=12)
     ax.set_ylabel('Coefficient of variation\nof relative abundance', fontsize=12)
 
-    fig_name = mydir + '/figs/cv_time_%s.pdf' % taxonomic_level
+    fig_name = utils.directory + '/figs/cv_time_%s.pdf' % taxonomic_level
     fig.savefig(fig_name, format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
     plt.close()
 
@@ -627,7 +390,7 @@ def plot_Nmax_vs_pln_Nmax():
         obs = []
         pred = []
 
-        fileeee = open(mydir+('/data/pln_sad_%s.csv') % (carbon) )
+        fileeee = open(utils.directory+('/data/pln_sad_%s.csv') % (carbon) )
         fileeee_first_line = fileeee.readline()
         for line in fileeee:
             line=line.strip().split(',')
@@ -671,7 +434,7 @@ def plot_Nmax_vs_pln_Nmax():
 
 
     fig.subplots_adjust(wspace=0.3)
-    fig.savefig(mydir + "/figs/Nmax_vs_pln_Nmax.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/Nmax_vs_pln_Nmax.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
@@ -726,7 +489,7 @@ def plot_abundance_occupy_dist():
 
 
     fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(mydir + "/figs/AOD.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/AOD.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
@@ -766,7 +529,7 @@ def plot_lognormal():
     ax.legend(loc="upper left", fontsize=8)
 
 
-    fig.savefig(mydir + '/figs/MAD.pdf', format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+    fig.savefig(utils.directory + '/figs/MAD.pdf', format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
     plt.close()
 
 
@@ -775,7 +538,117 @@ def plot_lognormal():
 
 
 
-plot_lognormal()
+
+def plot_predicted_occupancies():
+
+    fig = plt.figure(figsize = (4*len(utils.carbons), 4*len(utils.carbons))) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for carbon_row_idx, carbon_row in enumerate(utils.carbons):
+
+        for carbon_column_idx, carbon_column in enumerate(utils.carbons):
+
+            if carbon_row_idx > carbon_column_idx:
+                continue
+
+            if carbon_row != carbon_column:
+                carbon_title = carbon_row + ' + ' + carbon_column
+            else:
+                carbon_title = carbon_row
+
+            s_by_s, ESVs, comm_rep_list = utils.get_s_by_s(list(set([carbon_row,carbon_column])))
+
+            occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+
+            ax_plot = plt.subplot2grid((1*len(utils.carbons), 1*len(utils.carbons)), (carbon_row_idx, carbon_column_idx), colspan=1)
+            ax_plot.plot([0.01,1],[0.01,1], lw=3,ls='--',c='k',zorder=1)
+            ax_plot.scatter(occupancies, predicted_occupancies, alpha=0.8,zorder=2)#, c='#87CEEB')
+
+            ax_plot.set_xscale('log', basex=10)
+            ax_plot.set_yscale('log', basey=10)
+            ax_plot.set_xlabel('Observed occupancy', fontsize=12)
+            ax_plot.set_ylabel('Predicted occupancy', fontsize=10)
+
+            ax_plot.set_title(carbon_title, fontsize=14, fontweight='bold' )
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+def plot_taylors_time_series():
+
+    s_by_s_all_transfers_dict = {}
+
+    all_samples = []
+    for transfer in range(1, 13):
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
+        #rel_s_by_s_np = (s_by_s/s_by_s.sum(axis=0))
+
+        # so we dont include the communities with no temporal samples
+        if transfer == 1:
+            comm_rep_list_all = comm_rep_list
+
+            #for comm_rep in  comm_rep_list:
+            #    s_by_s_all_transfers_dict[comm_rep] = {}
+
+        #for afd_idx, afd in enumerate(s_by_s):
+
+        for sad_idx, sad in enumerate(s_by_s.T):
+
+            if comm_rep_list[sad_idx] not in comm_rep_list_all:
+                continue
+
+            comm_rep = comm_rep_list[sad_idx] + '_' + str(transfer)
+
+            all_samples.append(comm_rep)
+
+            s_by_s_all_transfers_dict[comm_rep] = {}
+
+
+            for n_i_idx, n_i in enumerate(sad):
+                species_i = species[n_i_idx]
+
+                s_by_s_all_transfers_dict[comm_rep][species_i] = n_i
+
+    s_by_s_all_transfers_df = pd.DataFrame(s_by_s_all_transfers_dict)
+    s_by_s_all_transfers_df = s_by_s_all_transfers_df.fillna(0)
+
+    s_by_s_all_transfers_df = s_by_s_all_transfers_df[(s_by_s_all_transfers_df.T != 0).any()]
+    s_by_s_all_transfers = s_by_s_all_transfers_df.values
+
+    species_all_transfers = s_by_s_all_transfers_df.index.values
+    comm_rep_list_all_transfers = s_by_s_all_transfers_df.columns.values
+
+
+    occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s_all_transfers)
+
+
+    fig, ax = plt.subplots(figsize=(4,4))
+
+    ax.plot([0.01,1],[0.01,1], lw=3,ls='--',c='k',zorder=1)
+    ax.scatter(occupancies, predicted_occupancies, alpha=0.8,zorder=2)#, c='#87CEEB')
+
+    ax.set_xscale('log', basex=10)
+    ax.set_yscale('log', basey=10)
+    ax.set_xlabel('Observed occupancy', fontsize=12)
+    ax.set_ylabel('Predicted occupancy', fontsize=10)
+
+    ax.set_title('Merged Glucose time-series', fontsize=14, fontweight='bold' )
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies_merged_transfers.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+plot_taylors_time_series()
+#plot_predicted_occupancies()
+
+
+#plot_lognormal()
 
 
 #plot_abundance_occupy_dist()

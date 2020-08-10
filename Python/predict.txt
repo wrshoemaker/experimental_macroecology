@@ -1,0 +1,20 @@
+
+# remove zeros from observations
+for each species, calculate
+ tf = mean(count/totreads)
+ tvpf = mean( (count^2 - count)/totreads^2 ) )
+
+totreads refers to the total number of reads for all sites with non-zero read counts of the given species
+
+for each species
+
+f = o*tf
+vf = o*tvpf
+vf = vf - f^2
+
+
+## PREDICT OCCUPANCY ASSUMING A GAMMA AFD
+calculate gamma params for each species
+  beta = f^2/vf
+  theta = f/beta
+  o_pred = 1- mean((1.+theta*totreads)^(-beta ) )
