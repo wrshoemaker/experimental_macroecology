@@ -20,7 +20,7 @@ mytheme_main <- theme_bw() + theme(
 )
 ##########
 
-df <- read.csv("mydata.csv") # CHANGE HERE
+df <- read.csv("/Users/WRShoemaker/GitHub/experimental_macroecology/data/reformat_s_by_s.csv") # CHANGE HERE
 
 ###IGNORE THIS
 # load("./Genomics/Projects/EBI-Taxonomy/alltax_EBI.RData")
@@ -47,7 +47,7 @@ estpars <- df %>% filter(count > 0) %>% # remove entries with zero count (if pre
   group_by( condition ) %>%  mutate(o = o / n_distinct(sample) ) %>% # calculate occupancy
   ungroup() %>% select(-sample) %>% distinct() %>%
   mutate( f = o*tf, vf = o*tvpf ) %>% mutate(vf = vf - f^2 ) %>%  ungroup() %>% # mean and variance including zero
-  select( -tf, -tvpf, -count, -totreads ) %>% distinct()# remove from data
+  select( -tvpf, -count, -totreads ) %>% distinct()# remove from data
 ## estpars should look like
 # condition | sp | f | vf | o
 
@@ -58,11 +58,11 @@ occpred <- df %>% left_join(estpars %>% mutate( beta = f^2/vf, theta = f/beta ) 
 
 occpred %>% filter(vf > 0) %>%  ggplot()  + mytheme_main + ## estimation is based on poisson sampling... sometimes estimates negative variances (eveything can be done with max likelihood)
   aes(
-    y = o,
-    x = o_pred
-  ) + geom_point( color = "gray", alpha = 0.2 ) +
+    y = o_pred,
+    x = o
+  ) + geom_point( color = "gray", alpha = 0.9 ) +
   geom_abline(  ) +
   stat_summary_bin( fun.y = "mean", geom = "point", size = 3, stroke = 1, bins = 13, shape = 1 ) +
-  scale_y_continuous(name = "Empirical occupancy") +
-  scale_x_continuous( name = "Predicted occupancy" ) +
+  scale_x_continuous(name = "Empirical occupancy", trans='log10') +
+  scale_y_continuous( name = "Predicted occupancy", trans='log10' ) +
   facet_wrap( . ~ condition )
