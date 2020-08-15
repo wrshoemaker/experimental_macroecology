@@ -16,15 +16,17 @@ slope_null=2
 
 def plot_afd(n_bins=50):
 
-    AFDs = []
+    fig = plt.figure(figsize = (4*len(utils.carbons), 4)) #
+    fig.subplots_adjust(bottom= 0.15,  wspace=0.25)
 
-    number_communities = []
-
-    for carbon_idx, carbon in enumerate(['Citrate']):
+    for carbon_idx, carbon in enumerate(carbons):
 
         s_by_s, species, comm_rep_list = utils.get_s_by_s(carbon)
         rel_s_by_s_np = (s_by_s/s_by_s.sum(axis=0))
         #log_mean_rel_abundances = np.log(np.mean(rel_s_by_s_np, axis=1))
+
+        AFDs = []
+        number_communities = []
 
         for rel_sad in rel_s_by_s_np:
             rel_sad = rel_sad[rel_sad>0]
@@ -35,36 +37,33 @@ def plot_afd(n_bins=50):
 
         number_communities.append(len(log_mean_rel_abundances))
 
+        AFDs = np.asarray(AFDs)
+        #AFDs = AFDs.flatten()
+
+        rescaled_AFDs = (AFDs - np.mean(AFDs)) / np.std(AFDs)
+
+        ag,bg,cg = gamma.fit(rescaled_AFDs)
+
+        x_range = np.linspace(min(rescaled_AFDs) , max(rescaled_AFDs) , 10000)
 
 
-    AFDs = np.asarray(AFDs)
-    #AFDs = AFDs.flatten()
+        ax_i = plt.subplot2grid((1, 1*len(carbons)), (0, carbon_idx), colspan=1)
 
-    rescaled_AFDs = (AFDs - np.mean(AFDs)) / np.std(AFDs)
 
-    print(rescaled_AFDs)
+        ax_i.hist(rescaled_AFDs, alpha=0.8, bins= 20, density=True)
 
-    #print(rescaled_AFDs)
-    #print(min(rescaled_AFDs), max(rescaled_AFDs))
-    #print((max(rescaled_AFDs) - min(rescaled_AFDs)) / n_bins)
+        # weights=np.zeros_like(rescaled_AFDs) + 1. / len(rescaled_AFDs)
 
-    ag,bg,cg = gamma.fit(rescaled_AFDs)
+        ax_i.plot(x_range, gamma.pdf(x_range, ag, bg,cg), 'k', lw=2)
 
-    x_range = np.linspace(min(rescaled_AFDs) , max(rescaled_AFDs) , 10000)
+        ax_i.set_yscale('log', basey=10)
 
-    fig, ax = plt.subplots(figsize=(4,4))
+        ax_i.set_xlabel('Rescaled log\nrelative abundance', fontsize=12)
+        ax_i.set_ylabel('Probability density', fontsize=12)
 
-    ax.hist(rescaled_AFDs, alpha=0.8, bins= 20, density=True)
+        ax_i.set_title(carbon, fontsize=14, fontweight='bold' )
 
-    # weights=np.zeros_like(rescaled_AFDs) + 1. / len(rescaled_AFDs)
-
-    ax.plot(x_range, gamma.pdf(x_range, ag, bg,cg), 'k', lw=2)
-
-    ax.set_yscale('log', basey=10)
-
-    ax.set_xlabel('Rescaled log relative\naverage abundance', fontsize=12)
-    ax.set_ylabel('Probability density', fontsize=12)
-
+    #wspace=0.3, hspace=0.3
     fig_name = utils.directory + '/figs/AFD.pdf'
     fig.savefig(fig_name, format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
     plt.close()
@@ -510,39 +509,47 @@ def plot_abundance_occupy_dist():
 
 
 
-def plot_lognormal():
+def plot_mad():
 
-    MADs = []
+    #MADs = []
+
+    fig = plt.figure(figsize = (4*len(utils.carbons), 4)) #
+    fig.subplots_adjust(bottom= 0.15,  wspace=0.25)
 
     for carbon_idx, carbon in enumerate(carbons):
 
         s_by_s, species, comm_rep_list = utils.get_s_by_s(carbon)
         rel_s_by_s_np = (s_by_s/s_by_s.sum(axis=0))
-        log_mean_rel_abundances = np.log(np.mean(rel_s_by_s_np, axis=1))
+        #log_mean_rel_abundances = np.log(np.mean(rel_s_by_s_np, axis=1))
+        MADs = np.log(np.mean(rel_s_by_s_np, axis=1))
 
-        MADs.extend(log_mean_rel_abundances)
+        #MADs.extend(log_mean_rel_abundances)
 
-    MADs = np.asarray(MADs)
-    rescaled_MADs = (MADs - np.mean(MADs)) / np.std(MADs)
+        MADs = np.asarray(MADs)
+        rescaled_MADs = (MADs - np.mean(MADs)) / np.std(MADs)
 
-    shape,loc,scale = stats.lognorm.fit(rescaled_MADs)
+        shape,loc,scale = stats.lognorm.fit(rescaled_MADs)
 
-    x_range = np.linspace(min(rescaled_MADs) , max(rescaled_MADs) , 10000)
+        x_range = np.linspace(min(rescaled_MADs) , max(rescaled_MADs) , 10000)
 
-    fig, ax = plt.subplots(figsize=(4,4))
 
-    ax.hist(rescaled_MADs, alpha=0.8, bins= 20, density=True)
+        ax_i = plt.subplot2grid((1, 1*len(carbons)), (0, carbon_idx), colspan=1)
 
-    # weights=np.zeros_like(rescaled_AFDs) + 1. / len(rescaled_AFDs)
+        ax_i.hist(rescaled_MADs, alpha=0.8, bins= 15, density=True)
 
-    ax.plot(x_range, stats.lognorm.pdf(x_range, shape,loc,scale), 'k', label='Lognormal fit', lw=2)
+        # weights=np.zeros_like(rescaled_AFDs) + 1. / len(rescaled_AFDs)
 
-    ax.set_yscale('log', basey=10)
+        ax_i.plot(x_range, stats.lognorm.pdf(x_range, shape,loc,scale), 'k', label='Lognormal fit', lw=2)
 
-    ax.set_xlabel('Rescaled log average\nrelative abundance', fontsize=12)
-    ax.set_ylabel('Probability density', fontsize=12)
+        ax_i.set_yscale('log', basey=10)
 
-    ax.legend(loc="upper left", fontsize=8)
+        ax_i.set_xlabel('Rescaled log average\nrelative abundance', fontsize=12)
+        ax_i.set_ylabel('Probability density', fontsize=12)
+
+        ax_i.legend(loc="upper left", fontsize=8)
+
+        ax_i.set_title(carbon, fontsize=14, fontweight='bold' )
+
 
 
     fig.savefig(utils.directory + '/figs/MAD.pdf', format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
@@ -688,7 +695,6 @@ def plot_taylors_time_series(slope_null=2):
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(mean_rel_abundances), np.log10(var_rel_abundances))
 
-
         ax_plot = plt.subplot2grid((2, 2), (zeros_idx, 0), colspan=1)
 
         ax_plot.scatter(mean_rel_abundances, var_rel_abundances, alpha=0.8)#, c='#87CEEB')
@@ -712,7 +718,6 @@ def plot_taylors_time_series(slope_null=2):
 
         ax_plot.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_plot.transAxes  )
 
-
         # run slope test
         #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
         t_value = (slope - (slope_null))/std_err
@@ -726,6 +731,7 @@ def plot_taylors_time_series(slope_null=2):
     ax_sad = plt.subplot2grid((2, 2), (0, 1), colspan=1)
 
     log_mean_rel_abundances = np.log(np.mean(rel_s_by_s_all_transfers, axis=1))
+    print(len(log_mean_rel_abundances), len(species_all_transfers))
 
     rescaled_MADs = (log_mean_rel_abundances - np.mean(log_mean_rel_abundances)) / np.std(log_mean_rel_abundances)
 
@@ -783,12 +789,10 @@ def plot_taylors_time_series(slope_null=2):
     ax_afd.legend(loc="upper right", fontsize=8)
 
 
-
-
     fig.text(0, 0.7, "Zeros", va='center', fontweight='bold', rotation='vertical', fontsize=16)
     fig.text(0, 0.3, "No zeros", va='center', fontweight='bold',rotation='vertical', fontsize=16)
 
-    fig.text(0.5, 1, "Merged glucose time-series", va='center', fontweight='bold',fontsize=16)
+    fig.text(0.5, 1, "Merged glucose time-series", va='center',ha='center', fontweight='bold',fontsize=16)
 
 
 
@@ -900,6 +904,9 @@ def plot_taylors_law_migration(zeros=False, transfer=18):
         ax_plot.legend(loc="lower right", fontsize=8)
 
 
+
+    fig.text(0.5, 0.95, "Transfer %s"%str(transfer), va='center', ha='center', fontweight='bold',fontsize=16)
+
     fig.subplots_adjust(wspace=0.3, hspace=0.4)
     fig.savefig(utils.directory + "/figs/taylors_law_migration.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
@@ -952,7 +959,6 @@ def plot_mad_migration(zeros=False, transfer=18):
         ax_plot.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
 
 
-
     fig.subplots_adjust(wspace=0.3, hspace=0.4)
     fig.savefig(utils.directory + "/figs/mad_migration.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
@@ -960,16 +966,286 @@ def plot_mad_migration(zeros=False, transfer=18):
 
 
 
+def plot_afd_migration(zeros=False, transfer=18):
 
-plot_mad_migration()
+    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
+    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
+    #migration_innocula = [('Global_migration',4), ('Parent_migration',4)]
 
-plot_taylors_law_migration()
+    plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
+
+    fig = plt.figure(figsize = (8, 8)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+
+        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+
+        AFDs = rel_s_by_s.flatten()
+        AFDs = AFDs[AFDs>0]
+        AFDs = np.log(AFDs)
+        rescaled_AFDs = (AFDs - np.mean(AFDs)) / np.std(AFDs)
+
+
+        ag,bg,cg = gamma.fit(rescaled_AFDs)
+
+        x_range = np.linspace(min(rescaled_AFDs) , max(rescaled_AFDs) , 10000)
+
+        ax_plot = plt.subplot2grid((2, 2), plot_idxs[migration_innoculum_idx])
+
+
+        ax_plot.hist(rescaled_AFDs, alpha=0.8, bins= 20, density=True)
+
+        # weights=np.zeros_like(rescaled_AFDs) + 1. / len(rescaled_AFDs)
+
+        ax_plot.plot(x_range, gamma.pdf(x_range, ag, bg,cg), 'k', label='Gamma fit', lw=2)
+
+        ax_plot.set_yscale('log', basey=10)
+
+        ax_plot.set_xlabel('Rescaled log\nrelative abundance', fontsize=12)
+        ax_plot.set_ylabel('Probability density', fontsize=12)
+
+        ax_plot.legend(loc="upper right", fontsize=8)
+
+        ax_plot.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+
+
+    fig.text(0.5, 0.95, "Transfer %s"%str(transfer), va='center', ha='center', fontweight='bold',fontsize=16)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.4)
+    fig.savefig(utils.directory + "/figs/afd_migration.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+def plot_taylors_migration_time_series():
+
+    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum']
+    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
+
+    fig = plt.figure(figsize = (4*len(migration_innocula), 8)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+
+        # rows are species, columns are sites
+        # calculate relative abundance for each site
+
+
+        for zeros_idx, zeros in enumerate(['yes', 'no']):
+
+            mean_rel_abundances = []
+            var_rel_abundances = []
+
+            for afd in s_by_s:
+
+                afd_no_zeros = afd[afd>0]
+
+                if len(afd_no_zeros) < 3:
+                    continue
+
+                if zeros == 'yes':
+
+                    mean_rel_abundances.append(np.mean(afd))
+                    var_rel_abundances.append(np.var(afd))
+
+                else:
+
+                    mean_rel_abundances.append(np.mean(afd_no_zeros))
+                    var_rel_abundances.append(np.var(afd_no_zeros))
+
+            #print(migration_innoculum, mean_rel_abundances)
+
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(mean_rel_abundances), np.log10(var_rel_abundances))
+
+            ax_plot = plt.subplot2grid((2, 1*len(migration_innocula)), (zeros_idx, migration_innoculum_idx))
+
+            ax_plot.scatter(mean_rel_abundances, var_rel_abundances, alpha=0.8)#, c='#87CEEB')
+
+            x_log10_range =  np.linspace(min(np.log10(mean_rel_abundances)) , max(np.log10(mean_rel_abundances)) , 10000)
+            y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+            y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+
+            if zeros_idx ==0:
+
+                ax_plot.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+
+            ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
+            ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+
+
+            ax_plot.set_xscale('log', basex=10)
+            ax_plot.set_yscale('log', basey=10)
+
+            ax_plot.set_xlabel('Average relative\nabundance', fontsize=12)
+            ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
+
+            ax_plot.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_plot.transAxes  )
+
+            # run slope test
+            #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
+            t_value = (slope - (slope_null))/std_err
+            p_value = stats.t.sf(np.abs(t_value), len(mean_rel_abundances)-2)
+
+            sys.stdout.write("Slope = %g, t = %g, P= %g\n" % (slope, t_value, p_value))
+
+            ax_plot.legend(loc="lower right", fontsize=8)
+
+
+    fig.text(0.02, 0.7, "Zeros", va='center', fontweight='bold', rotation='vertical', fontsize=16)
+
+    fig.text(0.02, 0.3, "No zeros", va='center', fontweight='bold',rotation='vertical', fontsize=16)
+
+    fig.text(0.5, 0.96, "Merged time series", va='center', ha='center', fontweight='bold', fontsize=18)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/taylors_law_migration_merged_transfers.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+def plot_afd_migration_time_series():
+
+    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum']
+    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
+
+    fig = plt.figure(figsize = (12, 4)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+
+        #rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+
+        AFDs = rel_s_by_s.flatten()
+        AFDs = AFDs[AFDs>0]
+        AFDs = np.log(AFDs)
+        rescaled_AFDs = (AFDs - np.mean(AFDs)) / np.std(AFDs)
+
+        ag,bg,cg = gamma.fit(rescaled_AFDs)
+
+        x_range = np.linspace(min(rescaled_AFDs) , max(rescaled_AFDs) , 10000)
+
+
+        ax_plot = plt.subplot2grid((1, 3), (0,migration_innoculum_idx))
+
+        ax_plot.hist(rescaled_AFDs, alpha=0.8, bins= 20, density=True)
+
+        # weights=np.zeros_like(rescaled_AFDs) + 1. / len(rescaled_AFDs)
+
+        ax_plot.plot(x_range, gamma.pdf(x_range, ag, bg,cg), 'k', label='Gamma fit', lw=2)
+
+        ax_plot.set_yscale('log', basey=10)
+
+        ax_plot.set_xlabel('Rescaled log\nrelative abundance', fontsize=12)
+        ax_plot.set_ylabel('Probability density', fontsize=12)
+
+        ax_plot.legend(loc="upper right", fontsize=8)
+
+        ax_plot.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+
+
+    fig.text(0.5, 0.96, "Merged time series", va='center', ha='center', fontweight='bold',fontsize=16)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.4)
+    fig.savefig(utils.directory + "/figs/afd_migration_transfers_merged.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+
+
+def plot_mad_migration_time_series(zeros=False, transfer=18):
+
+    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum' ]
+    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
+    #migration_innocula = [('Global_migration',4), ('Parent_migration',4)]
+
+    fig = plt.figure(figsize = (12, 4)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+
+        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        mean_rel_abundances = np.mean(rel_s_by_s, axis=1)
+
+        #mean_rel_abundances = mean_rel_abundances[mean_rel_abundances>0]
+        log_mean_rel_abundances = np.log(mean_rel_abundances)
+
+        rescaled_MADs = (log_mean_rel_abundances - np.mean(log_mean_rel_abundances)) / np.std(log_mean_rel_abundances)
+        print(len(rescaled_MADs), len(species))
+
+        shape,loc,scale = stats.lognorm.fit(rescaled_MADs)
+
+        x_range = np.linspace(min(rescaled_MADs) , max(rescaled_MADs) , 10000)
+
+
+        ax_plot = plt.subplot2grid((1, 3), (0,migration_innoculum_idx))
+
+        ax_plot.hist(rescaled_MADs, alpha=0.8, bins= 15, density=True)
+
+        ax_plot.plot(x_range, stats.lognorm.pdf(x_range, shape,loc,scale), 'k', label='Lognormal fit', lw=2)
+
+        ax_plot.set_yscale('log', basey=10)
+
+        ax_plot.set_xlabel('Rescaled log average\nrelative abundance', fontsize=12)
+        ax_plot.set_ylabel('Probability density', fontsize=12)
+
+        ax_plot.legend(loc="upper right", fontsize=8)
+
+        ax_plot.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+
+
+    fig.text(0.5, 0.97, "Merged time series", va='center', ha='center', fontweight='bold',fontsize=16)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.4)
+    fig.savefig(utils.directory + "/figs/mad_migration_merged_transfers.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+
+
+#plot_mad_migration_time_series()
+
+
+#plot_taylors_time_series()
+
+#plot_taylors_law_migration()
+
+
+
+
+
+
+#plot_afd_migration_time_series()
+
+
+
+#plot_taylors_migration_time_series()
+
+
+
+#plot_taylors_time_series()
+
+#plot_afd()
+
+
+#plot_afd_migration()
+
+
+#plot_taylors_law_migration()
 
 #plot_taylors_time_series()
 #plot_predicted_occupancies()
 
 
-#plot_lognormal()
+#plot_mad()
 
 
 #plot_abundance_occupy_dist()
@@ -981,8 +1257,6 @@ plot_taylors_law_migration()
 #examine_cv('genus')
 
 #plot_pln()
-
-#fit_sad()
 
 #plot_afd()
 #plot_taylors()

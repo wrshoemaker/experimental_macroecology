@@ -57,7 +57,7 @@ def get_s_by_s_temporal(transfers, carbon='Glucose'):
 
     transfers = [str(transfer) for transfer in transfers]
 
-    otu = open(directory + '/data/otu_table.csv')
+    otu = open( '%s/data/otu_table.csv' % directory)
     otu_first_line = otu.readline()
     otu_first_line = otu_first_line.strip().split(',')
 
@@ -395,3 +395,90 @@ def get_s_by_s_migration(transfer,migration='No_migration',inocula=40):
     s_by_s = s_by_s_df.values.T
     # it's a relativized S by S matrix
     return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()
+
+
+
+def get_s_by_s_temporal_migration(migration='No_migration',inocula=40,community=None):
+
+    otu_path = directory + '/data/migration_ESV_data_table_SE.csv'
+    #otu_first_line = otu.readline()
+    #otu_first_line = otu_first_line.strip().split(',')
+    count_dict = {}
+
+
+    if community==None:
+
+        communities = []
+
+        for line_idx, line in enumerate(open(otu_path, 'r')):
+            if line_idx == 0:
+                continue
+            line = line.strip().split(',')
+            if (int(line[5]) == 1) and (line[2] == migration) and (int(line[3]) == inocula):
+                communities.append(line[6])
+
+        communities = list(set(communities))
+
+    else:
+
+        communities = [str(community)]
+
+
+
+    for line_idx, line in enumerate(open(otu_path, 'r')):
+        if line_idx == 0:
+            continue
+        line = line.strip().split(',')
+
+        if float(line[1]) == 0:
+            continue
+
+        if (line[6] in  communities) and (line[2] == migration) and (int(line[3]) == inocula):
+
+            if line[0] not in count_dict:
+                count_dict[line[0]] = {}
+
+
+            community_time = '%s_%s' % (line[6], line[5])
+
+            if community_time not in count_dict[line[0]]:
+                count_dict[line[0]][community_time] = 0
+
+            if count_dict[line[0]][community_time] > 0:
+
+                sys.stdout.write("Relative abundance already in dictionary!!\n" )
+
+            count_dict[line[0]][community_time] = float(line[1])
+
+
+    s_by_s_df = pd.DataFrame(count_dict)
+    s_by_s_df = s_by_s_df.fillna(0)
+    s_by_s = s_by_s_df.values.T
+    # it's a relativized S by S matrix
+    return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()
+
+
+def get_migration_time_series_community_names(migration='No_migration',inocula=40):
+
+    otu_path = directory + '/data/migration_ESV_data_table_SE.csv'
+    #otu_first_line = otu.readline()
+    #otu_first_line = otu_first_line.strip().split(',')
+    count_community_dict = {}
+
+    communities = []
+
+    for line_idx, line in enumerate(open(otu_path, 'r')):
+        if line_idx == 0:
+            continue
+        line = line.strip().split(',')
+        if (int(line[5]) == 3) and (line[2] == migration) and (int(line[3]) == inocula):
+            communities.append(line[6])
+
+    return list(set(communities))
+
+
+
+
+
+
+print(get_migration_time_series_community_names(migration='Global_migration',inocula=4))
