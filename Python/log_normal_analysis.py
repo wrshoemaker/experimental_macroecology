@@ -14,6 +14,12 @@ carbons = utils.carbons
 
 slope_null=2
 
+titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
+migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
+plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
+
+
+
 def plot_afd(n_bins=50):
 
     fig = plt.figure(figsize = (4*len(utils.carbons), 4)) #
@@ -833,19 +839,13 @@ def reformat_site_by_species():
 
 def plot_taylors_law_migration(zeros=False, transfer=18):
 
-    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
-    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
-    #migration_innocula = [('Global_migration',4), ('Parent_migration',4)]
-
-    plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
-
     fig = plt.figure(figsize = (8, 8)) #
     fig.subplots_adjust(bottom= 0.15)
 
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
 
         mean_rel_abundances = []
         var_rel_abundances = []
@@ -869,7 +869,6 @@ def plot_taylors_law_migration(zeros=False, transfer=18):
 
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(mean_rel_abundances), np.log10(var_rel_abundances))
-        #print((2, 2), plot_idxs[migration_innoculum_idx])
 
         ax_plot = plt.subplot2grid((2, 2), plot_idxs[migration_innoculum_idx])
 
@@ -917,19 +916,13 @@ def plot_taylors_law_migration(zeros=False, transfer=18):
 
 def plot_mad_migration(zeros=False, transfer=18):
 
-    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
-    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
-    #migration_innocula = [('Global_migration',4), ('Parent_migration',4)]
-
-    plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
-
     fig = plt.figure(figsize = (8, 8)) #
     fig.subplots_adjust(bottom= 0.15)
 
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        rel_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
         mean_rel_abundances = np.mean(rel_s_by_s, axis=0)
 
         #mean_rel_abundances = mean_rel_abundances[mean_rel_abundances>0]
@@ -968,18 +961,12 @@ def plot_mad_migration(zeros=False, transfer=18):
 
 def plot_afd_migration(zeros=False, transfer=18):
 
-    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
-    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
-    #migration_innocula = [('Global_migration',4), ('Parent_migration',4)]
-
-    plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
-
     fig = plt.figure(figsize = (8, 8)) #
     fig.subplots_adjust(bottom= 0.15)
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        rel_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
 
         AFDs = rel_s_by_s.flatten()
         AFDs = AFDs[AFDs>0]
@@ -1020,19 +1007,15 @@ def plot_afd_migration(zeros=False, transfer=18):
 
 def plot_taylors_migration_time_series():
 
-    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum']
-    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
-
     fig = plt.figure(figsize = (4*len(migration_innocula), 8)) #
     fig.subplots_adjust(bottom= 0.15)
 
-    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula[:-1]):
 
-        s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
 
         # rows are species, columns are sites
         # calculate relative abundance for each site
-
 
         for zeros_idx, zeros in enumerate(['yes', 'no']):
 
@@ -1108,16 +1091,12 @@ def plot_taylors_migration_time_series():
 
 def plot_afd_migration_time_series():
 
-    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum']
-    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
-
     fig = plt.figure(figsize = (12, 4)) #
     fig.subplots_adjust(bottom= 0.15)
 
-    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula[:-1]):
 
-        #rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
-        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        rel_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
 
         AFDs = rel_s_by_s.flatten()
         AFDs = AFDs[AFDs>0]
@@ -1160,17 +1139,13 @@ def plot_afd_migration_time_series():
 
 def plot_mad_migration_time_series(zeros=False, transfer=18):
 
-    titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum' ]
-    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
-    #migration_innocula = [('Global_migration',4), ('Parent_migration',4)]
-
     fig = plt.figure(figsize = (12, 4)) #
     fig.subplots_adjust(bottom= 0.15)
 
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        rel_s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        rel_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
         mean_rel_abundances = np.mean(rel_s_by_s, axis=1)
 
         #mean_rel_abundances = mean_rel_abundances[mean_rel_abundances>0]
@@ -1209,7 +1184,39 @@ def plot_mad_migration_time_series(zeros=False, transfer=18):
 
 
 
+def plot_predicted_occupancies_migration():
 
+    fig = plt.figure(figsize = (12, 12)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+
+        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+
+        occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+
+        ax_plot = plt.subplot2grid((2, 2),plot_idxs[migration_innoculum_idx], colspan=1)
+        ax_plot.plot([0.01,1],[0.01,1], lw=3,ls='--',c='k',zorder=1)
+        ax_plot.scatter(occupancies, predicted_occupancies, alpha=0.8,zorder=2)#, c='#87CEEB')
+
+        ax_plot.set_xscale('log', basex=10)
+        ax_plot.set_yscale('log', basey=10)
+        ax_plot.set_xlabel('Observed occupancy', fontsize=14)
+        ax_plot.set_ylabel('Predicted occupancy', fontsize=14)
+
+        ax_plot.set_title(titles[migration_innoculum_idx], fontsize=16, fontweight='bold' )
+
+
+    fig.text(0.5, 0.97, "Transfer 18", va='center', ha='center', fontweight='bold',fontsize=16)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies_migration.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+plot_predicted_occupancies_migration()
 
 #plot_mad_migration_time_series()
 

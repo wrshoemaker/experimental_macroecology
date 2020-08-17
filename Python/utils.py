@@ -361,7 +361,7 @@ def group_ESVs(s_by_s, species, comm_rep_list, taxonomic_level='genus'):
 
 
 
-def get_s_by_s_migration(transfer,migration='No_migration',inocula=40):
+def get_relative_s_by_s_migration(transfer=18,migration='No_migration',inocula=40):
     # migration options, 'No_migration', 'Parent_migration', 'Global_migration'
 
     otu = open(directory + '/data/migration_ESV_data_table_SE.csv')
@@ -398,13 +398,12 @@ def get_s_by_s_migration(transfer,migration='No_migration',inocula=40):
 
 
 
-def get_s_by_s_temporal_migration(migration='No_migration',inocula=40,community=None):
+def get_relative_s_by_s_temporal_migration(migration='No_migration',inocula=40,community=None):
 
     otu_path = directory + '/data/migration_ESV_data_table_SE.csv'
     #otu_first_line = otu.readline()
     #otu_first_line = otu_first_line.strip().split(',')
     count_dict = {}
-
 
     if community==None:
 
@@ -422,8 +421,6 @@ def get_s_by_s_temporal_migration(migration='No_migration',inocula=40,community=
     else:
 
         communities = [str(community)]
-
-
 
     for line_idx, line in enumerate(open(otu_path, 'r')):
         if line_idx == 0:
@@ -481,4 +478,37 @@ def get_migration_time_series_community_names(migration='No_migration',inocula=4
 
 
 
-print(get_migration_time_series_community_names(migration='Global_migration',inocula=4))
+def get_s_by_s_migration(transfer=18,migration='No_migration',inocula=40):
+    # migration options, 'No_migration', 'Parent_migration', 'Global_migration'
+
+    otu = open(directory + '/data/migration_ESV_data_table_absabundance_SE.csv')
+    otu_first_line = otu.readline()
+    otu_first_line = otu_first_line.strip().split(',')
+
+    count_dict = {}
+    for line in otu:
+        line = line.strip().split(',')
+        if float(line[1]) == 0:
+            continue
+
+        if (int(line[5]) == transfer) and (line[3] == migration) and (int(line[4]) == inocula) :
+
+            if line[0] not in count_dict:
+                count_dict[line[0]] = {}
+
+            if line[6] not in count_dict[line[0]]:
+                count_dict[line[0]][line[6]] = 0
+
+            if count_dict[line[0]][line[6]] > 0:
+
+                sys.stdout.write("Species already in dictionary!!\n" )
+
+            count_dict[line[0]][line[6]] += int(line[1])
+
+    otu.close()
+
+    s_by_s_df = pd.DataFrame(count_dict)
+    s_by_s_df = s_by_s_df.fillna(0)
+    s_by_s = s_by_s_df.values.T
+    # it's a relativized S by S matrix
+    return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()
