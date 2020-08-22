@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from macroeco_distributions import pln, pln_solver, pln_ll
-from macroecotools import obs_pred_rsquare
+#from macroeco_distributions import pln, pln_solver, pln_ll
+#from macroecotools import obs_pred_rsquare
 
 directory = os.path.expanduser("~/GitHub/experimental_macroecology")
 metadata_path = directory + '/data/metadata.csv'
@@ -88,115 +88,143 @@ def get_s_by_s_temporal(transfers, carbon='Glucose'):
     print(comm_rep_transfer_list)
 
 
+def get_species_means_and_variances(rel_s_by_s, zeros=False):
 
+    mean_rel_abundances = []
+    var_rel_abundances = []
 
-class lognorm:
+    for afd in rel_s_by_s:
 
-    def __init__(self, obs):
-        self.obs = obs
+        afd_no_zeros = afd[afd>0]
 
+        if len(afd_no_zeros) < 3:
+            continue
 
-    def ppoints(self, n):
-        """ numpy analogue or `R`'s `ppoints` function
-            see details at http://stat.ethz.ch/R-manual/R-patched/library/stats/html/ppoints.html
-            :param n: array type or number
-            Obtained from: http://stackoverflow.com/questions/20292216/imitating-ppoints-r-function-in-python
-            on 5 April 2016
-            """
-        if n < 10:
-            a = 3/8
+        if zeros == True:
+
+            mean_rel_abundances.append(np.mean(afd))
+            var_rel_abundances.append(np.var(afd))
+
         else:
-            a = 1/2
 
-        try:
-            n = np.float(len(n))
-        except TypeError:
-            n = np.float(n)
-        return (np.arange(n) + 1 - a)/(n + 1 - 2*a)
+            mean_rel_abundances.append(np.mean(afd_no_zeros))
+            var_rel_abundances.append(np.var(afd_no_zeros))
 
+    mean_rel_abundances = np.asarray(mean_rel_abundances)
+    var_rel_abundances = np.asarray(var_rel_abundances)
 
-
-    def get_rad_pln(self, S, mu, sigma, lower_trunc = True):
-        """Obtain the predicted RAD from a Poisson lognormal distribution"""
-        abundance = list(np.empty([S]))
-        rank = range(1, int(S) + 1)
-        cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
-        j = 0
-        cdf_cum = 0
-        i = 1
-        while j < S:
-            cdf_cum += pln.pmf(i, mu, sigma, lower_trunc)
-            while cdf_cum >= cdf_obs[j]:
-                abundance[j] = i
-                j += 1
-                if j == S:
-                    abundance.reverse()
-                    return abundance
-            i += 1
-
-
-    def get_rad_from_obs(self):
-        mu, sigma = pln_solver(self.obs)
-        pred_rad = self.get_rad_pln(len(self.obs), mu, sigma)
-
-        return (pred_rad, mu, sigma)
+    return mean_rel_abundances, var_rel_abundances
 
 
 
 
-def fit_sad():
+#class lognorm:
 
-    for carbon_idx, carbon in enumerate(carbons):
-
-        sys.stdout.write("Fitting lognormal for %s communities...\n" % (carbon))
-
-        s_by_s, species, comm_rep_list = get_s_by_s(carbon)
-
-        data = []
-
-        obs_list = []
-        pred_list = []
-
-        N_communities = s_by_s.shape[1]
-        for sad in s_by_s.T:
-            sys.stdout.write("%d communities to go!\n" % (N_communities))
-            N_communities -= 1
-
-            sad = sad[sad>0]
-            sad.sort()
-            sad = sad[::-1]
-            if len(sad) < 10:
-                continue
-
-            N = sum(sad)
-            S = len(sad)
-            Nmax = max(sad)
-
-            lognorm_pred = lognorm(sad)
-            sad_predicted, mu, sigma = lognorm_pred.get_rad_from_obs()
-            pln_Nmax = max(sad_predicted)
-
-            ll = pln_ll(sad, mu, sigma)
-            r2 = obs_pred_rsquare(np.log10(sad), np.log10(sad_predicted))
-
-            data.append([str(N),str(S),str(Nmax),str(pln_Nmax),str(ll),str(r2)])
-
-            obs_list.extend(sad)
-            pred_list.extend(sad_predicted)
+#    def __init__(self, obs):
+#        self.obs = obs
 
 
-        df_sad_out = open((directory + '/data/pln_sad_counts_%s.csv') % (carbon) , 'w')
-        df_sad_out.write(','.join(['Observed','Predicted']) + '\n')
-        for i in range(len(obs_list)):
-            df_sad_out.write(','.join([str(obs_list[i]), str(pred_list[i])]) + '\n')
-        df_sad_out.close()
+#    def ppoints(self, n):
+#        """ numpy analogue or `R`'s `ppoints` function
+#            see details at http://stat.ethz.ch/R-manual/R-patched/library/stats/html/ppoints.html
+#            :param n: array type or number
+#            Obtained from: http://stackoverflow.com/questions/20292216/imitating-ppoints-r-function-in-python
+#            on 5 April 2016
+#            """
+#        if n < 10:
+#            a = 3/8
+#        else:
+#            a = 1/2
+
+#        try:
+#            n = np.float(len(n))
+#        except TypeError:
+#            n = np.float(n)
+#        return (np.arange(n) + 1 - a)/(n + 1 - 2*a)
 
 
-        df_out = open((directory + '/data/pln_sad_%s.csv') % (carbon) , 'w')
-        df_out.write(','.join(['N','S','Nmax', 'pln_Nmax', 'll','r2_mod']) + '\n')
-        for i in range(len(data)):
-            df_out.write(','.join(data[i]) + '\n')
-        df_out.close()
+
+#    def get_rad_pln(self, S, mu, sigma, lower_trunc = True):
+#        """Obtain the predicted RAD from a Poisson lognormal distribution"""
+#        abundance = list(np.empty([S]))
+#        rank = range(1, int(S) + 1)
+#        cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
+#        j = 0
+#        cdf_cum = 0
+#        i = 1
+#        while j < S:
+#            cdf_cum += pln.pmf(i, mu, sigma, lower_trunc)
+#            while cdf_cum >= cdf_obs[j]:
+#                abundance[j] = i
+#                j += 1
+#                if j == S:
+#                    abundance.reverse()
+#                    return abundance
+#            i += 1
+
+
+#    def get_rad_from_obs(self):
+#        mu, sigma = pln_solver(self.obs)
+#        pred_rad = self.get_rad_pln(len(self.obs), mu, sigma)
+
+#        return (pred_rad, mu, sigma)
+
+
+
+
+#def fit_sad():
+
+#    for carbon_idx, carbon in enumerate(carbons):
+#
+#        sys.stdout.write("Fitting lognormal for %s communities...\n" % (carbon))
+#
+#        s_by_s, species, comm_rep_list = get_s_by_s(carbon)
+
+#        data = []
+
+#        obs_list = []
+#        pred_list = []
+
+#        N_communities = s_by_s.shape[1]
+#        for sad in s_by_s.T:
+#            sys.stdout.write("%d communities to go!\n" % (N_communities))
+#            N_communities -= 1
+#
+#            sad = sad[sad>0]
+#            sad.sort()
+#            sad = sad[::-1]
+#            if len(sad) < 10:
+#                continue
+
+#            N = sum(sad)
+#            S = len(sad)
+#            Nmax = max(sad)
+
+#            lognorm_pred = lognorm(sad)
+#            sad_predicted, mu, sigma = lognorm_pred.get_rad_from_obs()
+#            pln_Nmax = max(sad_predicted)
+
+#            ll = pln_ll(sad, mu, sigma)
+#            r2 = obs_pred_rsquare(np.log10(sad), np.log10(sad_predicted))
+
+#            data.append([str(N),str(S),str(Nmax),str(pln_Nmax),str(ll),str(r2)])
+
+#            obs_list.extend(sad)
+#            pred_list.extend(sad_predicted)
+
+
+#        df_sad_out = open((directory + '/data/pln_sad_counts_%s.csv') % (carbon) , 'w')
+#        df_sad_out.write(','.join(['Observed','Predicted']) + '\n')
+#        for i in range(len(obs_list)):
+#            df_sad_out.write(','.join([str(obs_list[i]), str(pred_list[i])]) + '\n')
+#        df_sad_out.close()
+
+
+#        df_out = open((directory + '/data/pln_sad_%s.csv') % (carbon) , 'w')
+#        df_out.write(','.join(['N','S','Nmax', 'pln_Nmax', 'll','r2_mod']) + '\n')
+#        for i in range(len(data)):
+#            df_out.write(','.join(data[i]) + '\n')
+#        df_out.close()
 
 
 
@@ -478,7 +506,7 @@ def get_migration_time_series_community_names(migration='No_migration',inocula=4
 
 
 
-def get_s_by_s_migration(transfer=18,migration='No_migration',inocula=40):
+def get_s_by_s_migration(transfer=18, migration_innocula=[('No_migration',40)]):
     # migration options, 'No_migration', 'Parent_migration', 'Global_migration'
 
     otu = open(directory + '/data/migration_ESV_data_table_absabundance_SE.csv')
@@ -491,19 +519,21 @@ def get_s_by_s_migration(transfer=18,migration='No_migration',inocula=40):
         if float(line[1]) == 0:
             continue
 
-        if (int(line[5]) == transfer) and (line[3] == migration) and (int(line[4]) == inocula) :
+        if (int(line[5]) == transfer) and ( (line[3],int(line[4])) in migration_innocula):
 
-            if line[0] not in count_dict:
-                count_dict[line[0]] = {}
+            rep = '%s_%s_%s' % (line[3], line[4], line[0])
 
-            if line[6] not in count_dict[line[0]]:
-                count_dict[line[0]][line[6]] = 0
+            if rep not in count_dict:
+                count_dict[rep] = {}
 
-            if count_dict[line[0]][line[6]] > 0:
+            if line[6] not in count_dict[rep]:
+                count_dict[rep][line[6]] = 0
+
+            if count_dict[rep][line[6]] > 0:
 
                 sys.stdout.write("Species already in dictionary!!\n" )
 
-            count_dict[line[0]][line[6]] += int(line[1])
+            count_dict[rep][line[6]] += int(line[1])
 
     otu.close()
 

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 from scipy.stats import gamma
 
-from macroecotools import obs_pred_rsquare
+#from macroecotools import obs_pred_rsquare
 import utils
 
 carbons = utils.carbons
@@ -17,6 +17,10 @@ slope_null=2
 titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
 plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
+
+family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
+                'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',
+                'Lachnospiraceae':'deepskyblue', 'Pseudomonadaceae':'darkviolet'}
 
 
 
@@ -1191,7 +1195,7 @@ def plot_predicted_occupancies_migration():
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration_inocula=[migration_innoculum])
 
         occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
 
@@ -1216,7 +1220,251 @@ def plot_predicted_occupancies_migration():
 
 
 
-plot_predicted_occupancies_migration()
+
+def taylors_law_attractor(zeros=False, transfer=18, migration='No_migration', inocula=4):
+
+    attractor_dict = {}
+
+    attractor_file = open(utils.directory+'/data/attractor_status.csv')
+    attractor_file_fitst_line = attractor_file.readline()
+    for line in attractor_file:
+        line = line.strip().split(',')
+        if (line[0] == migration) and (int(line[1]) == inocula):
+
+            if line[-1] not in attractor_dict:
+                attractor_dict[line[-1]] = []
+
+            attractor_dict[line[-1]].append(str(line[-2]))
+    attractor_file.close()
+
+    rel_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration,inocula=inocula)
+    # assumes that
+    # rows = species
+    # columns = sites
+
+    means, variances = utils.get_species_means_and_variances(rel_s_by_s, zeros=zeros)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
+
+
+    fig = plt.figure(figsize = (12, 4)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    ax_0 = plt.subplot2grid((1, 3), (0, 0), colspan=1)
+
+    ax_0.scatter(means, variances, c='k', alpha=0.8)#, c='#87CEEB')
+
+    x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
+    y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+    y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+
+    ax_0.set_title("All replicate populations", fontsize=14, fontweight='bold' )
+
+    ax_0.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
+    ax_0.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+
+    ax_0.set_xscale('log', basex=10)
+    ax_0.set_yscale('log', basey=10)
+
+    ax_0.set_xlabel('Average relative\nabundance', fontsize=12)
+    ax_0.set_ylabel('Variance of relative abundance', fontsize=10)
+
+    ax_0.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_0.transAxes  )
+
+
+    t_value = (slope - (slope_null))/std_err
+    p_value = stats.t.sf(np.abs(t_value), len(means)-2)
+
+    sys.stdout.write("All replicate populations\n")
+    sys.stdout.write("Slope = %g, t = %g, P = %g\n" % (slope, t_value, p_value))
+
+
+    ax_count = 1
+
+    for attractor in attractor_dict.keys():
+
+        attractor_idxs = [attractor_dict[attractor].index(comm_rep) for comm_rep in comm_rep_list if comm_rep in attractor_dict[attractor] ]
+
+        rel_s_by_s_attractor = rel_s_by_s[:, attractor_idxs]
+        rel_s_by_s_attractor = rel_s_by_s_attractor[~np.all(rel_s_by_s_attractor == 0, axis=1)]
+
+        means_attractor, variances_attractor = utils.get_species_means_and_variances(rel_s_by_s_attractor, zeros=zeros)
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_attractor), np.log10(variances_attractor))
+
+
+        ax_i = plt.subplot2grid((1, 3), (0, ax_count), colspan=1)
+
+        ax_i.scatter(means_attractor, variances_attractor, alpha=0.8, c=family_colors[attractor])#, c='#87CEEB')
+
+        x_log10_range =  np.linspace(min(np.log10(means_attractor)) , max(np.log10(means_attractor)) , 10000)
+        y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+        y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+
+        ax_i.set_title(attractor, fontsize=14, fontweight='bold' )
+
+        ax_i.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
+        ax_i.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+
+        ax_i.set_xscale('log', basex=10)
+        ax_i.set_yscale('log', basey=10)
+
+        ax_i.set_xlabel('Average relative\nabundance', fontsize=12)
+        ax_i.set_ylabel('Variance of relative abundance', fontsize=10)
+
+        ax_i.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_i.transAxes  )
+
+
+        # run slope test
+        #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
+        t_value = (slope - (slope_null))/std_err
+        p_value = stats.t.sf(np.abs(t_value), len(means_attractor)-2)
+
+        sys.stdout.write("Populations with attractor %s\n" % (attractor))
+        sys.stdout.write("Slope = %g, t = %g, P = %g\n" % (slope, t_value, p_value))
+
+        ax_i.legend(loc="lower right", fontsize=8)
+
+        ax_count+=1
+
+
+    #wspace=0.3, hspace=0.3
+    fig_name = utils.directory + '/figs/taylors_law_attractor.pdf'
+    fig.text(0.5, 1, "No migration, low inoculum, transfer 18", ha='center', fontweight='bold', fontsize=16)
+    fig.subplots_adjust(wspace=0.3, hspace=0.4)
+    fig.savefig(fig_name, format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+    plt.close()
+
+
+
+def plot_taylors_law_merged_treatments(zeros=False):
+
+    fig = plt.figure(figsize = (4*len(utils.carbons), 4*len(utils.carbons))) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for carbon_row_idx, carbon_row in enumerate(utils.carbons):
+
+        for carbon_column_idx, carbon_column in enumerate(utils.carbons):
+
+            if carbon_row_idx > carbon_column_idx:
+                continue
+
+            if carbon_row != carbon_column:
+                carbon_title = carbon_row + ' + ' + carbon_column
+            else:
+                carbon_title = carbon_row
+
+            s_by_s, ESVs, comm_rep_list = utils.get_s_by_s(list(set([carbon_row,carbon_column])))
+            rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+            means, variances = utils.get_species_means_and_variances(rel_s_by_s, zeros=zeros)
+
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
+
+            ax_plot = plt.subplot2grid((1*len(utils.carbons), 1*len(utils.carbons)), (carbon_row_idx, carbon_column_idx), colspan=1)
+
+
+            ax_plot.scatter(means, variances, alpha=0.8)#, c='#87CEEB')
+
+            x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
+            y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+            y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+
+            ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
+            ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+
+            ax_plot.set_xscale('log', basex=10)
+            ax_plot.set_yscale('log', basey=10)
+
+            ax_plot.set_xlabel('Average relative\nabundance', fontsize=12)
+            ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
+
+            ax_plot.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_plot.transAxes  )
+
+            ax_plot.set_xlabel('Average relative\nabundance', fontsize=12)
+            ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
+
+            ax_plot.set_title(carbon_title, fontsize=14, fontweight='bold' )
+
+            ax_plot.legend(loc="lower right", fontsize=8)
+
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.45)
+    fig.savefig(utils.directory + "/figs/taylors_law_merged_treatments.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+def plot_taylors_law_migration_merged_treatments(zeros=False):
+
+    fig = plt.figure(figsize = (4*len(migration_innocula), 4*len(migration_innocula))) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    for migration_innoculum_row_idx, migration_innoculum_row in enumerate(migration_innocula):
+
+        for migration_innoculum_column_idx, migration_innoculum_column in enumerate(migration_innocula):
+
+            if migration_innoculum_row_idx > migration_innoculum_column_idx:
+                continue
+
+            if migration_innoculum_row != migration_innoculum_column:
+                title = titles[migration_innoculum_row_idx] + ' +\n' + titles[migration_innoculum_column_idx]
+            else:
+                title = titles[migration_innoculum_row_idx]
+
+
+            s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration_innocula=list(set([migration_innoculum_row,migration_innoculum_column])))
+
+            rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+            means, variances = utils.get_species_means_and_variances(rel_s_by_s, zeros=zeros)
+
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
+
+            ax_plot = plt.subplot2grid((1*len(migration_innocula), 1*len(migration_innocula)), (migration_innoculum_row_idx, migration_innoculum_column_idx), colspan=1)
+
+            ax_plot.scatter(means, variances, alpha=0.8)#, c='#87CEEB')
+
+            x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
+            y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+            y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+
+            ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
+            ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+
+            ax_plot.set_xscale('log', basex=10)
+            ax_plot.set_yscale('log', basey=10)
+
+            ax_plot.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_plot.transAxes  )
+
+            ax_plot.set_xlabel('Average relative\nabundance', fontsize=12)
+            ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
+
+            ax_plot.set_title(title, fontsize=12, fontweight='bold' )
+
+            ax_plot.legend(loc="lower right", fontsize=8)
+
+
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.5)
+    fig.savefig(utils.directory + "/figs/taylors_law_migration_merged_treatments.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+plot_taylors_law_migration_merged_treatments()
+
+#taylors_law_attractor()
+
+
+
+#taylors_law_attractor()
+
+
+
+#plot_predicted_occupancies_migration()
 
 #plot_mad_migration_time_series()
 
