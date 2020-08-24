@@ -1290,7 +1290,7 @@ def taylors_law_attractor(zeros=False, transfer=18, migration='No_migration', in
 
         means_attractor, variances_attractor = utils.get_species_means_and_variances(rel_s_by_s_attractor, zeros=zeros)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_attractor), np.log10(variances_attractor))
+        slope_attractor, intercept_attractor, r_value_attractor, p_value_attractor, std_err_attractor = stats.linregress(np.log10(means_attractor), np.log10(variances_attractor))
 
 
         ax_i = plt.subplot2grid((1, 3), (0, ax_count), colspan=1)
@@ -1298,8 +1298,8 @@ def taylors_law_attractor(zeros=False, transfer=18, migration='No_migration', in
         ax_i.scatter(means_attractor, variances_attractor, alpha=0.8, c=family_colors[attractor])#, c='#87CEEB')
 
         x_log10_range =  np.linspace(min(np.log10(means_attractor)) , max(np.log10(means_attractor)) , 10000)
-        y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
-        y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+        y_log10_fit_range = 10 ** (slope_attractor*x_log10_range + intercept_attractor)
+        y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept_attractor)
 
         ax_i.set_title(attractor, fontsize=14, fontweight='bold' )
 
@@ -1314,16 +1314,26 @@ def taylors_law_attractor(zeros=False, transfer=18, migration='No_migration', in
 
         ax_i.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_i.transAxes  )
 
+        ax_i.legend(loc="lower right", fontsize=8)
 
         # run slope test
         #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
-        t_value = (slope - (slope_null))/std_err
+        t_value = (slope_attractor - (slope_null))/std_err_attractor
         p_value = stats.t.sf(np.abs(t_value), len(means_attractor)-2)
 
         sys.stdout.write("Populations with attractor %s\n" % (attractor))
         sys.stdout.write("Slope = %g, t = %g, P = %g\n" % (slope, t_value, p_value))
 
-        ax_i.legend(loc="lower right", fontsize=8)
+
+        # slope of attractor vs merged slope test
+
+        t_attractor = (slope_attractor - slope) / np.sqrt(std_err_attractor**2 + std_err**2)
+        p_value_attractor = stats.t.sf(np.abs(t_attractor), len(means_attractor)+len(means)-4)
+
+        sys.stdout.write("All attractors vs attractor %s\n" % (attractor))
+        sys.stdout.write("t = %g, P = %g\n" % (t_attractor, p_value_attractor))
+
+
 
         ax_count+=1
 
@@ -1454,9 +1464,9 @@ def plot_taylors_law_migration_merged_treatments(zeros=False):
 
 
 
-plot_taylors_law_migration_merged_treatments()
+#plot_taylors_law_migration_merged_treatments()
 
-#taylors_law_attractor()
+taylors_law_attractor()
 
 
 
