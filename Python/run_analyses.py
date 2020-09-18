@@ -13,6 +13,7 @@ import utils
 carbons = utils.carbons
 
 slope_null=2
+alpha=0.05
 
 titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
@@ -1312,7 +1313,7 @@ def taylors_law_attractor(zeros=False, transfer=18, migration='No_migration', in
         ax_i.set_xlabel('Average relative\nabundance', fontsize=12)
         ax_i.set_ylabel('Variance of relative abundance', fontsize=10)
 
-        ax_i.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_i.transAxes  )
+        ax_i.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_attractor, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_i.transAxes  )
 
         ax_i.legend(loc="lower right", fontsize=8)
 
@@ -1461,6 +1462,189 @@ def plot_taylors_law_migration_merged_treatments(zeros=False):
     fig.savefig(utils.directory + "/figs/taylors_law_migration_merged_treatments.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
+
+
+def getPairStats(x, y):
+
+    #calculate means
+    x_bar = np.mean(x)
+    y_bar = np.mean(y)
+    #get number of entries
+    n = len(x)
+
+    #calculate sums
+    x_sum = np.sum(x)
+    x_sum_square = np.sum([xi**2 for xi in x])
+    y_sum = np.sum(y)
+    y_sum_square = np.sum([yi**2 for yi in y])
+    xy_sum = np.sum([xi*yi for xi, yi in zip(x, y)])
+
+    #calculcate remainder of equations
+    s_xx  = x_sum_square - (1/n)*(x_sum**2)
+    s_yy = y_sum_square - (1/n)*(y_sum**2)
+    s_xy = xy_sum - (1/n)*x_sum*y_sum
+
+    return s_xx, s_yy, s_xy
+
+
+
+
+def taylors_law_time_series():
+
+    from matplotlib import cm
+
+    color_range =  np.linspace(0.0, 1.0, 12)
+
+    #color_range_transfers = [x-1]
+
+    rgb = cm.get_cmap('Blues')( color_range )
+
+
+    means = []
+    variances = []
+    colors = []
+
+    intercepts = []
+    slopes = []
+
+    slops_CIs = []
+
+    for transfer in range(1, 13):
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
+        #print(transfer, len(comm_rep_list))
+        rel_s_by_s_np = (s_by_s/s_by_s.sum(axis=0))
+
+        # so we dont include the communities with no temporal samples
+        means_transfer = []
+        variances_transfer = []
+        if transfer == 1:
+            comm_rep_list_all = comm_rep_list
+
+        for afd_idx, afd in enumerate(rel_s_by_s_np):
+
+            afd = afd[afd>0]
+
+
+            if len(afd) < 4:
+                continue
+
+
+            means_transfer.append(np.mean(afd))
+            variances_transfer.append(np.var(afd))
+
+
+            means.append(np.mean(afd))
+            variances.append(np.var(afd))
+
+            colors.append(color_range[transfer-1])
+
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_transfer), np.log10(variances_transfer))
+
+        s_xx, s_yy, s_xy = getPairStats(np.log10(means_transfer), np.log10(variances_transfer))
+
+        t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
+
+        #maximim likelihood estimator
+        sigma_hat = np.sqrt((1/len(means_transfer))*(s_yy-slope*s_xy))
+
+        interval_val = t*sigma_hat*np.sqrt(len(means_transfer)/((len(means_transfer)-2)*s_xx))
+
+        slopes.append(slope)
+        intercepts.append(intercept)
+
+        slops_CIs.append(interval_val)
+
+
+    means = np.asarray(means)
+    variances = np.asarray(variances)
+    colors = np.asarray(colors)
+
+    intercepts = np.asarray(intercepts)
+    slopes = np.asarray(slopes)
+    slops_CIs = np.asarray(slops_CIs)
+
+
+
+    #fig, ax = plt.subplots(figsize=(4,4))
+
+    fig = plt.figure(figsize = (8, 4)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    fig.text(0.5, 1.07, 'Glucose time-series merged across replicates', fontsize=14, fontweight='bold', ha='center', va='center')
+
+
+    ax_scatter = plt.subplot2grid((1, 2), (0, 0), colspan=1)
+    ax_slopes = plt.subplot2grid((1, 2), (0, 1), colspan=1)
+
+    #fig.subplots_adjust(bottom= 0.15)
+
+    #slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
+
+    #x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
+    #y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+    #y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+
+    for slope_idx, slope in enumerate(slopes):
+
+        x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
+        y_log10_fit_range = 10 ** (slopes[slope_idx]*x_log10_range + intercepts[slope_idx])
+        #y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+        ax_scatter.plot(10**x_log10_range, y_log10_fit_range, c=rgb[slope_idx], lw=2.5, linestyle='-', zorder=1, label='transfer=%d, slope=%s' % (slope_idx+1 , ('%f' % round(slope,2)).rstrip('0').rstrip('.')))
+
+
+
+
+    #ax.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
+    #ax.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+
+    #ax.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes  )
+
+
+    # run slope test
+    #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
+    #t_value = (slope - (slope_null))/std_err
+    #p_value = stats.t.sf(np.abs(t_value), len(means)-2)
+
+    #sys.stdout.write("Slope = %g, t = %g, P= %g\n" % (slope, t_value, p_value))
+
+    ax_scatter.legend(loc="lower right", fontsize=6)
+
+    ax_scatter.scatter(means, variances, c= colors, cmap='Blues', alpha=1,zorder=2)#, c='#87CEEB')
+
+    ax_scatter.set_xscale('log', basex=10)
+    ax_scatter.set_yscale('log', basey=10)
+    ax_scatter.set_xlabel('Average relative\nabundance', fontsize=12)
+    ax_scatter.set_ylabel('Variance of relative abundance', fontsize=10)
+
+
+
+    #ax_slopes.plot(list(range(1, 13)), slopes, \
+    #    'b-',  c = '#FF6347')
+
+    print(color_range)
+
+    ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw = 3, zorder=1)
+
+
+    ax_slopes.errorbar(list(range(1, 13)), slopes, slops_CIs,linestyle='-', marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
+    ax_slopes.scatter(list(range(1, 13)), slopes, c= color_range, cmap='Blues', alpha=2, zorder=3)#, c='#87CEEB')
+
+    ax_slopes.set_xlabel('Transfer', fontsize=12)
+    ax_slopes.set_ylabel('Slope', fontsize=10)
+
+
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/taylors_law_time_series.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+
+#taylors_law_time_series()
 
 
 
