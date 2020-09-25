@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import bisect
+
 #from macroeco_distributions import pln, pln_solver, pln_ll
 #from macroecotools import obs_pred_rsquare
 
@@ -483,6 +485,7 @@ def get_relative_s_by_s_temporal_migration(migration='No_migration',inocula=40,c
     return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()
 
 
+
 def get_migration_time_series_community_names(migration='No_migration',inocula=40):
 
     otu_path = directory + '/data/migration_ESV_data_table_SE.csv'
@@ -542,3 +545,89 @@ def get_s_by_s_migration(transfer=18, migration_innocula=[('No_migration',40)]):
     s_by_s = s_by_s_df.values.T
     # it's a relativized S by S matrix
     return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()
+
+
+
+
+
+
+def get_relative_abundance_dictionary_temporal_migration(migration='No_migration',inocula=40,community=None):
+
+    otu_path = directory + '/data/migration_ESV_data_table_SE.csv'
+    #otu_first_line = otu.readline()
+    #otu_first_line = otu_first_line.strip().split(',')
+    count_dict = {}
+
+    if community==None:
+
+        communities = []
+
+        for line_idx, line in enumerate(open(otu_path, 'r')):
+            if line_idx == 0:
+                continue
+            line = line.strip().split(',')
+            if (int(line[5]) == 1) and (line[2] == migration) and (int(line[3]) == inocula):
+                communities.append(line[6])
+
+        communities = list(set(communities))
+
+    else:
+
+        communities = [str(community)]
+
+    for line_idx, line in enumerate(open(otu_path, 'r')):
+        if line_idx == 0:
+            continue
+        line = line.strip().split(',')
+
+        if float(line[1]) == 0:
+            continue
+
+        replicate = line[6]
+        species = line[0]
+        transfer = int(line[5])
+
+        relative_abundance = float(line[1])
+
+        if relative_abundance == 0:
+            continue
+
+        if (replicate in  communities) and (line[2] == migration) and (int(line[3]) == inocula):
+
+            if species not in count_dict:
+                count_dict[species] = {}
+
+            if replicate not in  count_dict[species]:
+                count_dict[species][replicate] = {}
+
+                count_dict[species][replicate]['trasnfers'] = []
+
+                count_dict[species][replicate]['relative_abundances'] = []
+
+
+            bisect.insort(count_dict[species][replicate]['trasnfers'],  int(transfer))
+
+            transfer_idx = count_dict[species][replicate]['trasnfers'].index(transfer)
+
+            count_dict[species][replicate]['relative_abundances'].insert(transfer_idx, relative_abundance)
+
+
+
+            #community_time = '%s_%s' % (line[6], line[5])
+
+            #if community_time not in count_dict[line[0]]:
+            #    count_dict[line[0]][community_time] = 0
+
+            #if count_dict[line[0]][community_time] > 0:
+
+            #    sys.stdout.write("Relative abundance already in dictionary!!\n" )
+
+            #count_dict[line[0]][community_time] = float(line[1])
+
+    return count_dict
+
+    #s_by_s_df = pd.DataFrame(count_dict)
+    #s_by_s_df = s_by_s_df.fillna(0)
+    #s_by_s = s_by_s_df.values.T
+    # it's a relativized S by S matrix
+    #return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()

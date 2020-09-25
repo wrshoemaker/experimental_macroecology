@@ -10,12 +10,26 @@ from scipy.stats import gamma
 #from macroecotools import obs_pred_rsquare
 import utils
 
+
+from matplotlib import cm
+
+color_range =  np.linspace(0.0, 1.0, 18)
+rgb = cm.get_cmap('Blues')( color_range )
+
+
 carbons = utils.carbons
 
 slope_null=2
 alpha=0.05
 
 titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
+
+titles_dict = {('No_migration',4): 'No migration, low inoculum',
+                ('No_migration',40): 'No migration, high inoculum',
+                ('Global_migration',4): 'Global migration, low inoculum',
+                ('Parent_migration',4): 'Parent migration, low inoculum' }
+
+
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
 plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
 
@@ -1491,13 +1505,9 @@ def getPairStats(x, y):
 
 def taylors_law_time_series():
 
-    from matplotlib import cm
-
-    color_range =  np.linspace(0.0, 1.0, 12)
 
     #color_range_transfers = [x-1]
 
-    rgb = cm.get_cmap('Blues')( color_range )
 
 
     means = []
@@ -1644,13 +1654,192 @@ def taylors_law_time_series():
 
 
 
+
+def plot_gamma_migration():
+
+    #Global migration (low inocula)
+    #Parent migration (low inocula)
+
+    transfer = 12
+
+    migration_innocula__dict = {}
+
+    for migration_innocula_i in migration_innocula[2:]:
+
+        relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration_innocula_i[0],inocula=migration_innocula_i[1])
+
+        migration_innocula__dict[migration_innocula_i] = []
+
+        #print(rel_s_by_s.shape)
+
+        for afd in relative_s_by_s:
+
+            afd = afd[afd>0]
+
+            log_mean_rel_abundances = np.log(afd)
+
+            migration_innocula__dict[migration_innocula_i].extend(log_mean_rel_abundances)
+
+
+        migration_innocula__dict[migration_innocula_i] = np.asarray(migration_innocula__dict[migration_innocula_i])
+
+    merged =  np.concatenate((migration_innocula__dict[migration_innocula[2]], migration_innocula__dict[migration_innocula[3]]), axis=None)
+
+
+    fig, ax = plt.subplots(figsize=(4,4))
+
+    colors = ['b', 'r']
+
+    for migration_innocula_i_idx, migration_innocula_i in enumerate(migration_innocula[2:]):
+
+        standardized_log_abundances = (migration_innocula__dict[migration_innocula_i] - np.mean(merged)) / np.std(merged)
+
+        ax.hist(standardized_log_abundances, alpha=0.8, bins= 20, histtype='step', color=colors[migration_innocula_i_idx], label=titles_dict[migration_innocula_i],  weights=np.zeros_like(standardized_log_abundances) + 1. / len(standardized_log_abundances))
+
+
+    ax.set_xlabel('Rescaled log \nrelative abundance', fontsize=12)
+    ax.set_ylabel('Probability density', fontsize=12)
+
+    ax.legend(loc="upper left", fontsize=8)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/afd_migration_transfer_12.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+def plot_timeseries():
+
+    migration_innoculum_idx = 0
+
+    migration_innoculum = migration_innocula[migration_innoculum_idx]
+
+    number_transfers = 18
+
+    relative_abundance_dict = utils.get_relative_abundance_dictionary_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+
+    species_mean_relative_abundances = []
+    species_mean_absolute_differences = []
+    species_mean_width_distribution_ratios = []
+    species_transfers = []
+
+    for species, species_dict in relative_abundance_dict.items():
+
+        species_abundance_difference_dict = {}
+
+        for replicate, species_replicate_dict in species_dict.items():
+
+            if len(species_replicate_dict['trasnfers']) < 2:
+                continue
+
+            transfers = np.asarray(species_replicate_dict['trasnfers'])
+            relative_abundances = np.asarray(species_replicate_dict['relative_abundances'])
+
+            transfer_differences = transfers[:-1]
+            absolute_differences = np.abs(relative_abundances[1:] - relative_abundances[:-1])
+
+            width_distribution_ratios = np.abs(relative_abundances[1:] / relative_abundances[:-1])
+
+            for transfer_difference_idx, transfer_difference in enumerate(transfer_differences):
+
+                if str(transfer_difference) not in species_abundance_difference_dict:
+                    species_abundance_difference_dict[str(transfer_difference)] = {}
+                    species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'] = []
+                    species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'] = []
+                    species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'] = []
+
+                species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'].append(absolute_differences[transfer_difference_idx])
+                species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'].append(relative_abundances[transfer_difference_idx])
+                species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'].append(width_distribution_ratios[transfer_difference_idx])
+
+
+        for transfer, transfer_dict in species_abundance_difference_dict.items():
+
+            if len(transfer_dict['relative_abundances']) < 3:
+                continue
+
+            species_mean_relative_abundances.append(np.mean(np.log10(transfer_dict['relative_abundances'])))
+            species_mean_absolute_differences.append(np.mean(np.log10(transfer_dict['absolute_differences'])))
+            species_mean_width_distribution_ratios.append(np.mean(np.log10(transfer_dict['width_distribution_ratios'])))
+            species_transfers.append(int(transfer))
+
+
+    species_mean_relative_abundances = np.asarray(species_mean_relative_abundances)
+    species_mean_absolute_differences = np.asarray(species_mean_absolute_differences)
+    species_mean_width_distribution_ratios = np.asarray(species_mean_width_distribution_ratios)
+
+
+    colors = [rgb[species_transfer] for species_transfer in species_transfers]
+
+
+    fig, ax = plt.subplots(figsize=(4,4))
+
+    ax.scatter(10**species_mean_relative_abundances, 10**species_mean_absolute_differences, alpha=1, color=colors)
+
+    ax.set_xscale('log', basex=10)
+    ax.set_yscale('log', basey=10)
+    ax.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
+    ax.set_ylabel('Average difference between\ntime points,' + r'$\left \langle \left |  x(t + \delta t)  - x(t )\right | \right \rangle$', fontsize=12)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(species_mean_relative_abundances, species_mean_absolute_differences)
+
+    x_log10_range =  np.linspace(min(species_mean_relative_abundances) , max(species_mean_relative_abundances) , 10000)
+    y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
+
+    ax.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='--', zorder=2)
+
+    ax.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+
+
+    ax.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes  )
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/temporal_absolute_differences.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+    # plot width of distribution of variables
+
+    print(species_mean_width_distribution_ratios)
+
+    fig, ax = plt.subplots(figsize=(4,4))
+
+    ax.axhline(1, lw=1.5, ls=':',color='k', zorder=1)
+
+
+    ax.scatter(10**species_mean_relative_abundances, 10**species_mean_width_distribution_ratios, alpha=1, color=colors, zorder=2)
+
+    ax.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+
+
+    ax.set_xscale('log', basex=10)
+    ax.set_yscale('log', basey=10)
+    ax.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
+    ax.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+
+
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+plot_timeseries()
+#plot_gamma_migration()
+
+
+
+
 #taylors_law_time_series()
 
 
 
 #plot_taylors_law_migration_merged_treatments()
 
-taylors_law_attractor()
+#taylors_law_attractor()
 
 
 
