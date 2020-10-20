@@ -11,10 +11,6 @@ from scipy.stats import gamma
 import utils
 
 
-from matplotlib import cm
-
-color_range =  np.linspace(0.0, 1.0, 18)
-rgb = cm.get_cmap('Blues')( color_range )
 
 
 carbons = utils.carbons
@@ -22,15 +18,9 @@ carbons = utils.carbons
 slope_null=2
 alpha=0.05
 
-titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
-
-titles_dict = {('No_migration',4): 'No migration, low inoculum',
-                ('No_migration',40): 'No migration, high inoculum',
-                ('Global_migration',4): 'Global migration, low inoculum',
-                ('Parent_migration',4): 'Parent migration, low inoculum' }
 
 
-migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
+
 plot_idxs = [(0,0), (0,1), (1,0), (1,1)]
 
 family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
@@ -360,7 +350,6 @@ def examine_cv(taxonomic_level):
             #for abundance, comm_rep in zip(afd,comm_rep_list):
             #    genus_cv_time_dict[genus][transfer][comm_rep] += abundance
 
-            #print(genus_cv_time_dict[genus][transfer])
 
         # go back through and divide by total reads
 
@@ -368,12 +357,9 @@ def examine_cv(taxonomic_level):
 
         for comm_rep_idx, comm_rep in enumerate(comm_rep_list):
             for genus in genus_cv_time_dict.keys():
-                #print(genus, genus_cv_time_dict[genus])
                 if transfer in genus_cv_time_dict[genus]:
                     if comm_rep in genus_cv_time_dict[genus][transfer]:
                         genus_cv_time_dict[genus][transfer][comm_rep] = genus_cv_time_dict[genus][transfer][comm_rep] / N_total[comm_rep_idx]
-
-    #print(genus_cv_time_dict)
 
     fig, ax = plt.subplots(figsize=(4,4))
     ax.axhline(1, lw=1.5, ls=':',color='k', zorder=1)
@@ -505,8 +491,6 @@ def plot_abundance_occupy_dist():
 
             afd_no_zeros = afd[afd>0]
 
-            #print(afd_no_zeros)
-
             mean_rel_abundances.append(np.mean(afd_no_zeros))
 
 
@@ -519,8 +503,6 @@ def plot_abundance_occupy_dist():
 
         ax_plot.set_xscale('log', basex=10)
         ax_plot.set_yscale('log', basey=10)
-
-        print(len(comm_rep_list))
 
         ax_plot.set_ylim([1/(len(comm_rep_list)+10) , 1.1])
 
@@ -756,7 +738,6 @@ def plot_taylors_time_series(slope_null=2):
     ax_sad = plt.subplot2grid((2, 2), (0, 1), colspan=1)
 
     log_mean_rel_abundances = np.log(np.mean(rel_s_by_s_all_transfers, axis=1))
-    print(len(log_mean_rel_abundances), len(species_all_transfers))
 
     rescaled_MADs = (log_mean_rel_abundances - np.mean(log_mean_rel_abundances)) / np.std(log_mean_rel_abundances)
 
@@ -1058,8 +1039,6 @@ def plot_taylors_migration_time_series():
                     mean_rel_abundances.append(np.mean(afd_no_zeros))
                     var_rel_abundances.append(np.var(afd_no_zeros))
 
-            #print(migration_innoculum, mean_rel_abundances)
-
             slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(mean_rel_abundances), np.log10(var_rel_abundances))
 
             ax_plot = plt.subplot2grid((2, 1*len(migration_innocula)), (zeros_idx, migration_innoculum_idx))
@@ -1171,7 +1150,6 @@ def plot_mad_migration_time_series(zeros=False, transfer=18):
         log_mean_rel_abundances = np.log(mean_rel_abundances)
 
         rescaled_MADs = (log_mean_rel_abundances - np.mean(log_mean_rel_abundances)) / np.std(log_mean_rel_abundances)
-        print(len(rescaled_MADs), len(species))
 
         shape,loc,scale = stats.lognorm.fit(rescaled_MADs)
 
@@ -1210,7 +1188,7 @@ def plot_predicted_occupancies_migration():
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration_inocula=[migration_innoculum])
+        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration=migration_innoculum[0], inocula=migration_innoculum[1])
 
         occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
 
@@ -1478,32 +1456,8 @@ def plot_taylors_law_migration_merged_treatments(zeros=False):
 
 
 
-def getPairStats(x, y):
 
-    #calculate means
-    x_bar = np.mean(x)
-    y_bar = np.mean(y)
-    #get number of entries
-    n = len(x)
-
-    #calculate sums
-    x_sum = np.sum(x)
-    x_sum_square = np.sum([xi**2 for xi in x])
-    y_sum = np.sum(y)
-    y_sum_square = np.sum([yi**2 for yi in y])
-    xy_sum = np.sum([xi*yi for xi, yi in zip(x, y)])
-
-    #calculcate remainder of equations
-    s_xx  = x_sum_square - (1/n)*(x_sum**2)
-    s_yy = y_sum_square - (1/n)*(y_sum**2)
-    s_xy = xy_sum - (1/n)*x_sum*y_sum
-
-    return s_xx, s_yy, s_xy
-
-
-
-
-def taylors_law_time_series():
+def taylors_law_time_series_old():
 
 
     #color_range_transfers = [x-1]
@@ -1552,7 +1506,7 @@ def taylors_law_time_series():
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_transfer), np.log10(variances_transfer))
 
-        s_xx, s_yy, s_xy = getPairStats(np.log10(means_transfer), np.log10(variances_transfer))
+        s_xx, s_yy, s_xy = utils.get_pair_stats(np.log10(means_transfer), np.log10(variances_transfer))
 
         t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
 
@@ -1630,21 +1584,148 @@ def taylors_law_time_series():
 
 
 
-    #ax_slopes.plot(list(range(1, 13)), slopes, \
-    #    'b-',  c = '#FF6347')
-
-    print(color_range)
 
     ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw = 3, zorder=1)
 
 
     ax_slopes.errorbar(list(range(1, 13)), slopes, slops_CIs,linestyle='-', marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
-    ax_slopes.scatter(list(range(1, 13)), slopes, c= color_range, cmap='Blues', alpha=2, zorder=3)#, c='#87CEEB')
+
+    ax_slopes.scatter(list(range(1, 13)), slopes, c= color_range[:12], cmap='Blues', alpha=2, zorder=3)#, c='#87CEEB')
 
     ax_slopes.set_xlabel('Transfer', fontsize=12)
     ax_slopes.set_ylabel('Slope', fontsize=10)
 
 
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/taylors_law_time_series_old.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+
+def taylors_law_time_series():
+
+    means = []
+    variances = []
+    colors = []
+
+    intercepts = []
+    slopes = []
+
+    slops_CIs = []
+
+    #('No_migration',4),  ('Global_migration',4)
+
+    print(utils.get_migration_time_series_community_names(migration='Parent_migration', inocula=4))
+
+
+    for transfer in range(1, 13):
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
+        rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+        # so we dont include the communities with no temporal samples
+        means_transfer = []
+        variances_transfer = []
+        if transfer == 1:
+            comm_rep_list_all = comm_rep_list
+
+        means_transfer, variances_transfer = utils.get_species_means_and_variances(rel_s_by_s, zeros=False)
+
+
+        colors_transfer = [color_range[transfer-1] for i in range(len(means_transfer))]
+
+
+        means.extend(list(means_transfer))
+        variances.extend(list(variances_transfer))
+        colors.extend(colors_transfer)
+
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_transfer), np.log10(variances_transfer))
+
+        s_xx, s_yy, s_xy = utils.get_pair_stats(np.log10(means_transfer), np.log10(variances_transfer))
+
+        t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
+
+        #maximim likelihood estimator
+        sigma_hat = np.sqrt((1/len(means_transfer))*(s_yy-slope*s_xy))
+
+        interval_val = t*sigma_hat*np.sqrt(len(means_transfer)/((len(means_transfer)-2)*s_xx))
+
+        slopes.append(slope)
+        intercepts.append(intercept)
+
+        slops_CIs.append(interval_val)
+
+
+    means = np.asarray(means)
+    variances = np.asarray(variances)
+    colors = np.asarray(colors)
+
+    intercepts = np.asarray(intercepts)
+    slopes = np.asarray(slopes)
+    slops_CIs = np.asarray(slops_CIs)
+
+
+
+    #fig, ax = plt.subplots(figsize=(4,4))
+
+    fig = plt.figure(figsize = (8, 4)) #
+    fig.subplots_adjust(bottom= 0.15)
+
+    #fig.text(0.5, 1.07, 'Glucose time-series merged across replicates', fontsize=14, fontweight='bold', ha='center', va='center')
+
+
+    ax_scatter = plt.subplot2grid((1, 2), (0, 0), colspan=1)
+    ax_slopes = plt.subplot2grid((1, 2), (0, 1), colspan=1)
+
+    #fig.subplots_adjust(bottom= 0.15)
+
+    #slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
+
+
+    #for slope_idx, slope in enumerate(slopes):
+
+    #    x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
+    #    y_log10_fit_range = 10 ** (slopes[slope_idx]*x_log10_range + intercepts[slope_idx])
+    #    #y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
+    #    ax_scatter.plot(10**x_log10_range, y_log10_fit_range, c=rgb[slope_idx], lw=2.5, linestyle='-', zorder=1, label='transfer=%d, slope=%s' % (slope_idx+1 , ('%f' % round(slope,2)).rstrip('0').rstrip('.')))
+
+
+
+    # run slope test
+    #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
+    #t_value = (slope - (slope_null))/std_err
+    #p_value = stats.t.sf(np.abs(t_value), len(means)-2)
+
+    #sys.stdout.write("Slope = %g, t = %g, P= %g\n" % (slope, t_value, p_value))
+
+    ax_scatter.set_ylabel('Variance of relative abundance', fontsize=10)
+
+    # Bhatia–Davis inequality
+    mean_range = np.linspace(min(means), max(means), num=1000)
+    variance_range = (1-mean_range) * mean_range
+
+    ax_scatter.plot(mean_range, variance_range, ls=':', c = 'k', label='Bhatia–Davis inequality')
+    ax_scatter.scatter(means, variances, c= colors, cmap='Blues', alpha=0.8, edgecolors='k', zorder=2)#, c='#87CEEB')
+
+    ax_scatter.set_xscale('log', basex=10)
+    ax_scatter.set_yscale('log', basey=10)
+    ax_scatter.set_xlabel('Average relative\nabundance', fontsize=12)
+    ax_scatter.set_ylabel('Variance of relative abundance', fontsize=10)
+
+    ax_scatter.legend(loc="lower right", fontsize=8)
+
+
+
+
+    ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw = 3, zorder=1)
+
+    ax_slopes.errorbar(list(range(1, 13)), slopes, slops_CIs,linestyle='-', marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
+    ax_slopes.scatter(list(range(1, 13)), slopes, c= color_range[:12], cmap='Blues', edgecolors='k', alpha=1, zorder=3)#, c='#87CEEB')
+    ax_slopes.set_xlabel('Transfer', fontsize=12)
+    ax_slopes.set_ylabel('Slope', fontsize=10)
 
     fig.subplots_adjust(wspace=0.3, hspace=0.3)
     fig.savefig(utils.directory + "/figs/taylors_law_time_series.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
@@ -1670,7 +1751,6 @@ def plot_gamma_migration():
 
         migration_innocula__dict[migration_innocula_i] = []
 
-        #print(rel_s_by_s.shape)
 
         for afd in relative_s_by_s:
 
@@ -1709,131 +1789,112 @@ def plot_gamma_migration():
 
 
 
-def plot_timeseries():
-
-    migration_innoculum_idx = 0
-
-    migration_innoculum = migration_innocula[migration_innoculum_idx]
-
-    number_transfers = 18
-
-    relative_abundance_dict = utils.get_relative_abundance_dictionary_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
-
-    species_mean_relative_abundances = []
-    species_mean_absolute_differences = []
-    species_mean_width_distribution_ratios = []
-    species_transfers = []
-
-    for species, species_dict in relative_abundance_dict.items():
-
-        species_abundance_difference_dict = {}
-
-        for replicate, species_replicate_dict in species_dict.items():
-
-            if len(species_replicate_dict['trasnfers']) < 2:
-                continue
-
-            transfers = np.asarray(species_replicate_dict['trasnfers'])
-            relative_abundances = np.asarray(species_replicate_dict['relative_abundances'])
-
-            transfer_differences = transfers[:-1]
-            absolute_differences = np.abs(relative_abundances[1:] - relative_abundances[:-1])
-
-            width_distribution_ratios = np.abs(relative_abundances[1:] / relative_abundances[:-1])
-
-            for transfer_difference_idx, transfer_difference in enumerate(transfer_differences):
-
-                if str(transfer_difference) not in species_abundance_difference_dict:
-                    species_abundance_difference_dict[str(transfer_difference)] = {}
-                    species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'] = []
-                    species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'] = []
-                    species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'] = []
-
-                species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'].append(absolute_differences[transfer_difference_idx])
-                species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'].append(relative_abundances[transfer_difference_idx])
-                species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'].append(width_distribution_ratios[transfer_difference_idx])
 
 
-        for transfer, transfer_dict in species_abundance_difference_dict.items():
+def plot_per_timeseries_perdict_occupancy():
 
-            if len(transfer_dict['relative_abundances']) < 3:
-                continue
+    migration = 'No_migration'
+    inocula = 4
 
-            species_mean_relative_abundances.append(np.mean(np.log10(transfer_dict['relative_abundances'])))
-            species_mean_absolute_differences.append(np.mean(np.log10(transfer_dict['absolute_differences'])))
-            species_mean_width_distribution_ratios.append(np.mean(np.log10(transfer_dict['width_distribution_ratios'])))
-            species_transfers.append(int(transfer))
+    communities = utils.get_migration_time_series_community_names(migration=migration,inocula=inocula)
 
 
-    species_mean_relative_abundances = np.asarray(species_mean_relative_abundances)
-    species_mean_absolute_differences = np.asarray(species_mean_absolute_differences)
-    species_mean_width_distribution_ratios = np.asarray(species_mean_width_distribution_ratios)
-
-
-    colors = [rgb[species_transfer] for species_transfer in species_transfers]
-
+    communities_keep = [key for key, value in communities.items() if len(value) == 18]
 
     fig, ax = plt.subplots(figsize=(4,4))
+    fig.subplots_adjust(bottom= 0.15)
 
-    ax.scatter(10**species_mean_relative_abundances, 10**species_mean_absolute_differences, alpha=1, color=colors)
+    for community in communities_keep:
 
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration,inocula=inocula,communities=[community])
+
+        occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+        ax.scatter(occupancies, predicted_occupancies, alpha=0.5,zorder=2)#, c='#87CEEB'
+
+
+    ax.plot([0.07,1],[0.07,1], lw=3,ls='--',c='k',zorder=1)
     ax.set_xscale('log', basex=10)
     ax.set_yscale('log', basey=10)
-    ax.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
-    ax.set_ylabel('Average difference between\ntime points,' + r'$\left \langle \left |  x(t + \delta t)  - x(t )\right | \right \rangle$', fontsize=12)
+    ax.set_xlabel('Observed occupancy', fontsize=12)
+    ax.set_ylabel('Predicted occupancy', fontsize=10)
 
-    slope, intercept, r_value, p_value, std_err = stats.linregress(species_mean_relative_abundances, species_mean_absolute_differences)
-
-    x_log10_range =  np.linspace(min(species_mean_relative_abundances) , max(species_mean_relative_abundances) , 10000)
-    y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
-
-    ax.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='--', zorder=2)
-
-    ax.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
-
-
-    ax.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes  )
+    ax.set_title("Per-replicate timeseries\n%s" % titles_dict[(migration, inocula)], fontsize=14, fontweight='bold' )
 
     fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/temporal_absolute_differences.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-    plt.close()
-
-
-    # plot width of distribution of variables
-
-    print(species_mean_width_distribution_ratios)
-
-    fig, ax = plt.subplots(figsize=(4,4))
-
-    ax.axhline(1, lw=1.5, ls=':',color='k', zorder=1)
-
-
-    ax.scatter(10**species_mean_relative_abundances, 10**species_mean_width_distribution_ratios, alpha=1, color=colors, zorder=2)
-
-    ax.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
-
-
-    ax.set_xscale('log', basex=10)
-    ax.set_yscale('log', basey=10)
-    ax.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
-    ax.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
-
-
-
-    fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies_per_timeseries.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
 
 
-plot_timeseries()
+def plot_attractor_predict_occupancy(transfer=18):
+    # Global_migration, 4
+    # Parent_migration, 4
+    # No_migration, 40
+    # No_migration, 4
+
+
+    migration_innocula = [('No_migration',4), ('Parent_migration',4)]
+
+    #communities = utils.get_migration_time_series_community_names(migration=migration,inocula=inocula)
+
+    #fig, ax = plt.subplots(figsize=(4,4))
+    #fig.subplots_adjust(bottom= 0.15)
+    fig = plt.figure(figsize = (4*len(migration_innocula), 4))
+    fig.subplots_adjust(bottom= 0.15,  wspace=0.25)
+
+    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+
+        ax = plt.subplot2grid((1, len(migration_innocula)), (0, migration_innoculum_idx), colspan=1)
+
+        migration, inocula = migration_innoculum
+
+        attractor_dict = utils.get_attractor_status(migration=migration, inocula=inocula)
+
+        s_by_s_all, species_all, comm_rep_list_all = utils.get_s_by_s_migration(transfer=transfer,migration=migration,inocula=inocula)
+        occupancies_all, predicted_occupancies_all = utils.predict_occupancy(s_by_s_all)
+        ax.scatter(occupancies_all, predicted_occupancies_all, label='All attractors',edgecolors='k',  alpha=0.8,zorder=2)
+
+        for attractor, attractor_communities in attractor_dict.items():
+
+            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer=transfer,migration=migration,inocula=inocula, communities=attractor_communities)
+
+            occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+
+            ax.scatter(occupancies, predicted_occupancies, color=family_colors[attractor], label=attractor, edgecolors='k', alpha=0.8,zorder=2)
+
+
+        ax.plot([0.01,1],[0.01,1], lw=3,ls='--',c='k',zorder=1)
+        ax.set_xscale('log', basex=10)
+        ax.set_yscale('log', basey=10)
+        ax.set_xlabel('Observed occupancy', fontsize=12)
+        ax.set_ylabel('Predicted occupancy', fontsize=12)
+
+        ax.set_title(titles_dict[migration_innoculum], fontsize=12, fontweight='bold' )
+        ax.legend(loc="upper left", fontsize=8)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies_attractor.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+
+taylors_law_time_series_old()
+
+
+#plot_attractor_predict_occupancy()
+
+
+
+#plot_predicted_occupancies_migration()
+
+#plot_per_timeseries_perdict_occupancy()
+
+
+
+#plot_timeseries()
 #plot_gamma_migration()
 
-
-
-
-#taylors_law_time_series()
 
 
 

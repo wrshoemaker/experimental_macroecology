@@ -2,3 +2,6 @@ data/migration_ESV_data_table_SE.csv
 ./data/migration_ESV_data_table_absabundance_SE.csv
 data/migration_ESV_data_table_absabundance_SE.csv
 .DS_Store
+data/reformat_s_by_s.csv
+Python/.RData
+Python/.Rhistory

@@ -20,7 +20,7 @@ mytheme_main <- theme_bw() + theme(
 )
 ##########
 
-df <- read.csv("/Users/WRShoemaker/GitHub/experimental_macroecology/data/reformat_s_by_s.csv") # CHANGE HERE
+df <- read.csv("/Users/wrshoemaker/GitHub/experimental_macroecology/data/reformat_s_by_s.csv") # CHANGE HERE
 
 ###IGNORE THIS
 # load("./Genomics/Projects/EBI-Taxonomy/alltax_EBI.RData")
@@ -66,3 +66,4 @@ occpred %>% filter(vf > 0) %>%  ggplot()  + mytheme_main + ## estimation is base
   scale_x_continuous(name = "Empirical occupancy", trans='log10') +
   scale_y_continuous( name = "Predicted occupancy", trans='log10' ) +
   facet_wrap( . ~ condition )
+
