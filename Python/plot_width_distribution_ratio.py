@@ -11,11 +11,29 @@ import utils
 
 
 from matplotlib import cm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+np.random.seed(123456789)
 
 number_transfers = 18
 
+x_cutoffs = np.linspace(np.log10(0.01), np.log10(0.9), num=100)
 
 
+def get_slopes_cutoffs(mean_relative_abundances, mean_absolute_differences, x_cutoffs=x_cutoffs):
+
+    slopes_cutoff = []
+
+    for x_cutoff in x_cutoffs:
+
+        mean_relative_abundances_cutoff = mean_relative_abundances[mean_relative_abundances< x_cutoff]
+        mean_absolute_differences_cutoff = mean_absolute_differences[mean_relative_abundances< x_cutoff]
+        slope_cutoff, intercept_cutoff, r_value_cutoff, p_value_cutoff, std_err_cutoff = stats.linregress(mean_relative_abundances_cutoff, mean_absolute_differences_cutoff)
+        slopes_cutoff.append(slope_cutoff)
+
+    slopes_cutoff = np.asarray(slopes_cutoff)
+
+    return x_cutoffs, slopes_cutoff
 
 def get_temporal_patterns(migration_innoculum):
 
@@ -88,11 +106,11 @@ def get_temporal_patterns(migration_innoculum):
         if transfer_ == 6:
             widths_ = widths_[widths_<-1.8]
 
-        if len(widths_) < 4:
+        if len(widths_) < 3:
             continue
 
         variance_width_distribution_transfers.append(transfer_)
-        variance_width_distribution.append(np.var(widths_))
+        variance_width_distribution.append(np.sqrt(np.var(widths_)) / np.absolute(np.mean(widths_)) )
 
     variance_width_distribution_transfers = np.asarray(variance_width_distribution_transfers)
     variance_width_distribution = np.asarray(variance_width_distribution)
@@ -115,6 +133,13 @@ width_colors_global_migration = [utils.rgb_red[width_transfer_] for width_transf
 
 colors_no_migration = [utils.rgb[species_transfer] for species_transfer in species_transfers_no_migration]
 colors_global_migration = [utils.rgb_red[species_transfer] for species_transfer in species_transfers_global_migration]
+
+
+
+
+
+
+
 
 
 fig = plt.figure(figsize = (8, 12)) #
@@ -144,8 +169,29 @@ y_log10_fit_range_no_migration = 10 ** (slope_no_migration*x_log10_range_no_migr
 ax_scatter_no_migration.plot(10**x_log10_range_no_migration, y_log10_fit_range_no_migration, c='k', lw=3, linestyle='--', zorder=2)
 ax_scatter_no_migration.set_title(utils.titles_dict[('No_migration',4)], fontsize=12, fontweight='bold' )
 ax_scatter_no_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_no_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_no_migration.transAxes  )
+#ax_scatter_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
-ax_scatter_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+
+cutoffs_no_migration, slopes_no_migration = get_slopes_cutoffs(mean_relative_abundances_no_migration, mean_absolute_differences_no_migration)
+ins_no_migration = inset_axes(ax_scatter_no_migration, width="100%", height="100%", loc='lower right', bbox_to_anchor=(0.68,0.11,0.3,0.3), bbox_transform=ax_scatter_no_migration.transAxes)
+ins_no_migration.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
+ins_no_migration.set_ylabel("Slope", fontsize=8)
+
+ins_no_migration.plot(10**cutoffs_no_migration, slopes_no_migration, ls='-', c='k')
+ins_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+
+ins_no_migration.axhline(2/3, lw=1.5, ls='--',color='k', zorder=1)
+ins_no_migration.axhline(1, lw=1.5, ls='--',color='k', zorder=1)
+
+ins_no_migration.set_xscale('log', basex=10)
+
+ins_no_migration.tick_params(labelsize=5)
+ins_no_migration.tick_params(axis='both', which='major', pad=1)
+
+ins_no_migration.set_ylim(0.65, 1.02)
+
+ins_no_migration.text(0.21,0.88, 'Linear', fontsize=5, color='k', ha='center', va='center', transform=ins_no_migration.transAxes )
+ins_no_migration.text(0.26,0.18, 'Square\nroot', fontsize=5, color='k', ha='center', va='center', transform=ins_no_migration.transAxes )
 
 
 mean_relative_abundances_global_migration_filter = mean_relative_abundances_global_migration[mean_relative_abundances_global_migration< -1]
@@ -162,8 +208,27 @@ y_log10_fit_range_global_migration = 10 ** (slope_global_migration*x_log10_range
 ax_scatter_global_migration.plot(10**x_log10_range_global_migration, y_log10_fit_range_global_migration, c='k', lw=3, linestyle='--', zorder=2)
 ax_scatter_global_migration.set_title(utils.titles_dict[('Global_migration',4)], fontsize=12, fontweight='bold' )
 ax_scatter_global_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_global_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_global_migration.transAxes  )
+#ax_scatter_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
-ax_scatter_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+
+cutoffs_global_migration, slopes_global_migration = get_slopes_cutoffs(mean_relative_abundances_global_migration, mean_absolute_differences_global_migration)
+ins_global_migration = inset_axes(ax_scatter_global_migration, width="100%", height="100%", loc='lower right', bbox_to_anchor=(0.68,0.11,0.3,0.3), bbox_transform=ax_scatter_global_migration.transAxes)
+ins_global_migration.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
+ins_global_migration.set_ylabel("Slope", fontsize=8)
+
+ins_global_migration.plot(10**cutoffs_global_migration, slopes_global_migration, ls='-', c='k')
+ins_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+ins_global_migration.set_xscale('log', basex=10)
+ins_global_migration.tick_params(labelsize=5)
+ins_global_migration.tick_params(axis='both', which='major', pad=1)
+
+ins_global_migration.axhline(2/3, lw=1.5, ls='--',color='k', zorder=1)
+ins_global_migration.axhline(1, lw=1.5, ls='--',color='k', zorder=1)
+
+ins_global_migration.set_ylim(0.65, 1.02)
+
+ins_global_migration.text(0.21,0.88, 'Linear', fontsize=5, color='k', ha='center', va='center', transform=ins_global_migration.transAxes )
+ins_global_migration.text(0.26,0.18, 'Square\nroot', fontsize=5, color='k', ha='center', va='center', transform=ins_global_migration.transAxes )
 
 
 
@@ -173,7 +238,6 @@ ax_width_no_migration.set_xscale('log', basex=10)
 ax_width_no_migration.set_yscale('log', basey=10)
 ax_width_no_migration.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
 ax_width_no_migration.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
-
 
 
 ax_width_global_migration.axhline(1, lw=3, ls=':',color='k', zorder=1)
@@ -189,10 +253,6 @@ ax_width_global_migration.set_ylabel('Width distribution of relative\nabundance 
 #ax_1.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
 
 
-#numpy.concatenate([a,b])
-
-
-# stats
 
 
 KS_statistic, p_value = stats.ks_2samp(mean_width_distribution_ratios_no_migration, mean_width_distribution_ratios_global_migration)
@@ -217,9 +277,7 @@ ax_lognormal.axvline(0, lw=3, ls=':',color='darkgrey', zorder=3)
 
 ax_lognormal.plot(x_range_no_migration, samples_fit_log_no_migration, color=width_colors_no_migration[-3], label='Lognormal fit', lw=3, zorder=3)
 ax_lognormal.plot(x_range_global_migration, samples_fit_log_global_migration, color=width_colors_global_migration[-3], label='Lognormal fit', lw=3, zorder=3)
-
 ax_lognormal.set_yscale('log', basey=10)
-
 ax_lognormal.set_xlabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$' + ', log10', fontsize=12)
 ax_lognormal.set_ylabel('Probability density', fontsize=12)
 
@@ -227,15 +285,21 @@ ax_lognormal.legend(loc="lower center", fontsize=8)
 
 
 
-ax_variance.plot(variance_transfers_no_migration, variance_no_migration, color = 'k', zorder=1)
-ax_variance.plot(variance_transfers_global_migration, variance_global_migration, color = 'k', zorder=1)
+ax_variance.axhline(1, lw=3, ls=':',color='k', zorder=1)
+ax_variance.plot(variance_transfers_no_migration, variance_no_migration, color = 'k', zorder=2)
+ax_variance.plot(variance_transfers_global_migration, variance_global_migration, color = 'k', zorder=2)
 
-
-ax_variance.scatter(variance_transfers_no_migration, variance_no_migration, color = width_colors_no_migration, edgecolors='k', zorder=2)
-ax_variance.scatter(variance_transfers_global_migration, variance_global_migration, color = width_colors_global_migration, edgecolors='k', zorder=2)
+ax_variance.scatter(variance_transfers_no_migration, variance_no_migration, color = width_colors_no_migration, edgecolors='k', zorder=3)
+ax_variance.scatter(variance_transfers_global_migration, variance_global_migration, color = width_colors_global_migration, edgecolors='k', zorder=3)
 
 ax_variance.set_xlabel('Transfer', fontsize=12)
-ax_variance.set_ylabel('Variance of log-transformed\nrelative abundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+ax_variance.set_ylabel('CV of log-transformed relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+
+
+#ax_variance.set_ylim(0,10)
+
+ax_variance.set_yscale('log', basey=10)
+
 
 ## Variance difference test
 
@@ -264,9 +328,9 @@ for i in range(10000):
 null_values = np.asarray(null_values)
 p_value_variance = len(null_values[null_values < mean_ratio_observed]) / 10000
 
-sys.stdout.write("Variance difference test P = %g\n" % ( p_value_variance))
+sys.stdout.write("CV difference test P = %g\n" % ( p_value_variance))
 
-ax_variance.text(0.75,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_variance.transAxes )
+ax_variance.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_variance.transAxes )
 
 
 #variance_no_migration_exp = 10**variance_no_migration

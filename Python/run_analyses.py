@@ -1774,7 +1774,7 @@ def plot_gamma_migration():
 
         standardized_log_abundances = (migration_innocula__dict[migration_innocula_i] - np.mean(merged)) / np.std(merged)
 
-        ax.hist(standardized_log_abundances, alpha=0.8, bins= 20, histtype='step', color=colors[migration_innocula_i_idx], label=titles_dict[migration_innocula_i],  weights=np.zeros_like(standardized_log_abundances) + 1. / len(standardized_log_abundances))
+        ax.hist(standardized_log_abundances, alpha=0.8, bins= 20, histtype='step', color=colors[migration_innocula_i_idx], label=utils.titles_dict[migration_innocula_i],  weights=np.zeros_like(standardized_log_abundances) + 1. / len(standardized_log_abundances))
 
 
     ax.set_xlabel('Rescaled log \nrelative abundance', fontsize=12)
@@ -1818,10 +1818,13 @@ def plot_per_timeseries_perdict_occupancy():
     ax.set_xlabel('Observed occupancy', fontsize=12)
     ax.set_ylabel('Predicted occupancy', fontsize=10)
 
-    ax.set_title("Per-replicate timeseries\n%s" % titles_dict[(migration, inocula)], fontsize=14, fontweight='bold' )
+    #ax.set_title(utils.titles_no_inocula_dict[(migration, inocula)], fontsize=12, fontweight='bold' )
+
+
+    ax.set_title("Per-replicate timeseries\n%s" % utils.titles_dict[(migration, inocula)], fontsize=14, fontweight='bold' )
 
     fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/predicted_occupancies_per_timeseries.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies_per_timeseries.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
@@ -1870,25 +1873,24 @@ def plot_attractor_predict_occupancy(transfer=18):
         ax.set_xlabel('Observed occupancy', fontsize=12)
         ax.set_ylabel('Predicted occupancy', fontsize=12)
 
-        ax.set_title(titles_dict[migration_innoculum], fontsize=12, fontweight='bold' )
+        ax.set_title(utils.titles_dict[migration_innoculum], fontsize=12, fontweight='bold' )
         ax.legend(loc="upper left", fontsize=8)
 
     fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/predicted_occupancies_attractor.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/predicted_occupancies_attractor.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
 
-taylors_law_time_series_old()
 
 
-#plot_attractor_predict_occupancy()
+#taylors_law_time_series_old()
 
-
+plot_attractor_predict_occupancy()
 
 #plot_predicted_occupancies_migration()
 
-#plot_per_timeseries_perdict_occupancy()
+plot_per_timeseries_perdict_occupancy()
 
 
 

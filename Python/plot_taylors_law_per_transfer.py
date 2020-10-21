@@ -41,6 +41,8 @@ for experiment_idx, experiment in enumerate(experiments):
 
     slops_CIs = []
 
+    species_relative_abundances_dict = {}
+
     for transfer in range(1, transfer_max+1):
 
         if experiment[0] == 'Glucose':
@@ -48,7 +50,6 @@ for experiment_idx, experiment in enumerate(experiments):
             s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
             #if transfer==1:
             #    communities_keep = comm_rep_list
-
             #    s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
 
         else:
@@ -58,12 +59,33 @@ for experiment_idx, experiment in enumerate(experiments):
 
             s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer=transfer, migration=experiment[0],inocula=experiment[1], communities=communities )
 
+        comm_rep_array = np.asarray(comm_rep_list)
 
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
+        #for afd_idx, afd in enumerate(rel_s_by_s):
+
+            #species_i = species[afd_idx]
+
+            #if species_i not in species_relative_abundances_dict:
+            #    species_relative_abundances_dict[species_i] = {}
+
+            #afd_no_zeros = afd[afd>0]
+            #comm_rep_array_no_zeros = comm_rep_array[afd>0]
+
+            #for comm_rep_array_no_zeros_i, afd_no_zeros_i in zip(comm_rep_array_no_zeros, afd_no_zeros):
+
+            #    if comm_rep_array_no_zeros_i not in species_relative_abundances_dict[species_i]:
+            #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i] = {}
+            #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'] = []
+            #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['relative_abundances'] = []
+
+            #    species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'].append(transfer, afd_no_zeros_i)
+
+
         means_transfer, variances_transfer = utils.get_species_means_and_variances(rel_s_by_s, zeros=False)
 
-        if len(means_transfer) < 4:
+        if len(means_transfer) < 5:
             continue
 
 
@@ -156,17 +178,11 @@ for experiment_idx, experiment in enumerate(experiments):
     ax_scatter.set_yscale('log', basey=10)
     ax_scatter.set_xlabel('Average relative\nabundance', fontsize=12)
     ax_scatter.set_ylabel('Variance of relative abundance', fontsize=10)
-
     ax_scatter.legend(loc="lower right", fontsize=8)
-
-
     ax_scatter.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
 
 
-
     ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw = 3, zorder=1)
-
-
 
     slope_colors = [color_range[t-1] for t in transfers]
 
@@ -180,5 +196,5 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/taylors_law_time_series_all.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_time_series_all.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

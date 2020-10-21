@@ -46,6 +46,12 @@ titles_no_inocula_dict = {('No_migration',4): 'No migration',
                 ('Glucose', np.nan): 'Glucose' }
 
 
+family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
+                'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',
+                'Lachnospiraceae':'deepskyblue', 'Pseudomonadaceae':'darkviolet'}
+
+
+
 def get_p_value(p_value, alpha=0.05):
 
     if p_value >= 0.05:
