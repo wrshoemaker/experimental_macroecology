@@ -17,7 +17,7 @@ np.random.seed(123456789)
 
 number_transfers = 18
 
-x_cutoffs = np.linspace(np.log10(0.01), np.log10(0.9), num=100)
+x_cutoffs = np.linspace(np.log10(0.01), np.log10(1), num=100)
 
 
 def get_slopes_cutoffs(mean_relative_abundances, mean_absolute_differences, x_cutoffs=x_cutoffs):
@@ -28,6 +28,11 @@ def get_slopes_cutoffs(mean_relative_abundances, mean_absolute_differences, x_cu
 
         mean_relative_abundances_cutoff = mean_relative_abundances[mean_relative_abundances< x_cutoff]
         mean_absolute_differences_cutoff = mean_absolute_differences[mean_relative_abundances< x_cutoff]
+
+        #print(x_cutoff-0.5, x_cutoff)
+        #mean_relative_abundances_cutoff = mean_relative_abundances[(mean_relative_abundances> x_cutoff-0.5) & (mean_relative_abundances< x_cutoff) ]
+        #mean_absolute_differences_cutoff = mean_absolute_differences[(mean_relative_abundances> x_cutoff-0.5) & (mean_relative_abundances< x_cutoff) ]
+
         slope_cutoff, intercept_cutoff, r_value_cutoff, p_value_cutoff, std_err_cutoff = stats.linregress(mean_relative_abundances_cutoff, mean_absolute_differences_cutoff)
         slopes_cutoff.append(slope_cutoff)
 
@@ -184,10 +189,8 @@ ins_no_migration.axhline(2/3, lw=1.5, ls='--',color='k', zorder=1)
 ins_no_migration.axhline(1, lw=1.5, ls='--',color='k', zorder=1)
 
 ins_no_migration.set_xscale('log', basex=10)
-
 ins_no_migration.tick_params(labelsize=5)
 ins_no_migration.tick_params(axis='both', which='major', pad=1)
-
 ins_no_migration.set_ylim(0.65, 1.02)
 
 ins_no_migration.text(0.21,0.88, 'Linear', fontsize=5, color='k', ha='center', va='center', transform=ins_no_migration.transAxes )
@@ -239,6 +242,9 @@ ax_width_no_migration.set_yscale('log', basey=10)
 ax_width_no_migration.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
 ax_width_no_migration.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
 
+ax_width_no_migration.set_xlim([1e-4, 1])
+ax_width_no_migration.set_ylim([1e-2, 1e2])
+
 
 ax_width_global_migration.axhline(1, lw=3, ls=':',color='k', zorder=1)
 ax_width_global_migration.scatter(10**mean_relative_abundances_global_migration, 10**mean_width_distribution_ratios_global_migration, alpha=1, color=colors_global_migration, zorder=2, edgecolors='k')
@@ -246,6 +252,9 @@ ax_width_global_migration.set_xscale('log', basex=10)
 ax_width_global_migration.set_yscale('log', basey=10)
 ax_width_global_migration.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
 ax_width_global_migration.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+
+ax_width_global_migration.set_xlim([1e-4, 1])
+ax_width_global_migration.set_ylim([1e-2, 1e2])
 
 
 
@@ -266,22 +275,31 @@ shape_global_migration, loc_global_migration, scale_global_migration = stats.log
 x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration) , max(mean_width_distribution_ratios_no_migration) , 10000)
 x_range_global_migration = np.linspace(min(mean_width_distribution_ratios_global_migration) , max(mean_width_distribution_ratios_global_migration) , 10000)
 
-ax_lognormal.hist(mean_width_distribution_ratios_no_migration, histtype='step', color=colors_no_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
-ax_lognormal.hist(mean_width_distribution_ratios_global_migration, histtype='step', color=colors_global_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
-
 samples_fit_log_no_migration = stats.lognorm.pdf(x_range_no_migration, shape_no_migration, loc_no_migration, scale_no_migration)
 samples_fit_log_global_migration = stats.lognorm.pdf(x_range_global_migration, shape_global_migration, loc_global_migration, scale_global_migration)
 
-ax_lognormal.axvline(0, lw=3, ls=':',color='darkgrey', zorder=3)
+ax_lognormal.hist(mean_width_distribution_ratios_no_migration, histtype='step', color=colors_no_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
+ax_lognormal.hist(mean_width_distribution_ratios_global_migration, histtype='step', color=colors_global_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
+
+ax_lognormal.axvline(0, lw=2.5, ls=':',color='darkgrey', zorder=3)
+
+ax_lognormal.axvline(np.mean(x_range_no_migration), lw=2.5, ls=':', color=width_colors_no_migration[-3],zorder=3)
+ax_lognormal.axvline(np.mean(x_range_global_migration), lw=2.5, ls=':', color=width_colors_global_migration[-3],zorder=3)
+
 
 
 ax_lognormal.plot(x_range_no_migration, samples_fit_log_no_migration, color=width_colors_no_migration[-3], label='Lognormal fit', lw=3, zorder=3)
 ax_lognormal.plot(x_range_global_migration, samples_fit_log_global_migration, color=width_colors_global_migration[-3], label='Lognormal fit', lw=3, zorder=3)
 ax_lognormal.set_yscale('log', basey=10)
-ax_lognormal.set_xlabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$' + ', log10', fontsize=12)
+ax_lognormal.set_xlabel('Width distribution of relative\nabundance ratios, ' + r'$\mathrm{log}_{10}$', fontsize=12)
 ax_lognormal.set_ylabel('Probability density', fontsize=12)
 
 ax_lognormal.legend(loc="lower center", fontsize=8)
+
+
+ax_lognormal.text(0.8,0.9,'$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
+ax_lognormal.text(0.8,0.82, r'$P\nless 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
+
 
 
 
@@ -293,7 +311,11 @@ ax_variance.scatter(variance_transfers_no_migration, variance_no_migration, colo
 ax_variance.scatter(variance_transfers_global_migration, variance_global_migration, color = width_colors_global_migration, edgecolors='k', zorder=3)
 
 ax_variance.set_xlabel('Transfer', fontsize=12)
-ax_variance.set_ylabel('CV of log-transformed relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+#ax_variance.set_ylabel('CV of log-transformed relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+ax_variance.set_ylabel('CV of log-transformed\nrelative abundance ratios, ' + r'$\frac{\sigma}{\left | \mu \right |}$', fontsize=12)
+
+ax_variance.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_variance.transAxes )
+
 
 
 #ax_variance.set_ylim(0,10)

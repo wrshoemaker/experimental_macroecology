@@ -103,12 +103,14 @@ for experiment_idx, experiment in enumerate(experiments):
         t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
 
         #maximim likelihood estimator
-        sigma_hat = np.sqrt((1/len(means_transfer))*(s_yy-slope*s_xy))
-        interval_val = t*sigma_hat*np.sqrt(len(means_transfer)/((len(means_transfer)-2)*s_xx))
+        mse = sum((np.log10(variances) - (intercept + slope*np.log10(means)))**2) / (len(means)-2)
+        #sigma_hat = np.sqrt((1/len(means_transfer))*(s_yy-slope*s_xy)
+        slope_CI = t*np.sqrt(mse/s_xx)
+
 
         slopes.append(slope)
         intercepts.append(intercept)
-        slops_CIs.append(interval_val)
+        slopes_CIs.append(slope_CI)
 
 
     transfers = np.asarray(transfers)
@@ -118,7 +120,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
     intercepts = np.asarray(intercepts)
     slopes = np.asarray(slopes)
-    slops_CIs = np.asarray(slops_CIs)
+    slopes_CIs = np.asarray(slopes_CIs)
 
     experiment_dict[experiment] = {}
 
@@ -128,7 +130,7 @@ for experiment_idx, experiment in enumerate(experiments):
     experiment_dict[experiment]['colors'] = colors
     experiment_dict[experiment]['intercepts'] = intercepts
     experiment_dict[experiment]['slopes'] = slopes
-    experiment_dict[experiment]['slops_CIs'] = slops_CIs
+    experiment_dict[experiment]['slops_CIs'] = slopes_CIs
 
 
 
