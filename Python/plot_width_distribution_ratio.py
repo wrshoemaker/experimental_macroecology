@@ -104,6 +104,9 @@ def get_temporal_patterns(migration_innoculum):
     variance_width_distribution_transfers = []
     variance_width_distribution = []
 
+    #mean_width_distribution_transfers = []
+    mean_width_distribution = []
+
     for transfer_, widths_ in species_mean_width_distribution_ratios_dict.items():
 
         widths_ = np.asarray(widths_)
@@ -117,8 +120,11 @@ def get_temporal_patterns(migration_innoculum):
         variance_width_distribution_transfers.append(transfer_)
         variance_width_distribution.append(np.sqrt(np.var(widths_)) / np.absolute(np.mean(widths_)) )
 
+        mean_width_distribution.append(np.mean(widths_))
+
     variance_width_distribution_transfers = np.asarray(variance_width_distribution_transfers)
     variance_width_distribution = np.asarray(variance_width_distribution)
+    mean_width_distribution = np.asarray(mean_width_distribution)
 
     species_mean_relative_abundances = np.asarray(species_mean_relative_abundances)
     species_mean_absolute_differences = np.asarray(species_mean_absolute_differences)
@@ -126,12 +132,15 @@ def get_temporal_patterns(migration_innoculum):
 
     species_transfers = np.asarray(species_transfers)
 
-    return species_transfers, species_mean_relative_abundances, species_mean_absolute_differences, species_mean_width_distribution_ratios, variance_width_distribution_transfers, variance_width_distribution
+    return species_transfers, species_mean_relative_abundances, species_mean_absolute_differences, species_mean_width_distribution_ratios, variance_width_distribution_transfers, variance_width_distribution, mean_width_distribution
 
 
 
-species_transfers_no_migration, mean_relative_abundances_no_migration, mean_absolute_differences_no_migration, mean_width_distribution_ratios_no_migration, variance_transfers_no_migration, variance_no_migration = get_temporal_patterns(('No_migration',4))
-species_transfers_global_migration, mean_relative_abundances_global_migration, mean_absolute_differences_global_migration, mean_width_distribution_ratios_global_migration, variance_transfers_global_migration, variance_global_migration = get_temporal_patterns(('Global_migration',4))
+species_transfers_no_migration, mean_relative_abundances_no_migration, mean_absolute_differences_no_migration, mean_width_distribution_ratios_no_migration, variance_transfers_no_migration, variance_no_migration, mean_no_migration = get_temporal_patterns(('No_migration',4))
+species_transfers_global_migration, mean_relative_abundances_global_migration, mean_absolute_differences_global_migration, mean_width_distribution_ratios_global_migration, variance_transfers_global_migration, variance_global_migration, mean_global_migration = get_temporal_patterns(('Global_migration',4))
+
+
+
 
 width_colors_no_migration = [utils.rgb[width_transfer_] for width_transfer_ in variance_transfers_no_migration]
 width_colors_global_migration = [utils.rgb_red[width_transfer_] for width_transfer_ in variance_transfers_global_migration]
@@ -157,8 +166,9 @@ ax_scatter_global_migration = plt.subplot2grid((3, 2), (0, 1))#, colspan=1)
 ax_width_no_migration = plt.subplot2grid((3, 2), (1, 0))#, colspan=1)
 ax_width_global_migration = plt.subplot2grid((3, 2), (1, 1))#, colspan=1)
 
-ax_lognormal = plt.subplot2grid((3, 2), (2, 0))#, colspan=1)
-ax_variance = plt.subplot2grid((3, 2), (2, 1))#, colspan=1)
+#ax_lognormal = plt.subplot2grid((3, 2), (2, 0))#, colspan=1)
+ax_mean = plt.subplot2grid((3, 2), (2, 0))#, colspan=1)
+ax_cv = plt.subplot2grid((3, 2), (2, 1))#, colspan=1)
 
 mean_relative_abundances_no_migration_filter = mean_relative_abundances_no_migration[mean_relative_abundances_no_migration< -1]
 mean_absolute_differences_no_migration_filter = mean_absolute_differences_no_migration[mean_relative_abundances_no_migration< -1]
@@ -264,101 +274,139 @@ ax_width_global_migration.set_ylim([1e-2, 1e2])
 
 
 
-KS_statistic, p_value = stats.ks_2samp(mean_width_distribution_ratios_no_migration, mean_width_distribution_ratios_global_migration)
-sys.stdout.write("KS = %g, P= %g\n" % (KS_statistic, p_value))
+#KS_statistic, p_value = stats.ks_2samp(mean_width_distribution_ratios_no_migration, mean_width_distribution_ratios_global_migration)
+#sys.stdout.write("KS = %g, P= %g\n" % (KS_statistic, p_value))
+
+
+#shape_no_migration, loc_no_migration, scale_no_migration = stats.lognorm.fit(mean_width_distribution_ratios_no_migration)
+#shape_global_migration, loc_global_migration, scale_global_migration = stats.lognorm.fit(mean_width_distribution_ratios_global_migration)
+
+#x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration) , max(mean_width_distribution_ratios_no_migration) , 10000)
+#x_range_global_migration = np.linspace(min(mean_width_distribution_ratios_global_migration) , max(mean_width_distribution_ratios_global_migration) , 10000)
+
+#samples_fit_log_no_migration = stats.lognorm.pdf(x_range_no_migration, shape_no_migration, loc_no_migration, scale_no_migration)
+#samples_fit_log_global_migration = stats.lognorm.pdf(x_range_global_migration, shape_global_migration, loc_global_migration, scale_global_migration)
+
+#ax_lognormal.hist(mean_width_distribution_ratios_no_migration, histtype='step', color=colors_no_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
+#ax_lognormal.hist(mean_width_distribution_ratios_global_migration, histtype='step', color=colors_global_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
+
+#ax_lognormal.axvline(0, lw=2.5, ls=':',color='darkgrey', zorder=3)
+
+#ax_lognormal.axvline(np.mean(x_range_no_migration), lw=2.5, ls=':', color=width_colors_no_migration[-3],zorder=3)
+#ax_lognormal.axvline(np.mean(x_range_global_migration), lw=2.5, ls=':', color=width_colors_global_migration[-3],zorder=3)
+
+
+#ax_lognormal.plot(x_range_no_migration, samples_fit_log_no_migration, color=width_colors_no_migration[-3], label='Lognormal fit', lw=3, zorder=3)
+#ax_lognormal.plot(x_range_global_migration, samples_fit_log_global_migration, color=width_colors_global_migration[-3], label='Lognormal fit', lw=3, zorder=3)
+#ax_lognormal.set_yscale('log', basey=10)
+#ax_lognormal.set_xlabel('Width distribution of relative\nabundance ratios, ' + r'$\mathrm{log}_{10}$', fontsize=12)
+#ax_lognormal.set_ylabel('Probability density', fontsize=12)
+
+#ax_lognormal.legend(loc="lower center", fontsize=8)
+
+#ax_lognormal.text(0.8,0.9,'$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
+#ax_lognormal.text(0.8,0.82, r'$P\nless 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
+
+
+ax_mean.axhline(0, lw=3, ls=':',color='k', zorder=1)
+ax_mean.plot(variance_transfers_no_migration, mean_no_migration, color = 'k', zorder=2)
+ax_mean.plot(variance_transfers_global_migration, mean_global_migration, color = 'k', zorder=2)
+
+ax_mean.scatter(variance_transfers_no_migration, mean_no_migration, color = width_colors_no_migration, edgecolors='k', zorder=3)
+ax_mean.scatter(variance_transfers_global_migration, mean_global_migration, color = width_colors_global_migration, edgecolors='k', zorder=3)
+ax_mean.set_xlabel('Transfer', fontsize=12)
+ax_mean.set_ylabel('Mean of log-transformed\nrelative abundance ratios, ' + r'$\mu$', fontsize=12)
+
+ax_mean.set_ylim(-0.65, 0.65)
 
 
 
-shape_no_migration, loc_no_migration, scale_no_migration = stats.lognorm.fit(mean_width_distribution_ratios_no_migration)
-shape_global_migration, loc_global_migration, scale_global_migration = stats.lognorm.fit(mean_width_distribution_ratios_global_migration)
+ax_cv.axhline(1, lw=3, ls=':',color='k', zorder=1)
+ax_cv.plot(variance_transfers_no_migration, variance_no_migration, color = 'k', zorder=2)
+ax_cv.plot(variance_transfers_global_migration, variance_global_migration, color = 'k', zorder=2)
 
-x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration) , max(mean_width_distribution_ratios_no_migration) , 10000)
-x_range_global_migration = np.linspace(min(mean_width_distribution_ratios_global_migration) , max(mean_width_distribution_ratios_global_migration) , 10000)
+ax_cv.scatter(variance_transfers_no_migration, variance_no_migration, color = width_colors_no_migration, edgecolors='k', zorder=3)
+ax_cv.scatter(variance_transfers_global_migration, variance_global_migration, color = width_colors_global_migration, edgecolors='k', zorder=3)
 
-samples_fit_log_no_migration = stats.lognorm.pdf(x_range_no_migration, shape_no_migration, loc_no_migration, scale_no_migration)
-samples_fit_log_global_migration = stats.lognorm.pdf(x_range_global_migration, shape_global_migration, loc_global_migration, scale_global_migration)
+ax_cv.set_xlabel('Transfer', fontsize=12)
+#ax_cv.set_ylabel('CV of log-transformed relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
+ax_cv.set_ylabel('CV of log-transformed\nrelative abundance ratios, ' + r'$\frac{\sigma}{\left | \mu \right |}$', fontsize=12)
 
-ax_lognormal.hist(mean_width_distribution_ratios_no_migration, histtype='step', color=colors_no_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
-ax_lognormal.hist(mean_width_distribution_ratios_global_migration, histtype='step', color=colors_global_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
-
-ax_lognormal.axvline(0, lw=2.5, ls=':',color='darkgrey', zorder=3)
-
-ax_lognormal.axvline(np.mean(x_range_no_migration), lw=2.5, ls=':', color=width_colors_no_migration[-3],zorder=3)
-ax_lognormal.axvline(np.mean(x_range_global_migration), lw=2.5, ls=':', color=width_colors_global_migration[-3],zorder=3)
+ax_cv.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
 
 
 
-ax_lognormal.plot(x_range_no_migration, samples_fit_log_no_migration, color=width_colors_no_migration[-3], label='Lognormal fit', lw=3, zorder=3)
-ax_lognormal.plot(x_range_global_migration, samples_fit_log_global_migration, color=width_colors_global_migration[-3], label='Lognormal fit', lw=3, zorder=3)
-ax_lognormal.set_yscale('log', basey=10)
-ax_lognormal.set_xlabel('Width distribution of relative\nabundance ratios, ' + r'$\mathrm{log}_{10}$', fontsize=12)
-ax_lognormal.set_ylabel('Probability density', fontsize=12)
+#ax_cv.set_ylim(0,10)
 
-ax_lognormal.legend(loc="lower center", fontsize=8)
-
-
-ax_lognormal.text(0.8,0.9,'$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
-ax_lognormal.text(0.8,0.82, r'$P\nless 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
-
-
-
-
-ax_variance.axhline(1, lw=3, ls=':',color='k', zorder=1)
-ax_variance.plot(variance_transfers_no_migration, variance_no_migration, color = 'k', zorder=2)
-ax_variance.plot(variance_transfers_global_migration, variance_global_migration, color = 'k', zorder=2)
-
-ax_variance.scatter(variance_transfers_no_migration, variance_no_migration, color = width_colors_no_migration, edgecolors='k', zorder=3)
-ax_variance.scatter(variance_transfers_global_migration, variance_global_migration, color = width_colors_global_migration, edgecolors='k', zorder=3)
-
-ax_variance.set_xlabel('Transfer', fontsize=12)
-#ax_variance.set_ylabel('CV of log-transformed relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
-ax_variance.set_ylabel('CV of log-transformed\nrelative abundance ratios, ' + r'$\frac{\sigma}{\left | \mu \right |}$', fontsize=12)
-
-ax_variance.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_variance.transAxes )
-
-
-
-#ax_variance.set_ylim(0,10)
-
-ax_variance.set_yscale('log', basey=10)
+ax_cv.set_yscale('log', basey=10)
 
 
 ## Variance difference test
 
-transfers_intersect = np.intersect1d(variance_transfers_no_migration, variance_transfers_global_migration)
+def test_difference_two_time_series(array_1, array_2):
+    _matrix = np.array([array_1, array_2])
+    #mean_ratio_observed = sum(_matrix[0,:] - _matrix[1,:])
+    mean_ratio_observed = np.mean(_matrix[0,:] - _matrix[1,:])
 
-sorter_no_migration = np.argsort(variance_transfers_no_migration)
-no_migration_idx = sorter_no_migration[np.searchsorted(variance_transfers_no_migration, transfers_intersect, sorter=sorter_no_migration)]
-variances_no_migration_intersect = variance_no_migration[no_migration_idx]
+    null_values = []
+    for i in range(10000):
+        _matrix_copy = np.copy(_matrix)
+        for i in range(_matrix_copy.shape[1]):
+            np.random.shuffle(_matrix_copy[:,i])
 
-sorter_global_migration = np.argsort(variance_transfers_global_migration)
-global_migration_idx = sorter_global_migration[np.searchsorted(variance_transfers_global_migration, transfers_intersect, sorter=sorter_global_migration)]
-variances_global_migration_intersect = variance_global_migration[global_migration_idx]
+        #null_values.append(sum(_matrix_copy[0,:] - _matrix_copy[1,:]))
+        null_values.append(np.mean(_matrix_copy[0,:] - _matrix_copy[1,:]))
 
-variances_matrix = np.array([variances_no_migration_intersect, variances_global_migration_intersect])
-mean_ratio_observed = sum(variances_matrix[0,:] - variances_matrix[1,:])
+    null_values = np.asarray(null_values)
+    p_value = len(null_values[null_values < mean_ratio_observed]) / 10000
 
-null_values = []
-for i in range(10000):
-    variances_matrix_copy = np.copy(variances_matrix)
-    for i in range(variances_matrix_copy.shape[1]):
-        np.random.shuffle(variances_matrix_copy[:,i])
-
-    null_values.append(sum(variances_matrix_copy[0,:] - variances_matrix_copy[1,:]))
+    return mean_ratio_observed, p_value
 
 
-null_values = np.asarray(null_values)
-p_value_variance = len(null_values[null_values < mean_ratio_observed]) / 10000
+def get_intersecting_timepoints(transfers_1, observations_1, transfers_2, observations_2):
 
-sys.stdout.write("CV difference test P = %g\n" % ( p_value_variance))
+    transfers_intersect = np.intersect1d(transfers_1, transfers_2)
 
-ax_variance.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_variance.transAxes )
+    sorter_1 = np.argsort(transfers_1)
+    sorted_idx_1 = sorter_1[np.searchsorted(transfers_1, transfers_intersect, sorter=sorter_1)]
+    observations_1_intersect = observations_1[sorted_idx_1]
+
+    sorter_2 = np.argsort(transfers_2)
+    sorted_idx_2 = sorter_2[np.searchsorted(transfers_2, transfers_intersect, sorter=sorter_2)]
+    observations_2_intersect = observations_2[sorted_idx_2]
+
+    return transfers_intersect, observations_1_intersect, observations_2_intersect
 
 
-#variance_no_migration_exp = 10**variance_no_migration
-#variance_global_migration_exp = 10**variance_global_migration
 
-#print(np.mean(variance_no_migration_exp/variance_global_migration_exp) )
+#transfers_intersect = np.intersect1d(variance_transfers_no_migration, variance_transfers_global_migration)
+
+#sorter_no_migration = np.argsort(variance_transfers_no_migration)
+#no_migration_idx = sorter_no_migration[np.searchsorted(variance_transfers_no_migration, transfers_intersect, sorter=sorter_no_migration)]
+#variances_no_migration_intersect = variance_no_migration[no_migration_idx]
+
+#sorter_global_migration = np.argsort(variance_transfers_global_migration)
+#global_migration_idx = sorter_global_migration[np.searchsorted(variance_transfers_global_migration, transfers_intersect, sorter=sorter_global_migration)]
+#variances_global_migration_intersect = variance_global_migration[global_migration_idx]
+
+
+transfers_intersect_mean, means_no_migration_intersect, means_global_migration_intersect  = get_intersecting_timepoints(variance_transfers_no_migration, mean_no_migration, variance_transfers_no_migration, mean_global_migration)
+transfers_intersect_cv, cv_no_migration_intersect, cv_global_migration_intersect  = get_intersecting_timepoints(variance_transfers_no_migration, variance_no_migration, variance_transfers_no_migration, variance_global_migration)
+
+mean_ratio_observed_mean, p_value_mean = test_difference_two_time_series(means_no_migration_intersect, means_global_migration_intersect)
+mean_ratio_observed_cv, p_value_cv = test_difference_two_time_series(cv_no_migration_intersect, cv_global_migration_intersect)
+
+
+#_matrix = np.array([variances_no_migration_intersect, variances_global_migration_intersect])
+
+
+
+sys.stdout.write("Mean difference test, D = %g,  P = %g\n" % (mean_ratio_observed_mean, p_value_mean))
+sys.stdout.write("CV difference test, D = %g,  P = %g\n" % (mean_ratio_observed_cv, p_value_cv))
+
+ax_cv.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
+ax_mean.text(0.8,0.9, r'$P\nless0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_mean.transAxes )
+
 
 
 
