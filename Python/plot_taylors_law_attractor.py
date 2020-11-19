@@ -62,7 +62,7 @@ def old_figure():
             #ax.text(0.3,0.9, r'$\sigma^{2}_{x} = {{{}}} * x^{{{}}}$'.format(str(round(10**intercept, 3)),  str(round(slope, 3)) ), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes  )
             ax.text(0.3,0.9, r'$\sigma^{{2}}_{{x}} = {{{}}} * \left \langle x \right \rangle^{{{}}}$'.format(str(round(10**intercept, 3)),  str(round(slope, 3)) ), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes  )
 
-
+            print(experiment, transfer)
 
             for attractor_idx, attractor in enumerate(attractor_dict.keys()):
 
@@ -100,6 +100,9 @@ def old_figure():
                 #ax.text(0.2,0.9-(0.1*(attractor_idx+1)), r'$y \sim x^{{{}}}$'.format(str( round(slope_attractor, 3) )), fontsize=11, color=utils.family_colors[attractor], ha='center', va='center', transform=ax.transAxes  )
                 #ax.text(0.3,0.9-(0.1*(attractor_idx+1)), r'$y \sim {{{}}} * x^{{{}}}$'.format(str(round(10**intercept_attractor, 3)),  str(round(slope_attractor, 3)) ), fontsize=11, color=utils.family_colors[attractor], ha='center', va='center', transform=ax.transAxes  )
                 ax.text(0.3,0.9-(0.1*(attractor_idx+1)), r'$\sigma^{{2}}_{{x}} = {{{}}} * \left \langle x \right \rangle^{{{}}}$'.format(str(round(10**intercept_attractor, 3)),  str(round(slope_attractor, 3)) ), fontsize=11, color=utils.family_colors[attractor], ha='center', va='center', transform=ax.transAxes  )
+
+
+
 
 
             ax.legend(loc="lower right", fontsize=8)
@@ -180,15 +183,17 @@ for experiment_idx, experiment in enumerate(experiments):
 
             # compare attractor to merged
 
-            t_intercept = (intercept - intercept_attractor) / std_error_intercept_difference
+            t_intercept = (intercept_attractor - intercept ) / std_error_intercept_difference
             p_value_intercept = stats.t.sf(np.abs(t_intercept), df)*2
 
             s2_y_x_slope = (mse + mse_attractor)/df
 
             std_error_slope_difference = np.sqrt((s2_y_x_slope/s_xx_attractor) + (s2_y_x_slope/s_xx))
-            t_slope =  (slope - slope_attractor) / std_error_slope_difference
+            t_slope =  (slope_attractor - slope) / std_error_slope_difference
 
             p_value_slope = stats.t.sf(np.abs(t_slope), df)*2
+
+            print(t_slope, std_error_slope_difference)
 
             x_log10_range_attractor =  np.linspace(min(np.log10(means_attractor)) , max(np.log10(means_attractor)) , 10000)
             y_log10_fit_range_attractor = 10 ** (slope_attractor*x_log10_range_attractor + intercept_attractor)
@@ -217,19 +222,73 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 
-
-
-#ax_slope = plt.subplot2grid((2, 3), (0, 2), colspan=1)
-#ax_slope.set_xlabel('Difference in slope between\nattractor and merged attractors', fontsize=14)
+ax_slope = plt.subplot2grid((2, 3), (0, 2), colspan=1)
+ax_intercept = plt.subplot2grid((2, 3), (1, 2), colspan=1)
 
 
 
-#ax_intercept = plt.subplot2grid((2, 3), (1, 2), colspan=1)
-# for major ticks
-#ax_intercept.set_yticks([])
-# for minor ticks
-#ax_intercept.set_yticks([], minor=True)
-#ax_intercept.set_xlabel('Difference in intercept between\nattractor and merged attractors', fontsize=14)
+count = 0
+
+y_axis_labels = []
+y_axis_positions = []
+
+for key in t_test_dict:
+
+    for transfer in t_test_dict[key]:
+
+        y_axis_labels.append('Transfer %d'%transfer)
+        y_axis_positions.append(count+1.2)
+
+        for attractor in  t_test_dict[key][transfer]:
+
+            dict_i = t_test_dict[key][transfer][attractor]
+
+            ax_slope.scatter(dict_i['t_slope'], count, s = 120, alpha=1, linewidth=2, edgecolors='k', color=utils.family_colors[attractor], label=attractor,  zorder=3)#, c='#87CEEB')
+            ax_intercept.scatter(dict_i['t_intercept'], count, s = 120, alpha=1, linewidth=2, edgecolors='k', color=utils.family_colors[attractor], label=attractor,  zorder=3)#, c='#87CEEB')
+
+            ax_slope.errorbar(dict_i['t_slope'], count, xerr=dict_i['CI_slope'],linestyle='-', marker='o', c='k', elinewidth=2, alpha=1, zorder=2)
+            ax_intercept.errorbar(dict_i['t_intercept'], count, xerr=dict_i['CI_intercept'],linestyle='-', marker='o', c='k', elinewidth=2, alpha=1, zorder=2)
+
+
+            count += 1
+
+
+
+
+
+ax_slope.set_yticks(y_axis_positions)
+ax_slope.set_yticklabels(y_axis_labels, rotation=90, fontsize=5.5, fontweight='bold', ha='center')
+ax_slope.tick_params(axis=u'y',length=0)
+
+
+ax_intercept.set_yticks(y_axis_positions)
+ax_intercept.set_yticklabels(y_axis_labels, rotation=90, fontsize=5.5, fontweight='bold', ha='center')
+ax_intercept.tick_params(axis=u'y',length=0)
+
+
+
+ax_slope.set_xlim([-2.1, 0.1 ])
+ax_intercept.set_xlim([-3.1, 0.15  ])
+
+ax_slope.axvline(0, lw=3, ls=':',color='k', zorder=1)
+ax_intercept.axvline(0, lw=3, ls=':',color='k', zorder=1)
+
+
+ax_slope.set_xlabel('Standardized slope difference\nbetween individual and merged attractors', fontsize=12)
+ax_intercept.set_xlabel('Standardized intercept difference\nbetween individual and merged attractors', fontsize=12)
+
+
+
+#ax_slope.text(-0.12,0.25, 'No migration\nlow inoculum', fontsize=10, rotation=90, color='k', fontweight='bold', ha='center', va='center', transform=ax_slope.transAxes )
+#ax_slope.text(-0.12,0.25, 'No migration\nlow inoculum', fontsize=10, rotation=90, color='k', fontweight='bold', ha='center', va='center', transform=ax_slope.transAxes )
+
+ax_slope.text(-0.07,0.25, 'No migration', fontsize=9, rotation=90, color='k', fontweight='bold', ha='center', va='center', transform=ax_slope.transAxes )
+ax_slope.text(-0.07,0.75, 'Parent migration', fontsize=9, rotation=90, color='k', fontweight='bold', ha='center', va='center', transform=ax_slope.transAxes )
+
+
+ax_intercept.text(-0.07,0.25, 'No migration', fontsize=9, rotation=90, color='k', fontweight='bold', ha='center', va='center', transform=ax_intercept.transAxes )
+ax_intercept.text(-0.07,0.75, 'Parent migration', fontsize=9, rotation=90, color='k', fontweight='bold', ha='center', va='center', transform=ax_intercept.transAxes )
+
 
 
 
