@@ -191,9 +191,13 @@ for experiment_idx, experiment in enumerate(experiments):
             std_error_slope_difference = np.sqrt((s2_y_x_slope/s_xx_attractor) + (s2_y_x_slope/s_xx))
             t_slope =  (slope_attractor - slope) / std_error_slope_difference
 
+
             p_value_slope = stats.t.sf(np.abs(t_slope), df)*2
 
-            print(t_slope, std_error_slope_difference)
+            print(t_slope, p_value_slope, df)
+
+            print(t_intercept, p_value_intercept, df)
+
 
             x_log10_range_attractor =  np.linspace(min(np.log10(means_attractor)) , max(np.log10(means_attractor)) , 10000)
             y_log10_fit_range_attractor = 10 ** (slope_attractor*x_log10_range_attractor + intercept_attractor)
@@ -239,7 +243,8 @@ for key in t_test_dict:
         y_axis_labels.append('Transfer %d'%transfer)
         y_axis_positions.append(count+1.2)
 
-        for attractor in  t_test_dict[key][transfer]:
+        #for attractor in  t_test_dict[key][transfer]:
+        for attractor in  [ 'Alcaligenaceae', 'Pseudomonadaceae']:
 
             dict_i = t_test_dict[key][transfer][attractor]
 
