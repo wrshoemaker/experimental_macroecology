@@ -23,6 +23,7 @@ directory = os.path.expanduser("~/GitHub/experimental_macroecology")
 metadata_path = directory + '/data/metadata.csv'
 otu_path = directory + '/data/otu_table.csv'
 
+
 carbons = ['Glucose', 'Citrate', 'Leucine']
 carbons_colors = ['royalblue', 'forestgreen', 'darkred']
 carbons_shapes = ['o', 'D', 'X']
@@ -54,7 +55,7 @@ family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
 
 def get_p_value(p_value, alpha=0.05):
 
-    if p_value >= 0.05:
+    if p_value >= alpha:
 
         return r'$P \nless 0.05$'
 

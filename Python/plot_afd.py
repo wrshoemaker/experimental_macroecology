@@ -171,13 +171,42 @@ for combo in treatment_combinations:
     distances_combo = [distances_dict[combo][transfer]['D'] for transfer in transfers]
     pvalues_combo = [distances_dict[combo][transfer]['pvalue_bh'] for transfer in transfers]
 
-    ax_distances.plot(transfers, distances_combo, color = 'k', zorder=1)
-    ax_distances.scatter(transfers, distances_combo, alpha=1, edgecolors='k', marker=marker_dict[combo], s = 120, label=label_dict[combo], zorder=2)
+    #colors_experiment_transfer = utils.color_dict[experiment][transfer-1]
 
+    ax_distances.plot(transfers, distances_combo, color = 'k', zorder=1)
+
+for combo in treatment_combinations:
+
+    for transfer in transfers:
+
+        distances_combo_transfer = distances_dict[combo][transfer]['D']
+        pvalues_combo_transfer = distances_dict[combo][transfer]['pvalue_bh']
+
+        colors_experiment_transfer_1 = utils.color_dict[combo[0]][transfer-1]
+        colors_experiment_transfer_2 = utils.color_dict[combo[1]][transfer-1]
+
+        if pvalues_combo_transfer < 0.05:
+
+            ax_distances.text(transfer, distances_combo_transfer+0.025, '*', fontsize=12, color='k', ha='center', va='center')#, transform=ax.transAxes )
+
+
+        marker_style = dict(color='k', marker='o',
+                            markerfacecoloralt=colors_experiment_transfer_1,
+                            markerfacecolor=colors_experiment_transfer_2)
+
+        #ax_distances.plot(transfer, distances_combo_transfer, alpha=1, edgecolors='k', marker=marker_dict[combo], s = 120, label=label_dict[combo], zorder=2)
+
+        ax_distances.plot(transfer, distances_combo_transfer, markersize = 16,   \
+            linewidth=2,  alpha=1, zorder=3, fillstyle='left', **marker_style)
 
 #transfers
 
-ax_distances.legend(loc="upper right", fontsize=6, markerscale=0.5)
+
+#legend_elements = [Line2D([0], [0], color='k', ls='--', lw=1.5, label='Mean ' + r'$\left | \beta_{1} -1 \right |$'),
+#                    Line2D([0], [0], color='k', ls=':', lw=1.5, label='Null')]
+#ax_distances.legend(handles=legend_elements, loc='upper left')
+#ax_distances.legend(loc="upper right", fontsize=6, markerscale=0.5)
+
 ax_distances.set_xlabel('Transfers' , fontsize=12)
 ax_distances.set_ylabel('Kolmogorov–Smirnov distance, '+ r'$D$', fontsize=12)
 

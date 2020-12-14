@@ -308,7 +308,7 @@ ax_width_global_migration.set_ylim([1e-2, 1e2])
 #ax_lognormal.text(0.8,0.82, r'$P\nless 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
 
 
-ax_mean.axhline(0, lw=3, ls=':',color='k', zorder=1)
+ax_mean.axhline(0, lw=3, ls=':',color='grey', zorder=1)
 ax_mean.plot(variance_transfers_no_migration, mean_no_migration, color = 'k', zorder=2)
 ax_mean.plot(variance_transfers_global_migration, mean_global_migration, color = 'k', zorder=2)
 
@@ -321,7 +321,7 @@ ax_mean.set_ylim(-0.65, 0.65)
 
 
 
-ax_cv.axhline(1, lw=3, ls=':',color='k', zorder=1)
+ax_cv.axhline(1, lw=3, ls=':',color='grey', zorder=1)
 ax_cv.plot(variance_transfers_no_migration, variance_no_migration, color = 'k', zorder=2)
 ax_cv.plot(variance_transfers_global_migration, variance_global_migration, color = 'k', zorder=2)
 
@@ -332,7 +332,7 @@ ax_cv.set_xlabel('Transfer', fontsize=12)
 #ax_cv.set_ylabel('CV of log-transformed relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
 ax_cv.set_ylabel('CV of log-transformed\nrelative abundance ratios, ' + r'$\frac{\sigma}{\left | \mu \right |}$', fontsize=12)
 
-ax_cv.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
+#ax_cv.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
 
 
 
@@ -404,12 +404,19 @@ mean_ratio_observed_cv, p_value_cv = test_difference_two_time_series(cv_no_migra
 sys.stdout.write("Mean difference test, D = %g,  P = %g\n" % (mean_ratio_observed_mean, p_value_mean))
 sys.stdout.write("CV difference test, D = %g,  P = %g\n" % (mean_ratio_observed_cv, p_value_cv))
 
-ax_cv.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
-ax_mean.text(0.8,0.9, r'$P\nless0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_mean.transAxes )
+ax_cv.text(0.82,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
+ax_mean.text(0.82,0.9, r'$P\nless0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_mean.transAxes )
 
 
+
+ax_mean.axvline(x=12, c='k', ls=':', lw=2, label='End of migration')
+ax_cv.axvline(x=12, c='k', ls=':', lw=2, label='End of migration')
+
+ax_mean.legend(loc="upper left", fontsize=8)
+ax_cv.legend(loc="upper left", fontsize=8)
 
 
 fig.subplots_adjust(wspace=0.5, hspace=0.3)
-fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
