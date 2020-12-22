@@ -1883,14 +1883,18 @@ def plot_attractor_predict_occupancy(transfer=18):
 
 
 
+plot_predicted_occupancies()
+
+
+#plot_abundance_occupy_dist()
 
 #taylors_law_time_series_old()
 
-plot_attractor_predict_occupancy()
+#plot_attractor_predict_occupancy()
 
 #plot_predicted_occupancies_migration()
 
-plot_per_timeseries_perdict_occupancy()
+#plot_per_timeseries_perdict_occupancy()
 
 
 

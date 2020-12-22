@@ -4,10 +4,29 @@ import math, sys
 import numpy as np
 import sympy
 from scipy import special, optimize, stats
+from decimal import Decimal
 
 import utils
 
 np.random.seed(123456789)
+
+#np.seterr(divide = 'ignore')
+
+
+'''
+Code to calculate the likelihood ratio for the gamma and zero-inflated gamma
+Eq. 11 in Grilli 2020 https://doi.org/10.1038/s41467-020-18529-y
+
+Script loops over a range of initial conditions and selects the highest log-likelihood
+for the gamma distribution
+
+For the zero-inflated gamma, for each initial condition the code loops through
+different means of the prior distribution N times. The mean log-likelihood is
+calculated over the prior. An initial condition is skipped if it fails to converge
+for any of the prior means.
+'''
+
+#18 species with >=10 non zero occurances in glucos
 
 
 # kl = vector of counts (non zeros)
@@ -25,31 +44,28 @@ np.random.seed(123456789)
 alfapriorq_list = np.asarray([0.005, 0.01, 0.05, 0.1, 0.15, 0.3, 0.7, 1.1, 1.5, 2.2, 3.1, 5.7, 9, 20])
 
 betapriorq_all = 0.4
+#prior_probability = alfapriorq_list/(alfapriorq_list+betapriorq_all)
 
-s_by_s_np, species, communities_final = utils.get_s_by_s('Leucine', transfer=12, communities=None)
-nrall = np.sum(s_by_s_np, axis=0)
+N_tries = 100
+N_sucesses = 50
 
-#Nrep = 50
+min_nonzero = 10
 
-
-print(alfapriorq_list/ (alfapriorq_list+betapriorq_all))
 
 # initialize all combinations of initial conditions
 x_start_list = []
 
 for x_mean in [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.01, 0.05, 0.1, 0.2, 0.3]:
 
-    for x_1 in [0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2, 2.5]:
+    for x_1 in [0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2, 2.5, 3]:
 
         x_start_list.append((np.log(x_mean), x_1))
 
+#x_start_list = [(-9.210340371976182, 1)]
 
 
 #kl = np.asarray([100, 100,400, 50, 30,20,10,10,1,1,1])
-
-
 #xstart <- c( log(mean(kl/nl) ), min( mean(kl/nl)^2/mean( (kl^2 - kl)/nl^2 ), 3) )
-
 
 
 def likelihoodgamma(data, x):
@@ -74,11 +90,7 @@ def likelihoodgamma(data, x):
 def maxlikelihoodgamma(xstart, kl, nrall):
 
     # go over initial conditions.....
-
     #xstart = (np.log(np.mean(kl/nrall)), min((np.mean(kl/nrall)**2)/np.mean( ((kl**2) - kl)/(nrall**2) ), 3))
-
-    #print(xstart )
-    #xstart = (-1, 0.9)
 
     data = [xstart, kl, nrall]
     likelihood_partial = partial(likelihoodgamma, data)
@@ -142,8 +154,6 @@ def maxlikelihoodinflatedgamma(xstart, kl, nrall, alfapriorq, betapriorq):
 
     x = optimize.broyden1(likelihood_partial, xin=xstart, f_tol=1e-14)
 
-    #try(ans <- nleqslv(xstart,likelihoodinflatedgamma, method="Broyden", global="dbldog", kl = kl, nl = nl , q =  q), silent = silentopt)
-
     _llambda = x[0]
     _beta = x[1]
     _lambda = math.exp(_llambda)
@@ -151,7 +161,7 @@ def maxlikelihoodinflatedgamma(xstart, kl, nrall, alfapriorq, betapriorq):
 
     logL = sum( np.log( q*[kl==0][0] + (1-q) * np.exp( (-1*special.gammaln(kl+1)) + special.gammaln(_beta+kl) - special.gammaln(_beta) + kl*np.log(p) + _beta*np.log(1-p) ) ) )
 
-    return _llambda, _beta, logL, q, xstart
+    return _llambda, _beta, p, logL, q, xstart
 
 
 
@@ -159,160 +169,193 @@ def maxlikelihoodinflatedgamma(xstart, kl, nrall, alfapriorq, betapriorq):
 
 
 
-np.seterr(divide = 'ignore')
+def calculate_all_likelihoods(carbon_source, alfapriorq_list, betapriorq_all):
 
+    s_by_s_np, species, communities_final = utils.get_s_by_s(carbon_source, transfer=12, communities=None)
+    nrall = np.sum(s_by_s_np, axis=0)
 
-N_tries = 500
-N_sucesses = 50
+    priors_mean = alfapriorq_list / (alfapriorq_list +betapriorq_all)
 
-priors_mean = alfapriorq_list / (alfapriorq_list +betapriorq_all)
+    header = ['ESV', 'N_obs', 'N_obs_nonzero', 'maxloglikelihoodgamma', 'maxloglikelihoodinflatedgamma']
+    for prior_mean in priors_mean:
+        header.append('maxlikelihoodinflatedgamma-%s'%str(prior_mean))
 
-header = ['ESV', 'maxlikelihoodgamma', 'maxlikelihoodinflatedgamma']
-for prior_mean in priors_mean:
-    header.append('maxlikelihoodinflatedgamma-%s'%str(prior_mean))
+    record_strs = [",".join(header)]
 
-record_strs = [", ".join(header)]
+    for afd_i_idx, afd_i in enumerate(s_by_s_np):
 
+        #if afd_i_idx > 0:
+        #    continue
 
+        if len(afd_i[afd_i>0]) < min_nonzero:
+            continue
 
-alfapriorq_list
+        x_start_list_i = x_start_list.copy()
+        x_start_list_i.append((np.log(np.mean(afd_i/nrall)), min((np.mean(afd_i/nrall)**2)/np.mean( ((afd_i**2) - afd_i)/(nrall**2) ), 3)))
 
-for afd_i_idx, afd_i in enumerate(s_by_s_np):
+        logL_0 = -1000000000
 
-    prop_zeros = sum(afd_i==0) / len(communities_final)
+        llambda_best = 0
+        beta_best = 0
+        logL_best = logL_0
+        xstart_best = (1,1)
 
-    if prop_zeros > 0.8:
-        continue
+        for x_start_i in x_start_list_i:
 
-    x_start_list_i = x_start_list.copy()
-    x_start_list_i.append((np.log(np.mean(afd_i/nrall)), min((np.mean(afd_i/nrall)**2)/np.mean( ((afd_i**2) - afd_i)/(nrall**2) ), 3)))
+            try:
 
-    logL_0 = -1000000000
+                llambda, beta, logL, xstart = maxlikelihoodgamma(x_start_i, afd_i, nrall)
+                converged = True
 
-    llambda_best = 0
-    beta_best = 0
-    logL_best = logL_0
-    xstart_best = (1,1)
+                # keep maximum log likelihood
+                if logL > logL_best:
 
-    llambda_inflated_best = 0
-    beta_inflated_best = 0
-    logL_inflated_best = logL_0
-    xstart_inflated_best = (1,1)
-    alpha_dict_best = {}
+                    llambda_best = llambda
+                    beta_best = beta
+                    logL_best = logL
+                    xstart_best = xstart
 
-    for x_start_i in x_start_list_i:
+            except optimize.nonlin.NoConvergence as e:
 
-        try:
-
-            llambda, beta, logL, xstart = maxlikelihoodgamma(x_start_i, afd_i, nrall)
-            converged = True
-
-            # keep maximum log likelihood
-            if logL > logL_best:
-
-                llambda_best = llambda
-                beta_best = beta
-                logL_best = logL
-                xstart_best = xstart
-
-        except optimize.nonlin.NoConvergence as e:
-
-            x = e.args[0]
-            converged = False
+                x = e.args[0]
+                converged = False
 
 
         # for zero inflated gamma, go over a range of starting conditions
-        # for each starting condition, go through each prior fifty times
-        # compute the average of the
+        # for each prior fifty times
+        # compute the weighted average of the maximum likelihood for all
+        # initial conditions that successfully converge for a given prior
 
-        # number of alphas with less than k successful optimizations
+        # try to save time by skipping initial conditions where
+        # less than k alphas successfully optimize
 
-        alpha_dict = {}
+        prior_dict = {}
 
         num_failures = 0
         for alpha in alfapriorq_list:
 
-            # if we can't get enough sucessful iterations to perform the averaging,
-            # skip to the next set of initial conditions
-            if num_failures > 2:
+            if num_failures > 0:
                 continue
 
-            logL_inflated_alpha = []
-            N_tries_i = 0
-            N_sucesses_i = 0
+            prior_probability = alpha / (alpha+betapriorq_all)
 
-            while (N_tries_i < N_tries) and (N_sucesses_i <= N_sucesses):
+            mean_weighted_logL_inflated_best = -1000000000
+            logL_inflated_best_array = np.asarray([])
+            q_inflated_best_array = np.asarray([])
 
-            #for N_i in range(Nrep):
+            for x_start_i in x_start_list_i:
 
-                try:
+                # if we can't get enough sucessful iterations to perform the averaging,
+                # skip to the next set of initial conditions
+                #if num_failure s > 0:
+                #    continue
 
-                    llambda_inflated, beta_inflated, logL_inflated, q_inflated, xstart_inflatd = maxlikelihoodinflatedgamma(x_start_i, afd_i, nrall, alpha, betapriorq_all)
-                    converged = True
+                logL_inflated_i = []
+                #p_inflated_alpha = []
+                q_inflated_i = []
+                N_tries_i = 0
+                N_sucesses_i = 0
 
-                    logL_inflated_alpha.append(logL_inflated)
-                    N_sucesses_i += 1
+                while (N_tries_i < N_tries) and (N_sucesses_i < N_sucesses):
+
+                    try:
+
+                        llambda_inflated, beta_inflated, p_inflated, logL_inflated, q_inflated, xstart_inflatd = maxlikelihoodinflatedgamma(x_start_i, afd_i, nrall, alpha, betapriorq_all)
+                        converged = True
+                        logL_inflated_i.append(logL_inflated)
+                        #p_inflated_alpha.append(p_inflated)
+                        # get the prior
+                        q_inflated_i.append(q_inflated)
+                        N_sucesses_i += 1
+
+                    except optimize.nonlin.NoConvergence as e:
+
+                        x = e.args[0]
+                        converged = False
+
+                    N_tries_i += 1
+
+                # skip to next iteration if optimization did not succeed for all priors
+                if len(logL_inflated_i) < N_sucesses:
+                    continue
+
+                logL_inflated_i = np.asarray(logL_inflated_i)
+                q_inflated_i  = np.asarray(q_inflated_i )
+                # multiply the mean by prior probability because the prior
+                # is a random variable, i.e., different values in different iterations
+                #mean_weighted_logL_inflated_array_i = np.mean(logL_inflated_i * q_inflated_i)
+                mean_weighted_logL_inflated_array_i = logL_inflated_i + np.log(q_inflated_i)
+
+                mean_weighted_logL_inflated_list_i = mean_weighted_logL_inflated_array_i.tolist()
+                mean_weighted_logL_inflated_list_i = [Decimal(l).exp() for l in mean_weighted_logL_inflated_list_i]
+                mean_weighted_logL_inflated_i = float( (sum(mean_weighted_logL_inflated_list_i) / len(mean_weighted_logL_inflated_list_i)).ln() )
+
+                if mean_weighted_logL_inflated_i > mean_weighted_logL_inflated_best:
+
+                    # keep maximum log likelihood
+                    mean_weighted_logL_inflated_best = mean_weighted_logL_inflated_i
+                    logL_inflated_best_array = logL_inflated_i
+                    q_inflated_best_array = q_inflated_i
 
 
-                except optimize.nonlin.NoConvergence as e:
-
-                    x = e.args[0]
-                    converged = False
-
-                N_tries_i += 1
+                print(carbon_source, afd_i_idx, prior_probability, x_start_i, mean_weighted_logL_inflated_best)
 
 
-            if len(logL_inflated_alpha) < 10:
-                num_failures += 1
-                continue
+            if len(logL_inflated_best_array) < N_sucesses:
+                num_failures+=1
 
 
-            alpha_dict[alpha] = (np.mean(logL_inflated_alpha), len(logL_inflated_alpha))
+            prior_dict[prior_probability] = {}
+
+            prior_dict[prior_probability]['logL_inflated_best_array'] = logL_inflated_best_array
+
+            prior_dict[prior_probability]['q_inflated_best_array'] = q_inflated_best_array
+
+            print(prior_probability)
 
 
-            print(afd_i_idx, x_start_i, alpha/(alpha+betapriorq_all), len(logL_inflated_alpha))
-
-        # skip to next iteration if optimization did not succeed for all priors
-        if len(x) < len(alfapriorq_list):
+        # skip the species if we could not get a MLE for all priors
+        if len(prior_dict) < len(alfapriorq_list):
             continue
 
-        weighted_mean_likelihood = sum([k[0] * k[1] for k in alpha_dict.values()]) / sum([k[1] for k in alpha_dict.values()])
 
-        print(alpha_dict)
+        #logL_inflated_all = [ prior_dict[k]['logL_inflated_best_array'] * prior_dict[k]['q_inflated_best_array'] for k in prior_dict.keys() ]
+        # add together the log likelihood and the log of the probability, log(prob * likelihood) = log(prob) + log(likelihood)
+        logL_inflated_all = [prior_dict[k]['logL_inflated_best_array'] + np.log(prior_dict[k]['q_inflated_best_array']) for k in prior_dict.keys() ]
+        logL_inflated_all = np.concatenate(logL_inflated_all).ravel()
+        logL_inflated_all_list = logL_inflated_all.tolist()
+        # convert back from log scale and turn into decimal to prevent overflow
+        logL_inflated_all_list_decimal = [Decimal(l).exp() for l in logL_inflated_all_list]
+        # now calculate the mean
+        mean_weighted_logL_inflated_all  = float( (sum(logL_inflated_all_list_decimal) / len(logL_inflated_all_list_decimal)).ln() )
+        #mean_weighted_logL_inflated_all = math.log(np.mean(logL_inflated_all_list_decimal))
 
-        if weighted_mean_likelihood > logL_inflated_best:
+        record_list = [species[afd_i_idx], str(len(afd_i)), str(len(afd_i[afd_i>0])), str(logL_best), str(mean_weighted_logL_inflated_all)]
 
-            # keep maximum log likelihood
-            logL_inflated_best = weighted_mean_likelihood
-            #beta_inflated_best = beta
-            #llambda_inflated_best = logL
-            #xstart_inflated_best = xstart
+        for prior_prob_i in sorted(list(prior_dict.keys())):
 
-            alpha_dict_best = alpha_dict
+            logL_i = prior_dict[prior_prob_i]['logL_inflated_best_array'] + np.log(prior_dict[prior_prob_i]['q_inflated_best_array'])
+            logL_i_list = logL_i.tolist()
+            logL_i_list_decimal = [Decimal(l).exp() for l in logL_i_list]
 
+            record_list.append(str( float( (sum(logL_i_list_decimal) / len(logL_i_list_decimal)).ln() ) ))
 
-    # print out likelihood for both models and all alphas for that species if the iteration worked
-    if logL_inflated_best != logL_0:
-
-        record_list = [species[afd_i_idx], str(llambda_best), str(logL_inflated_best)]
-
-        for alfapriorq_list_i in alfapriorq_list:
-
-            record_list.append(str(alpha_dict_best[alfapriorq_list_i]))
-
-        record_str = ", ".join(record_list)
+        record_str = ",".join(record_list)
         record_strs.append(record_str)
 
 
+    sys.stderr.write("Done with %s species!\n" % carbon_source)
+    sys.stderr.write("Writing intermediate file...\n")
+    intermediate_filename = "%s/data/%s_gamma_likelihood.csv" % (utils.directory, carbon_source)
+    file = open(intermediate_filename,"w")
+    record_str = "\n".join(record_strs)
+    file.write(record_str)
+    file.close()
+    sys.stderr.write("Done!\n")
 
 
-dataset = 'glucose'
 
-sys.stderr.write("Done with %s species!\n" % dataset)
-sys.stderr.write("Writing intermediate file...\n")
-intermediate_filename = "%s/data/%s_gamma_likelihood.csv" % (utils.directory, dataset)
-file = gzip.open(intermediate_filename,"w")
-record_str = "\n".join(record_strs)
-file.write(record_str)
-file.close()
-sys.stderr.write("Done!\n")
+
+for carbon in utils.carbons:
+
+    calculate_all_likelihoods(carbon, alfapriorq_list, betapriorq_all)
