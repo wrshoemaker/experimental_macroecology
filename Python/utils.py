@@ -178,12 +178,13 @@ def get_s_by_s_temporal(transfers, carbon='Glucose'):
     #print(comm_rep_transfer_list)
 
 
-def get_species_means_and_variances(rel_s_by_s, min_observations=3, zeros=False):
+def get_species_means_and_variances(rel_s_by_s, species_list, min_observations=3, zeros=False):
 
     mean_rel_abundances = []
     var_rel_abundances = []
+    species_to_keep = []
 
-    for afd in rel_s_by_s:
+    for afd_idx, afd in enumerate(rel_s_by_s):
 
         afd_no_zeros = afd[afd>0]
 
@@ -200,10 +201,13 @@ def get_species_means_and_variances(rel_s_by_s, min_observations=3, zeros=False)
             mean_rel_abundances.append(np.mean(afd_no_zeros))
             var_rel_abundances.append(np.var(afd_no_zeros))
 
+        species_to_keep.append(species_list[afd_idx])
+
     mean_rel_abundances = np.asarray(mean_rel_abundances)
     var_rel_abundances = np.asarray(var_rel_abundances)
+    species_to_keep = np.asarray(species_to_keep)
 
-    return mean_rel_abundances, var_rel_abundances
+    return mean_rel_abundances, var_rel_abundances, species_to_keep
 
 
 

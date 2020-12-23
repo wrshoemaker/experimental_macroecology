@@ -53,6 +53,7 @@ min_nonzero = 10
 
 
 # initialize all combinations of initial conditions
+# 13X10 = 130 initial conditions
 x_start_list = []
 
 for x_mean in [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.01, 0.05, 0.1, 0.2, 0.3]:
@@ -319,9 +320,9 @@ def calculate_all_likelihoods(carbon_source, alfapriorq_list, betapriorq_all):
             continue
 
 
-        #logL_inflated_all = [ prior_dict[k]['logL_inflated_best_array'] * prior_dict[k]['q_inflated_best_array'] for k in prior_dict.keys() ]
         # add together the log likelihood and the log of the probability, log(prob * likelihood) = log(prob) + log(likelihood)
-        logL_inflated_all = [prior_dict[k]['logL_inflated_best_array'] + np.log(prior_dict[k]['q_inflated_best_array']) for k in prior_dict.keys() ]
+        #logL_inflated_all = [prior_dict[k]['logL_inflated_best_array'] + np.log(prior_dict[k]['q_inflated_best_array']) for k in prior_dict.keys() ]
+        logL_inflated_all = [prior_dict[k]['logL_inflated_best_array'] for k in prior_dict.keys() ]
         logL_inflated_all = np.concatenate(logL_inflated_all).ravel()
         logL_inflated_all_list = logL_inflated_all.tolist()
         # convert back from log scale and turn into decimal to prevent overflow
@@ -334,10 +335,11 @@ def calculate_all_likelihoods(carbon_source, alfapriorq_list, betapriorq_all):
 
         for prior_prob_i in sorted(list(prior_dict.keys())):
 
-            logL_i = prior_dict[prior_prob_i]['logL_inflated_best_array'] + np.log(prior_dict[prior_prob_i]['q_inflated_best_array'])
+            #logL_i = prior_dict[prior_prob_i]['logL_inflated_best_array'] + np.log(prior_dict[prior_prob_i]['q_inflated_best_array'])
+            logL_i = prior_dict[prior_prob_i]['logL_inflated_best_array']
             logL_i_list = logL_i.tolist()
             logL_i_list_decimal = [Decimal(l).exp() for l in logL_i_list]
-
+            # get the log of the mean likelihood
             record_list.append(str( float( (sum(logL_i_list_decimal) / len(logL_i_list_decimal)).ln() ) ))
 
         record_str = ",".join(record_list)

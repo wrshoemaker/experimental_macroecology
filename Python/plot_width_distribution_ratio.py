@@ -253,7 +253,7 @@ ax_width_no_migration.set_xlabel('Average relative abundance\nat time $t$, ' + r
 ax_width_no_migration.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
 
 ax_width_no_migration.set_xlim([1e-4, 1])
-ax_width_no_migration.set_ylim([1e-2, 1e2])
+ax_width_no_migration.set_ylim([0.5e-2, 3e2])
 
 
 ax_width_global_migration.axhline(1, lw=3, ls=':',color='k', zorder=1)
@@ -264,9 +264,55 @@ ax_width_global_migration.set_xlabel('Average relative abundance\nat time $t$, '
 ax_width_global_migration.set_ylabel('Width distribution of relative\nabundance ratios, ' + r'$\left \langle \frac{x(t + \delta t) }{x(t ) } \right \rangle$', fontsize=12)
 
 ax_width_global_migration.set_xlim([1e-4, 1])
-ax_width_global_migration.set_ylim([1e-2, 1e2])
+ax_width_global_migration.set_ylim([0.5e-2, 3e2])
 
 
+
+ins_width_no_migration = inset_axes(ax_width_no_migration, width="100%", height="100%", loc='upper right', bbox_to_anchor=(0.73,0.75,0.25,0.25), bbox_transform=ax_width_no_migration.transAxes)
+ins_width_global_migration = inset_axes(ax_width_global_migration, width="100%", height="100%", loc='upper right', bbox_to_anchor=(0.73,0.75,0.25,0.25), bbox_transform=ax_width_global_migration.transAxes)
+
+
+shape_no_migration, loc_no_migration, scale_no_migration = stats.lognorm.fit(mean_width_distribution_ratios_no_migration)
+shape_global_migration, loc_global_migration, scale_global_migration = stats.lognorm.fit(mean_width_distribution_ratios_global_migration)
+
+x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration) , max(mean_width_distribution_ratios_no_migration) , 10000)
+x_range_global_migration = np.linspace(min(mean_width_distribution_ratios_global_migration) , max(mean_width_distribution_ratios_global_migration) , 10000)
+
+samples_fit_log_no_migration = stats.lognorm.pdf(x_range_no_migration, shape_no_migration, loc_no_migration, scale_no_migration)
+samples_fit_log_global_migration = stats.lognorm.pdf(x_range_global_migration, shape_global_migration, loc_global_migration, scale_global_migration)
+
+ins_width_no_migration.hist(mean_width_distribution_ratios_no_migration, histtype='step', color=colors_no_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
+ins_width_global_migration.hist(mean_width_distribution_ratios_global_migration, histtype='step', color=colors_global_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
+
+
+#ins_width_no_migration.axvline(0, lw=2.5, ls=':',color='k', zorder=3)
+#ins_width_global_migration.axvline(0, lw=2.5, ls=':',color='k', zorder=3)
+
+ins_width_no_migration.axvline(np.mean(x_range_no_migration), lw=2.5, ls=':', color=width_colors_no_migration[-3],zorder=3)
+ins_width_global_migration.axvline(np.mean(x_range_global_migration), lw=2.5, ls=':', color=width_colors_global_migration[-3],zorder=3)
+
+ins_width_no_migration.plot(x_range_no_migration, samples_fit_log_no_migration, color=width_colors_no_migration[-3], label='Lognormal fit', lw=3, zorder=3)
+ins_width_global_migration.plot(x_range_global_migration, samples_fit_log_global_migration, color=width_colors_global_migration[-3], label='Lognormal fit', lw=3, zorder=3)
+
+ins_width_no_migration.set_yscale('log', basey=10)
+ins_width_global_migration.set_yscale('log', basey=10)
+
+ins_width_no_migration.set_xlabel('Width dist., ' + r'$\mathrm{log}_{10}$', fontsize=7)
+ins_width_global_migration.set_xlabel('Width dist., ' + r'$\mathrm{log}_{10}$', fontsize=7)
+
+ins_width_no_migration.set_ylabel('Prob. density', fontsize=7)
+ins_width_global_migration.set_ylabel('Prob. density', fontsize=7)
+
+
+ins_width_no_migration.tick_params(labelsize=5)
+ins_width_no_migration.tick_params(axis='both', which='major', pad=1)
+
+ins_width_global_migration.tick_params(labelsize=5)
+ins_width_global_migration.tick_params(axis='both', which='major', pad=1)
+
+
+ins_width_no_migration.set_xlim([-2.2, 2.2])
+ins_width_global_migration.set_xlim([-2.2, 2.2])
 
 
 #ax_1.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
@@ -278,29 +324,7 @@ ax_width_global_migration.set_ylim([1e-2, 1e2])
 #sys.stdout.write("KS = %g, P= %g\n" % (KS_statistic, p_value))
 
 
-#shape_no_migration, loc_no_migration, scale_no_migration = stats.lognorm.fit(mean_width_distribution_ratios_no_migration)
-#shape_global_migration, loc_global_migration, scale_global_migration = stats.lognorm.fit(mean_width_distribution_ratios_global_migration)
 
-#x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration) , max(mean_width_distribution_ratios_no_migration) , 10000)
-#x_range_global_migration = np.linspace(min(mean_width_distribution_ratios_global_migration) , max(mean_width_distribution_ratios_global_migration) , 10000)
-
-#samples_fit_log_no_migration = stats.lognorm.pdf(x_range_no_migration, shape_no_migration, loc_no_migration, scale_no_migration)
-#samples_fit_log_global_migration = stats.lognorm.pdf(x_range_global_migration, shape_global_migration, loc_global_migration, scale_global_migration)
-
-#ax_lognormal.hist(mean_width_distribution_ratios_no_migration, histtype='step', color=colors_no_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
-#ax_lognormal.hist(mean_width_distribution_ratios_global_migration, histtype='step', color=colors_global_migration[8], lw=3, alpha=0.8, bins= 12, density=True, zorder=2)
-
-#ax_lognormal.axvline(0, lw=2.5, ls=':',color='darkgrey', zorder=3)
-
-#ax_lognormal.axvline(np.mean(x_range_no_migration), lw=2.5, ls=':', color=width_colors_no_migration[-3],zorder=3)
-#ax_lognormal.axvline(np.mean(x_range_global_migration), lw=2.5, ls=':', color=width_colors_global_migration[-3],zorder=3)
-
-
-#ax_lognormal.plot(x_range_no_migration, samples_fit_log_no_migration, color=width_colors_no_migration[-3], label='Lognormal fit', lw=3, zorder=3)
-#ax_lognormal.plot(x_range_global_migration, samples_fit_log_global_migration, color=width_colors_global_migration[-3], label='Lognormal fit', lw=3, zorder=3)
-#ax_lognormal.set_yscale('log', basey=10)
-#ax_lognormal.set_xlabel('Width distribution of relative\nabundance ratios, ' + r'$\mathrm{log}_{10}$', fontsize=12)
-#ax_lognormal.set_ylabel('Probability density', fontsize=12)
 
 #ax_lognormal.legend(loc="lower center", fontsize=8)
 
