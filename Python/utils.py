@@ -6,14 +6,26 @@ import pandas as pd
 
 import bisect
 
+from scipy import stats, signal
+
 from matplotlib import cm
 
+family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
+                'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',
+                'Lachnospiraceae':'deepskyblue', 'Pseudomonadaceae':'darkviolet'}
+
+
 color_range =  np.linspace(0.0, 1.0, 18)
-rgb = cm.get_cmap('Blues')( color_range )
+rgb_blue = cm.get_cmap('Blues')( color_range )
 rgb_red = cm.get_cmap('Reds')( color_range )
 rgb_green = cm.get_cmap('Greens')( color_range )
 
-color_dict = {('No_migration',4):rgb, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green }
+rgb_alcaligenaceae = cm.get_cmap('Oranges')( color_range )
+rgb_pseudomonadaceae = cm.get_cmap('Purples')( color_range )
+
+color_dict = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green }
+
+attractor_latex_dict = {'Alcaligenaceae': r'$Alcaligenaceae$', 'Pseudomonadaceae': r'$Pseudomonadaceae$'}
 
 
 #from macroeco_distributions import pln, pln_solver, pln_ll
@@ -27,6 +39,7 @@ otu_path = directory + '/data/otu_table.csv'
 carbons = ['Glucose', 'Citrate', 'Leucine']
 carbons_colors = ['royalblue', 'forestgreen', 'darkred']
 carbons_shapes = ['o', 'D', 'X']
+attractors = [ 'Alcaligenaceae', 'Pseudomonadaceae']
 
 titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
 
@@ -47,9 +60,15 @@ titles_no_inocula_dict = {('No_migration',4): 'No migration',
                 ('Glucose', np.nan): 'Glucose' }
 
 
-family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
-                'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',
-                'Lachnospiraceae':'deepskyblue', 'Pseudomonadaceae':'darkviolet'}
+
+
+
+
+def calculate_noise_color():
+
+    # Fourier transform
+    frq, f = signal.periodogram(data[c])
+
 
 
 
@@ -208,6 +227,124 @@ def get_species_means_and_variances(rel_s_by_s, species_list, min_observations=3
     species_to_keep = np.asarray(species_to_keep)
 
     return mean_rel_abundances, var_rel_abundances, species_to_keep
+
+
+
+
+
+def get_temporal_patterns(migration_innoculum, attractor=None):
+
+    relative_abundance_dict_init = get_relative_abundance_dictionary_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
+
+    if attractor != None:
+        attractor_dict = get_attractor_status(migration=migration_innoculum[0], inocula=migration_innoculum[1])
+        to_keep = attractor_dict[attractor]
+        relative_abundance_dict = {}
+        for ESV, ESV_dict in relative_abundance_dict_init.items():
+
+            for replicate in ESV_dict.keys():
+                if replicate in to_keep:
+
+                    if ESV not in relative_abundance_dict:
+                        relative_abundance_dict[ESV] = {}
+                    relative_abundance_dict[ESV][replicate] = ESV_dict[replicate]
+
+    else:
+        relative_abundance_dict = relative_abundance_dict_init
+
+
+    species_mean_relative_abundances = []
+    species_mean_absolute_differences = []
+    species_mean_width_distribution_ratios = []
+    species_transfers = []
+    species_names = []
+
+    species_mean_width_distribution_ratios_dict = {}
+
+    for species, species_dict in relative_abundance_dict.items():
+
+        species_abundance_difference_dict = {}
+
+        for replicate, species_replicate_dict in species_dict.items():
+
+            if len(species_replicate_dict['transfers']) < 2:
+                continue
+
+            transfers = np.asarray(species_replicate_dict['transfers'])
+
+            relative_abundances = np.asarray(species_replicate_dict['relative_abundances'])
+
+            transfer_differences = transfers[:-1]
+            absolute_differences = np.abs(relative_abundances[1:] - relative_abundances[:-1])
+
+            #width_distribution_ratios = np.abs(relative_abundances[1:] / relative_abundances[:-1])
+            width_distribution_ratios = relative_abundances[1:] / relative_abundances[:-1]
+
+            for transfer_difference_idx, transfer_difference in enumerate(transfer_differences):
+
+                if str(transfer_difference) not in species_abundance_difference_dict:
+                    species_abundance_difference_dict[str(transfer_difference)] = {}
+                    species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'] = []
+                    species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'] = []
+                    species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'] = []
+
+                species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'].append(absolute_differences[transfer_difference_idx])
+                species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'].append(relative_abundances[transfer_difference_idx])
+                species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'].append(width_distribution_ratios[transfer_difference_idx])
+
+
+        for transfer, transfer_dict in species_abundance_difference_dict.items():
+
+            if len(transfer_dict['relative_abundances']) < 3:
+                continue
+
+            species_mean_relative_abundances.append(np.mean(np.log10(transfer_dict['relative_abundances'])))
+            species_mean_absolute_differences.append(np.mean(np.log10(transfer_dict['absolute_differences'])))
+            species_mean_width_distribution_ratios.append(np.mean(np.log10(transfer_dict['width_distribution_ratios'])))
+            species_transfers.append(int(transfer))
+            species_names.append(species)
+
+
+            if int(transfer) not in species_mean_width_distribution_ratios_dict:
+                species_mean_width_distribution_ratios_dict[int(transfer)] = []
+
+            species_mean_width_distribution_ratios_dict[int(transfer)].append(np.mean(np.log10(transfer_dict['width_distribution_ratios'])))
+
+
+    # calcualte variance in width distribution
+    variance_width_distribution_transfers = []
+    variance_width_distribution = []
+
+    #mean_width_distribution_transfers = []
+    mean_width_distribution = []
+
+    for transfer_, widths_ in species_mean_width_distribution_ratios_dict.items():
+
+        widths_ = np.asarray(widths_)
+
+        if transfer_ == 6:
+            widths_ = widths_[widths_<-1.8]
+
+        if len(widths_) < 3:
+            continue
+
+        variance_width_distribution_transfers.append(transfer_)
+        variance_width_distribution.append(np.sqrt(np.var(widths_)) / np.absolute(np.mean(widths_)) )
+
+        mean_width_distribution.append(np.mean(widths_))
+
+    variance_width_distribution_transfers = np.asarray(variance_width_distribution_transfers)
+    variance_width_distribution = np.asarray(variance_width_distribution)
+    mean_width_distribution = np.asarray(mean_width_distribution)
+
+    species_mean_relative_abundances = np.asarray(species_mean_relative_abundances)
+    species_mean_absolute_differences = np.asarray(species_mean_absolute_differences)
+    species_mean_width_distribution_ratios = np.asarray(species_mean_width_distribution_ratios)
+
+    species_transfers = np.asarray(species_transfers)
+    species_names = np.asarray(species_names)
+
+    return species_names, species_transfers, species_mean_relative_abundances, species_mean_absolute_differences, species_mean_width_distribution_ratios, variance_width_distribution_transfers, variance_width_distribution, mean_width_distribution
 
 
 
@@ -384,6 +521,8 @@ def plot_color_by_pt_dens(x, y, radius, loglog=0, plot_obj=None):
 
 
 
+
+
 def predict_occupancy(s_by_s):
 
     s_by_s_presence_absence = np.where(s_by_s > 0, 1, 0)
@@ -404,8 +543,6 @@ def predict_occupancy(s_by_s):
     #tf = np.mean(rel_abundances)
     tf = np.asarray(tf)
     # go through and calculate the variance for each species
-
-
 
     tvpf_list = []
     for afd in s_by_s:
@@ -434,7 +571,7 @@ def predict_occupancy(s_by_s):
     # each species has it's own beta and theta, which is used to calculate predicted occupancy
     for beta_i, theta_i in zip(beta,theta):
 
-        predicted_occupancies.append(1 - np.mean( (1+theta_i*totreads) **(-1*beta_i ) )  )
+        predicted_occupancies.append(1 - np.mean( ((1+theta_i*totreads)**(-1*beta_i ))   ))
 
         #1- mean( (1.+theta*totreads)^(-beta ) )
 
@@ -869,3 +1006,67 @@ def get_attractor_status(migration='No_migration', inocula=4):
     attractor_file.close()
 
     return attractor_dict
+
+
+
+
+def get_slopes_cutoffs(mean_relative_abundances, mean_absolute_differences):
+
+    x_cutoffs = np.linspace(np.log10(0.01), np.log10(1), num=100)
+
+    slopes_cutoff = []
+
+    for x_cutoff in x_cutoffs:
+
+        mean_relative_abundances_cutoff = mean_relative_abundances[mean_relative_abundances< x_cutoff]
+        mean_absolute_differences_cutoff = mean_absolute_differences[mean_relative_abundances< x_cutoff]
+        #mean_relative_abundances_cutoff = mean_relative_abundances[(mean_relative_abundances> x_cutoff-0.5) & (mean_relative_abundances< x_cutoff) ]
+        #mean_absolute_differences_cutoff = mean_absolute_differences[(mean_relative_abundances> x_cutoff-0.5) & (mean_relative_abundances< x_cutoff) ]
+
+        slope_cutoff, intercept_cutoff, r_value_cutoff, p_value_cutoff, std_err_cutoff = stats.linregress(mean_relative_abundances_cutoff, mean_absolute_differences_cutoff)
+        slopes_cutoff.append(slope_cutoff)
+
+    slopes_cutoff = np.asarray(slopes_cutoff)
+
+    return x_cutoffs, slopes_cutoff
+
+
+
+
+## Variance difference test
+
+def test_difference_two_time_series(array_1, array_2):
+    # two-sided test
+    _matrix = np.array([array_1, array_2])
+    #mean_ratio_observed = sum(_matrix[0,:] - _matrix[1,:])
+    mean_ratio_observed = np.absolute(np.mean(_matrix[0,:] - _matrix[1,:]))
+
+    null_values = []
+    for i in range(10000):
+        _matrix_copy = np.copy(_matrix)
+        for i in range(_matrix_copy.shape[1]):
+            np.random.shuffle(_matrix_copy[:,i])
+
+        #null_values.append(sum(_matrix_copy[0,:] - _matrix_copy[1,:]))
+        null_values.append(np.absolute(np.mean(_matrix_copy[0,:] - _matrix_copy[1,:])))
+
+    null_values = np.asarray(null_values)
+    p_value = len(null_values[null_values > mean_ratio_observed]) / 10000
+
+    return mean_ratio_observed, p_value
+
+
+
+def get_intersecting_timepoints(transfers_1, observations_1, transfers_2, observations_2):
+
+    transfers_intersect = np.intersect1d(transfers_1, transfers_2)
+
+    sorter_1 = np.argsort(transfers_1)
+    sorted_idx_1 = sorter_1[np.searchsorted(transfers_1, transfers_intersect, sorter=sorter_1)]
+    observations_1_intersect = observations_1[sorted_idx_1]
+
+    sorter_2 = np.argsort(transfers_2)
+    sorted_idx_2 = sorter_2[np.searchsorted(transfers_2, transfers_intersect, sorter=sorter_2)]
+    observations_2_intersect = observations_2[sorted_idx_2]
+
+    return transfers_intersect, observations_1_intersect, observations_2_intersect

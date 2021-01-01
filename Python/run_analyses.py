@@ -1809,6 +1809,7 @@ def plot_per_timeseries_perdict_occupancy():
         s_by_s, species, comm_rep_list = utils.get_s_by_s_temporal_migration(migration=migration,inocula=inocula,communities=[community])
 
         occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+        print(  (occupancies - predicted_occupancies ) / (1-predicted_occupancies) )
         ax.scatter(occupancies, predicted_occupancies, alpha=0.5,zorder=2)#, c='#87CEEB'
 
 
@@ -1881,10 +1882,50 @@ def plot_attractor_predict_occupancy(transfer=18):
     plt.close()
 
 
+from operator import itemgetter
 
 
-plot_predicted_occupancies()
+def occupancy_vs_likelihood():
+    intermediate_filename = "%s/data/%s_gamma_likelihood.csv" % (utils.directory, 'Glucose')
+    file = open(intermediate_filename,"r")
+    header_split = file.readline().strip().split(',')
+    prior_prob = [float(x.split('-')[1]) for x in header_split[5:]]
 
+    s_by_s, ESVs, comm_rep_list = utils.get_s_by_s('Glucose', transfer=12, communities=None)
+
+    occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+
+    occupancy_dict = {}
+    for ESV_zipped in zip(ESVs, occupancies, predicted_occupancies):
+        occupancy_dict[ESV_zipped[0]] = {}
+        occupancy_dict[ESV_zipped[0]]['occupancy'] = ESV_zipped[1]
+        occupancy_dict[ESV_zipped[0]]['predicted_occupancy'] = ESV_zipped[2]
+
+
+    for line in file:
+
+        line_split = line.strip().split(',')
+
+        occupancy = int(line_split[2])/int(line_split[1])
+
+        prior_prob_likelihoods = [float(x) for x in line_split[5:]]
+        prior_prob_max_line = prior_prob[max(enumerate(prior_prob_likelihoods), key=itemgetter(1))[0]]
+
+        deviation = occupancy - occupancy_dict[line_split[0]]['predicted_occupancy']
+
+        print(deviation,  prior_prob_max_line )
+
+    file.close()
+
+
+
+
+
+
+occupancy_vs_likelihood()
+
+#plot_predicted_occupancies()
+#plot_per_timeseries_perdict_occupancy()
 
 #plot_abundance_occupy_dist()
 

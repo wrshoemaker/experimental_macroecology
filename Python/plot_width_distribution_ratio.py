@@ -17,135 +17,20 @@ np.random.seed(123456789)
 
 number_transfers = 18
 
-x_cutoffs = np.linspace(np.log10(0.01), np.log10(1), num=100)
-
-
-def get_slopes_cutoffs(mean_relative_abundances, mean_absolute_differences, x_cutoffs=x_cutoffs):
-
-    slopes_cutoff = []
-
-    for x_cutoff in x_cutoffs:
-
-        mean_relative_abundances_cutoff = mean_relative_abundances[mean_relative_abundances< x_cutoff]
-        mean_absolute_differences_cutoff = mean_absolute_differences[mean_relative_abundances< x_cutoff]
-
-        #print(x_cutoff-0.5, x_cutoff)
-        #mean_relative_abundances_cutoff = mean_relative_abundances[(mean_relative_abundances> x_cutoff-0.5) & (mean_relative_abundances< x_cutoff) ]
-        #mean_absolute_differences_cutoff = mean_absolute_differences[(mean_relative_abundances> x_cutoff-0.5) & (mean_relative_abundances< x_cutoff) ]
-
-        slope_cutoff, intercept_cutoff, r_value_cutoff, p_value_cutoff, std_err_cutoff = stats.linregress(mean_relative_abundances_cutoff, mean_absolute_differences_cutoff)
-        slopes_cutoff.append(slope_cutoff)
-
-    slopes_cutoff = np.asarray(slopes_cutoff)
-
-    return x_cutoffs, slopes_cutoff
-
-def get_temporal_patterns(migration_innoculum):
-
-    relative_abundance_dict = utils.get_relative_abundance_dictionary_temporal_migration(migration=migration_innoculum[0],inocula=migration_innoculum[1])
-
-    species_mean_relative_abundances = []
-    species_mean_absolute_differences = []
-    species_mean_width_distribution_ratios = []
-    species_transfers = []
-
-    species_mean_width_distribution_ratios_dict = {}
-
-    for species, species_dict in relative_abundance_dict.items():
-
-        species_abundance_difference_dict = {}
-
-        for replicate, species_replicate_dict in species_dict.items():
-
-            if len(species_replicate_dict['transfers']) < 2:
-                continue
-
-            transfers = np.asarray(species_replicate_dict['transfers'])
-
-            relative_abundances = np.asarray(species_replicate_dict['relative_abundances'])
-
-            transfer_differences = transfers[:-1]
-            absolute_differences = np.abs(relative_abundances[1:] - relative_abundances[:-1])
-
-            #width_distribution_ratios = np.abs(relative_abundances[1:] / relative_abundances[:-1])
-            width_distribution_ratios = relative_abundances[1:] / relative_abundances[:-1]
-
-            for transfer_difference_idx, transfer_difference in enumerate(transfer_differences):
-
-                if str(transfer_difference) not in species_abundance_difference_dict:
-                    species_abundance_difference_dict[str(transfer_difference)] = {}
-                    species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'] = []
-                    species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'] = []
-                    species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'] = []
-
-                species_abundance_difference_dict[str(transfer_difference)]['absolute_differences'].append(absolute_differences[transfer_difference_idx])
-                species_abundance_difference_dict[str(transfer_difference)]['relative_abundances'].append(relative_abundances[transfer_difference_idx])
-                species_abundance_difference_dict[str(transfer_difference)]['width_distribution_ratios'].append(width_distribution_ratios[transfer_difference_idx])
-
-
-        for transfer, transfer_dict in species_abundance_difference_dict.items():
-
-            if len(transfer_dict['relative_abundances']) < 3:
-                continue
-
-            species_mean_relative_abundances.append(np.mean(np.log10(transfer_dict['relative_abundances'])))
-            species_mean_absolute_differences.append(np.mean(np.log10(transfer_dict['absolute_differences'])))
-            species_mean_width_distribution_ratios.append(np.mean(np.log10(transfer_dict['width_distribution_ratios'])))
-            species_transfers.append(int(transfer))
-
-
-            if int(transfer) not in species_mean_width_distribution_ratios_dict:
-                species_mean_width_distribution_ratios_dict[int(transfer)] = []
-
-            species_mean_width_distribution_ratios_dict[int(transfer)].append(np.mean(np.log10(transfer_dict['width_distribution_ratios'])))
-
-
-    # calcualte variance in width distribution
-    variance_width_distribution_transfers = []
-    variance_width_distribution = []
-
-    #mean_width_distribution_transfers = []
-    mean_width_distribution = []
-
-    for transfer_, widths_ in species_mean_width_distribution_ratios_dict.items():
-
-        widths_ = np.asarray(widths_)
-
-        if transfer_ == 6:
-            widths_ = widths_[widths_<-1.8]
-
-        if len(widths_) < 3:
-            continue
-
-        variance_width_distribution_transfers.append(transfer_)
-        variance_width_distribution.append(np.sqrt(np.var(widths_)) / np.absolute(np.mean(widths_)) )
-
-        mean_width_distribution.append(np.mean(widths_))
-
-    variance_width_distribution_transfers = np.asarray(variance_width_distribution_transfers)
-    variance_width_distribution = np.asarray(variance_width_distribution)
-    mean_width_distribution = np.asarray(mean_width_distribution)
-
-    species_mean_relative_abundances = np.asarray(species_mean_relative_abundances)
-    species_mean_absolute_differences = np.asarray(species_mean_absolute_differences)
-    species_mean_width_distribution_ratios = np.asarray(species_mean_width_distribution_ratios)
-
-    species_transfers = np.asarray(species_transfers)
-
-    return species_transfers, species_mean_relative_abundances, species_mean_absolute_differences, species_mean_width_distribution_ratios, variance_width_distribution_transfers, variance_width_distribution, mean_width_distribution
-
-
-
-species_transfers_no_migration, mean_relative_abundances_no_migration, mean_absolute_differences_no_migration, mean_width_distribution_ratios_no_migration, variance_transfers_no_migration, variance_no_migration, mean_no_migration = get_temporal_patterns(('No_migration',4))
-species_transfers_global_migration, mean_relative_abundances_global_migration, mean_absolute_differences_global_migration, mean_width_distribution_ratios_global_migration, variance_transfers_global_migration, variance_global_migration, mean_global_migration = get_temporal_patterns(('Global_migration',4))
 
 
 
 
-width_colors_no_migration = [utils.rgb[width_transfer_] for width_transfer_ in variance_transfers_no_migration]
+
+species_names_no_migration, species_transfers_no_migration, mean_relative_abundances_no_migration, mean_absolute_differences_no_migration, mean_width_distribution_ratios_no_migration, variance_transfers_no_migration, variance_no_migration, mean_no_migration = utils.get_temporal_patterns(('No_migration',4))
+species_names_global_migration, species_transfers_global_migration, mean_relative_abundances_global_migration, mean_absolute_differences_global_migration, mean_width_distribution_ratios_global_migration, variance_transfers_global_migration, variance_global_migration, mean_global_migration = utils.get_temporal_patterns(('Global_migration',4))
+
+
+
+width_colors_no_migration = [utils.rgb_blue[width_transfer_] for width_transfer_ in variance_transfers_no_migration]
 width_colors_global_migration = [utils.rgb_red[width_transfer_] for width_transfer_ in variance_transfers_global_migration]
 
-colors_no_migration = [utils.rgb[species_transfer] for species_transfer in species_transfers_no_migration]
+colors_no_migration = [utils.rgb_blue[species_transfer] for species_transfer in species_transfers_no_migration]
 colors_global_migration = [utils.rgb_red[species_transfer] for species_transfer in species_transfers_global_migration]
 
 
@@ -181,13 +66,13 @@ ax_scatter_no_migration.set_ylabel('Average difference between\ntime points,' + 
 slope_no_migration, intercept_no_migration, r_value_no_migration, p_value_no_migration, std_err_no_migration = stats.linregress(mean_relative_abundances_no_migration_filter, mean_absolute_differences_no_migration_filter)
 x_log10_range_no_migration =  np.linspace(min(mean_relative_abundances_no_migration) , max(mean_relative_abundances_no_migration) , 10000)
 y_log10_fit_range_no_migration = 10 ** (slope_no_migration*x_log10_range_no_migration + intercept_no_migration)
-ax_scatter_no_migration.plot(10**x_log10_range_no_migration, y_log10_fit_range_no_migration, c='k', lw=3, linestyle='--', zorder=2)
+#ax_scatter_no_migration.plot(10**x_log10_range_no_migration, y_log10_fit_range_no_migration, c='k', lw=3, linestyle='--', zorder=2)
 ax_scatter_no_migration.set_title(utils.titles_dict[('No_migration',4)], fontsize=12, fontweight='bold' )
-ax_scatter_no_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_no_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_no_migration.transAxes  )
+#ax_scatter_no_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_no_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_no_migration.transAxes  )
 #ax_scatter_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
 
-cutoffs_no_migration, slopes_no_migration = get_slopes_cutoffs(mean_relative_abundances_no_migration, mean_absolute_differences_no_migration)
+cutoffs_no_migration, slopes_no_migration = utils.get_slopes_cutoffs(mean_relative_abundances_no_migration, mean_absolute_differences_no_migration)
 ins_no_migration = inset_axes(ax_scatter_no_migration, width="100%", height="100%", loc='lower right', bbox_to_anchor=(0.68,0.11,0.3,0.3), bbox_transform=ax_scatter_no_migration.transAxes)
 ins_no_migration.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
 ins_no_migration.set_ylabel("Slope", fontsize=8)
@@ -207,6 +92,8 @@ ins_no_migration.text(0.21,0.88, 'Linear', fontsize=5, color='k', ha='center', v
 ins_no_migration.text(0.26,0.18, 'Square\nroot', fontsize=5, color='k', ha='center', va='center', transform=ins_no_migration.transAxes )
 
 
+
+
 mean_relative_abundances_global_migration_filter = mean_relative_abundances_global_migration[mean_relative_abundances_global_migration< -1]
 mean_absolute_differences_global_migration_filter = mean_absolute_differences_global_migration[mean_relative_abundances_global_migration< -1]
 
@@ -218,13 +105,13 @@ ax_scatter_global_migration.set_ylabel('Average difference between\ntime points,
 slope_global_migration, intercept_global_migration, r_value_global_migration, p_value_global_migration, std_err_global_migration = stats.linregress(mean_relative_abundances_global_migration_filter, mean_absolute_differences_global_migration_filter)
 x_log10_range_global_migration =  np.linspace(min(mean_relative_abundances_global_migration) , max(mean_relative_abundances_global_migration) , 10000)
 y_log10_fit_range_global_migration = 10 ** (slope_global_migration*x_log10_range_global_migration + intercept_global_migration)
-ax_scatter_global_migration.plot(10**x_log10_range_global_migration, y_log10_fit_range_global_migration, c='k', lw=3, linestyle='--', zorder=2)
+#ax_scatter_global_migration.plot(10**x_log10_range_global_migration, y_log10_fit_range_global_migration, c='k', lw=3, linestyle='--', zorder=2)
 ax_scatter_global_migration.set_title(utils.titles_dict[('Global_migration',4)], fontsize=12, fontweight='bold' )
-ax_scatter_global_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_global_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_global_migration.transAxes  )
+#ax_scatter_global_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_global_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_global_migration.transAxes  )
 #ax_scatter_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
 
-cutoffs_global_migration, slopes_global_migration = get_slopes_cutoffs(mean_relative_abundances_global_migration, mean_absolute_differences_global_migration)
+cutoffs_global_migration, slopes_global_migration = utils.get_slopes_cutoffs(mean_relative_abundances_global_migration, mean_absolute_differences_global_migration)
 ins_global_migration = inset_axes(ax_scatter_global_migration, width="100%", height="100%", loc='lower right', bbox_to_anchor=(0.68,0.11,0.3,0.3), bbox_transform=ax_scatter_global_migration.transAxes)
 ins_global_migration.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
 ins_global_migration.set_ylabel("Slope", fontsize=8)
@@ -275,7 +162,25 @@ ins_width_global_migration = inset_axes(ax_width_global_migration, width="100%",
 shape_no_migration, loc_no_migration, scale_no_migration = stats.lognorm.fit(mean_width_distribution_ratios_no_migration)
 shape_global_migration, loc_global_migration, scale_global_migration = stats.lognorm.fit(mean_width_distribution_ratios_global_migration)
 
-x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration) , max(mean_width_distribution_ratios_no_migration) , 10000)
+
+ks_no_migration, p_no_migration = stats.kstest(mean_width_distribution_ratios_no_migration, 'lognorm', args=(shape_no_migration, loc_no_migration, scale_no_migration), alternative='two-sided')
+
+ks_global_migration, p_global_migration = stats.kstest(mean_width_distribution_ratios_global_migration, 'lognorm', args=(shape_global_migration, loc_global_migration, scale_global_migration), alternative='two-sided')
+
+
+sys.stdout.write("KS test against lognormal, no migration: D = %g,  P = %g\n" % (ks_no_migration, p_no_migration))
+sys.stdout.write("KS test against lognormal, global migration: D = %g,  P = %g\n" % ( ks_global_migration, p_global_migration  ))
+
+
+# try with laplace, just for kicks
+
+loc_laplace, scale_laplace = stats.laplace.fit(mean_width_distribution_ratios_no_migration)
+ks_laplace, p_laplace = stats.kstest(mean_width_distribution_ratios_no_migration, 'laplace', args=(loc_laplace, scale_laplace), alternative='two-sided')
+sys.stdout.write("KS test against laplace, no migration: D = %g,  P = %g\n" % (ks_laplace, p_laplace))
+
+
+
+x_range_no_migration = np.linspace(min(mean_width_distribution_ratios_no_migration)  , max(mean_width_distribution_ratios_no_migration) , 10000)
 x_range_global_migration = np.linspace(min(mean_width_distribution_ratios_global_migration) , max(mean_width_distribution_ratios_global_migration) , 10000)
 
 samples_fit_log_no_migration = stats.lognorm.pdf(x_range_no_migration, shape_no_migration, loc_no_migration, scale_no_migration)
@@ -303,7 +208,6 @@ ins_width_global_migration.set_xlabel('Width dist., ' + r'$\mathrm{log}_{10}$', 
 ins_width_no_migration.set_ylabel('Prob. density', fontsize=7)
 ins_width_global_migration.set_ylabel('Prob. density', fontsize=7)
 
-
 ins_width_no_migration.tick_params(labelsize=5)
 ins_width_no_migration.tick_params(axis='both', which='major', pad=1)
 
@@ -311,8 +215,13 @@ ins_width_global_migration.tick_params(labelsize=5)
 ins_width_global_migration.tick_params(axis='both', which='major', pad=1)
 
 
-ins_width_no_migration.set_xlim([-2.2, 2.2])
-ins_width_global_migration.set_xlim([-2.2, 2.2])
+ins_width_no_migration.set_xlim([-2.4, 2.4])
+ins_width_global_migration.set_xlim([-2.4, 2.4])
+
+
+
+KS_statistic, p_value = stats.ks_2samp(mean_width_distribution_ratios_no_migration, mean_width_distribution_ratios_global_migration)
+sys.stdout.write("Difference between width dists: KS = %g, P= %g\n" % (KS_statistic, p_value))
 
 
 #ax_1.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
@@ -320,8 +229,6 @@ ins_width_global_migration.set_xlim([-2.2, 2.2])
 
 
 
-#KS_statistic, p_value = stats.ks_2samp(mean_width_distribution_ratios_no_migration, mean_width_distribution_ratios_global_migration)
-#sys.stdout.write("KS = %g, P= %g\n" % (KS_statistic, p_value))
 
 
 
@@ -359,47 +266,8 @@ ax_cv.set_ylabel('CV of log-transformed\nrelative abundance ratios, ' + r'$\frac
 #ax_cv.text(0.8,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
 
 
-
-#ax_cv.set_ylim(0,10)
-
 ax_cv.set_yscale('log', basey=10)
 
-
-## Variance difference test
-
-def test_difference_two_time_series(array_1, array_2):
-    _matrix = np.array([array_1, array_2])
-    #mean_ratio_observed = sum(_matrix[0,:] - _matrix[1,:])
-    mean_ratio_observed = np.mean(_matrix[0,:] - _matrix[1,:])
-
-    null_values = []
-    for i in range(10000):
-        _matrix_copy = np.copy(_matrix)
-        for i in range(_matrix_copy.shape[1]):
-            np.random.shuffle(_matrix_copy[:,i])
-
-        #null_values.append(sum(_matrix_copy[0,:] - _matrix_copy[1,:]))
-        null_values.append(np.mean(_matrix_copy[0,:] - _matrix_copy[1,:]))
-
-    null_values = np.asarray(null_values)
-    p_value = len(null_values[null_values < mean_ratio_observed]) / 10000
-
-    return mean_ratio_observed, p_value
-
-
-def get_intersecting_timepoints(transfers_1, observations_1, transfers_2, observations_2):
-
-    transfers_intersect = np.intersect1d(transfers_1, transfers_2)
-
-    sorter_1 = np.argsort(transfers_1)
-    sorted_idx_1 = sorter_1[np.searchsorted(transfers_1, transfers_intersect, sorter=sorter_1)]
-    observations_1_intersect = observations_1[sorted_idx_1]
-
-    sorter_2 = np.argsort(transfers_2)
-    sorted_idx_2 = sorter_2[np.searchsorted(transfers_2, transfers_intersect, sorter=sorter_2)]
-    observations_2_intersect = observations_2[sorted_idx_2]
-
-    return transfers_intersect, observations_1_intersect, observations_2_intersect
 
 
 
@@ -414,11 +282,11 @@ def get_intersecting_timepoints(transfers_1, observations_1, transfers_2, observ
 #variances_global_migration_intersect = variance_global_migration[global_migration_idx]
 
 
-transfers_intersect_mean, means_no_migration_intersect, means_global_migration_intersect  = get_intersecting_timepoints(variance_transfers_no_migration, mean_no_migration, variance_transfers_no_migration, mean_global_migration)
-transfers_intersect_cv, cv_no_migration_intersect, cv_global_migration_intersect  = get_intersecting_timepoints(variance_transfers_no_migration, variance_no_migration, variance_transfers_no_migration, variance_global_migration)
+transfers_intersect_mean, means_no_migration_intersect, means_global_migration_intersect  = utils.get_intersecting_timepoints(variance_transfers_no_migration, mean_no_migration, variance_transfers_global_migration, mean_global_migration)
+transfers_intersect_cv, cv_no_migration_intersect, cv_global_migration_intersect  = utils.get_intersecting_timepoints(variance_transfers_no_migration, variance_no_migration, variance_transfers_global_migration, variance_global_migration)
 
-mean_ratio_observed_mean, p_value_mean = test_difference_two_time_series(means_no_migration_intersect, means_global_migration_intersect)
-mean_ratio_observed_cv, p_value_cv = test_difference_two_time_series(cv_no_migration_intersect, cv_global_migration_intersect)
+mean_ratio_observed_mean, p_value_mean = utils.test_difference_two_time_series(means_no_migration_intersect, means_global_migration_intersect)
+mean_ratio_observed_cv, p_value_cv = utils.test_difference_two_time_series(cv_no_migration_intersect, cv_global_migration_intersect)
 
 
 #_matrix = np.array([variances_no_migration_intersect, variances_global_migration_intersect])
@@ -428,8 +296,9 @@ mean_ratio_observed_cv, p_value_cv = test_difference_two_time_series(cv_no_migra
 sys.stdout.write("Mean difference test, D = %g,  P = %g\n" % (mean_ratio_observed_mean, p_value_mean))
 sys.stdout.write("CV difference test, D = %g,  P = %g\n" % (mean_ratio_observed_cv, p_value_cv))
 
-ax_cv.text(0.82,0.9, '$P< 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
-ax_mean.text(0.82,0.9, r'$P\nless0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_mean.transAxes )
+ax_mean.text(0.82,0.9, utils.get_p_value(p_value_mean), fontsize=12, color='k', ha='center', va='center', transform=ax_mean.transAxes )
+ax_cv.text(0.82,0.9, utils.get_p_value(p_value_cv), fontsize=12, color='k', ha='center', va='center', transform=ax_cv.transAxes )
+
 
 
 
@@ -442,5 +311,5 @@ ax_cv.legend(loc="upper left", fontsize=8)
 
 fig.subplots_adjust(wspace=0.5, hspace=0.3)
 #fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + "/figs/temporal_width_distribution_ratios.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/temporal_width_distribution_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

@@ -289,7 +289,7 @@ for key in t_test_dict:
         y_axis_positions.append(count+1.2)
 
         #for attractor in  t_test_dict[key][transfer]:
-        for attractor in  [ 'Alcaligenaceae', 'Pseudomonadaceae']:
+        for attractor in  utils.attractors:
 
             dict_i = t_test_dict[key][transfer][attractor]
 

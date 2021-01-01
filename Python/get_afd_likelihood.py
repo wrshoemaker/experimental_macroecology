@@ -331,6 +331,8 @@ def calculate_all_likelihoods(carbon_source, alfapriorq_list, betapriorq_all):
         mean_weighted_logL_inflated_all  = float( (sum(logL_inflated_all_list_decimal) / len(logL_inflated_all_list_decimal)).ln() )
         #mean_weighted_logL_inflated_all = math.log(np.mean(logL_inflated_all_list_decimal))
 
+        print(afd_i_idx, logL_best, mean_weighted_logL_inflated_all)
+
         record_list = [species[afd_i_idx], str(len(afd_i)), str(len(afd_i[afd_i>0])), str(logL_best), str(mean_weighted_logL_inflated_all)]
 
         for prior_prob_i in sorted(list(prior_dict.keys())):
