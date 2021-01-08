@@ -6,7 +6,7 @@ import pandas as pd
 
 import bisect
 
-from scipy import stats, signal
+from scipy import stats, signal, optimize
 
 from matplotlib import cm
 
@@ -20,8 +20,24 @@ rgb_blue = cm.get_cmap('Blues')( color_range )
 rgb_red = cm.get_cmap('Reds')( color_range )
 rgb_green = cm.get_cmap('Greens')( color_range )
 
+
 rgb_alcaligenaceae = cm.get_cmap('Oranges')( color_range )
 rgb_pseudomonadaceae = cm.get_cmap('Purples')( color_range )
+
+
+def get_color_attractor(attractor, transfer):
+
+    if attractor == 'Alcaligenaceae':
+        return rgb_alcaligenaceae[transfer-1]
+
+    elif attractor == 'Pseudomonadaceae':
+        return rgb_pseudomonadaceae[transfer-1]
+
+    else:
+        print("Make a color map for this attractor!")
+
+
+
 
 color_dict = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green }
 
@@ -62,12 +78,131 @@ titles_no_inocula_dict = {('No_migration',4): 'No migration',
 
 
 
+def weakly_damped_oscillator_(ts, x0_, gamma, omega_0, phi):
+
+    return x0_ * np.exp(-1*ts*gamma) * np.cos(omega_0*ts + phi)
+
+
+
+def fit_weakly_damped_oscillator(ts,xs):
+    ts = np.asarray(ts)
+    # shift to zero
+    ts = ts - ts[0]
+    x0 = xs[0]
+
+    gamma_init = 0.8
+    omega_0_init = 10
+    phi_init = 0.3
+
+
+    def weakly_damped_oscillator(ts, gamma, omega_0, phi):
+
+        return x0 * np.exp(-1*ts*gamma) * np.cos(omega_0*ts + phi)
+
+
+    xmin = optimize.fmin(lambda x: np.square(xs-weakly_damped_oscillator(ts, x[0],x[1], x[2])).sum(), np.array([gamma_init, omega_0_init, phi_init]))
+    gamma = xmin[0]
+    omega_0 = xmin[1]
+    phi = xmin[2]
+
+    return gamma, omega_0, phi
+
+
+
+
+
+def max_difference_between_timepoints(x_min, x_max):
+    #assume log range
+    # returns log-spaced linear values
+    x_range = np.logspace(x_min, x_max, num=1000, base=10.0)
+
+    y_range = [max([1-x, x]) for x in x_range]
+    y_range = np.asarray(y_range)
+
+    return x_range, y_range
+
+
+def max_and_min_width_between_timepoints(x_min, x_max):
+
+    x_range = np.logspace(x_min, x_max, num=1000, base=10.0)
+
+    #y_range = [1/x for x in x_range]
+    y_max_range = 1/ x_range
+    y_min_range = 1/ x_range
+    #y_range = np.asarray(y_range)
+
+    return x_range, y_min_range , y_max_range
+
 
 
 def calculate_noise_color():
 
     # Fourier transform
     frq, f = signal.periodogram(data[c])
+
+
+
+def get_null_correlations(s_by_s, species, comm_rep_list, n_iter=10000):
+
+    rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+    corr_dict = {}
+
+    rel_s_by_s_permuted = rel_s_by_s[np.arange(len(rel_s_by_s))[:,None], np.random.randn(*rel_s_by_s.shape).argsort(axis=1)]
+
+    for species_i_idx, species_i in enumerate(species):
+
+        for species_j_idx, species_j in enumerate(species):
+
+            if species_j_idx >= species_i_idx:
+                continue
+
+            afd_i = rel_s_by_s[species_i_idx,:]
+            afd_j = rel_s_by_s[species_j_idx,:]
+
+            c_ij = np.corrcoef(afd_i, afd_j)[0][1]
+
+            corr_dict[(species_i, species_j)] = {}
+            corr_dict[(species_i, species_j)]['correlation_obs'] = c_ij
+            corr_dict[(species_i, species_j)]['correlation_null'] = []
+
+
+
+    for k in range(n_iter):
+
+        if k %1000 == 0:
+            print(k)
+
+        rel_s_by_s_permuted = rel_s_by_s[np.arange(len(rel_s_by_s))[:,None], np.random.randn(*rel_s_by_s.shape).argsort(axis=1)]
+
+        for species_i_idx, species_i in enumerate(species):
+
+            for species_j_idx, species_j in enumerate(species):
+
+                if species_j_idx >= species_i_idx:
+                    continue
+
+                afd_i = rel_s_by_s_permuted[species_i_idx,:]
+                afd_j = rel_s_by_s_permuted[species_j_idx,:]
+
+                c_ij = np.corrcoef(afd_i, afd_j)[0][1]
+
+                corr_dict[(species_i, species_j)]['correlation_null'].append(c_ij)
+
+
+    for species_i_idx, species_i in enumerate(species):
+
+        for species_j_idx, species_j in enumerate(species):
+
+            if species_j_idx >= species_i_idx:
+                continue
+
+            corr_dict[(species_i, species_j)]['correlation_null_mean'] = np.mean(corr_dict[(species_i, species_j)]['correlation_null'])
+
+
+
+    return corr_dict
+
 
 
 
@@ -198,7 +333,7 @@ def get_s_by_s_temporal(transfers, carbon='Glucose'):
 
 
 def get_species_means_and_variances(rel_s_by_s, species_list, min_observations=3, zeros=False):
-
+    #print(species_list)
     mean_rel_abundances = []
     var_rel_abundances = []
     species_to_keep = []
@@ -856,6 +991,11 @@ def get_s_by_s_migration(transfer=18, migration='No_migration',inocula=40, commu
         line = line.strip().split(',')
         if int(line[1]) == 0:
             continue
+
+        #print()
+
+        if line[1] == 1:
+            print("singleton!")
 
         if (int(line[5]) == transfer) and (line[3] == migration) and (int(line[4]) == inocula):
 

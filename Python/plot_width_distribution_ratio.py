@@ -72,13 +72,22 @@ ax_scatter_no_migration.set_title(utils.titles_dict[('No_migration',4)], fontsiz
 #ax_scatter_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
 
+max_difference_x, max_difference_y = utils.max_difference_between_timepoints(min(mean_relative_abundances_no_migration),  max(mean_relative_abundances_no_migration))
+
+#print(max_difference_x, max_difference_y)
+#ax_scatter_no_migration.plot(max_difference_x, max_difference_y, c='k', lw=3, linestyle='--', zorder=2)
+
+ax_scatter_no_migration.axvline(x=0.5, ls = ':', c='k', lw=2, zorder=1)
+
+
+
 cutoffs_no_migration, slopes_no_migration = utils.get_slopes_cutoffs(mean_relative_abundances_no_migration, mean_absolute_differences_no_migration)
 ins_no_migration = inset_axes(ax_scatter_no_migration, width="100%", height="100%", loc='lower right', bbox_to_anchor=(0.68,0.11,0.3,0.3), bbox_transform=ax_scatter_no_migration.transAxes)
 ins_no_migration.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
 ins_no_migration.set_ylabel("Slope", fontsize=8)
 
 ins_no_migration.plot(10**cutoffs_no_migration, slopes_no_migration, ls='-', c='k')
-ins_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+#ins_no_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
 ins_no_migration.axhline(2/3, lw=1.5, ls='--',color='k', zorder=1)
 ins_no_migration.axhline(1, lw=1.5, ls='--',color='k', zorder=1)
@@ -110,6 +119,9 @@ ax_scatter_global_migration.set_title(utils.titles_dict[('Global_migration',4)],
 #ax_scatter_global_migration.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope_global_migration, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_scatter_global_migration.transAxes  )
 #ax_scatter_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
+ax_scatter_global_migration.axvline(x=0.5, ls = ':', c='k', lw=2, zorder=1)
+
+
 
 cutoffs_global_migration, slopes_global_migration = utils.get_slopes_cutoffs(mean_relative_abundances_global_migration, mean_absolute_differences_global_migration)
 ins_global_migration = inset_axes(ax_scatter_global_migration, width="100%", height="100%", loc='lower right', bbox_to_anchor=(0.68,0.11,0.3,0.3), bbox_transform=ax_scatter_global_migration.transAxes)
@@ -117,7 +129,7 @@ ins_global_migration.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$',
 ins_global_migration.set_ylabel("Slope", fontsize=8)
 
 ins_global_migration.plot(10**cutoffs_global_migration, slopes_global_migration, ls='-', c='k')
-ins_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+#ins_global_migration.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 ins_global_migration.set_xscale('log', basex=10)
 ins_global_migration.tick_params(labelsize=5)
 ins_global_migration.tick_params(axis='both', which='major', pad=1)
@@ -145,6 +157,12 @@ ax_width_no_migration.set_ylim([0.5e-2, 3e2])
 
 ax_width_global_migration.axhline(1, lw=3, ls=':',color='k', zorder=1)
 ax_width_global_migration.scatter(10**mean_relative_abundances_global_migration, 10**mean_width_distribution_ratios_global_migration, alpha=1, color=colors_global_migration, zorder=2, edgecolors='k')
+
+#max_width_x, max_width_y = utils.max_width_between_timepoints(min(mean_relative_abundances_no_migration),  max(mean_relative_abundances_no_migration))
+#print(max_width_x, max_width_y)
+#ax_width_global_migration.plot(max_width_x, max_width_y, c='k', lw=3, linestyle='--', zorder=1)
+
+
 ax_width_global_migration.set_xscale('log', basex=10)
 ax_width_global_migration.set_yscale('log', basey=10)
 ax_width_global_migration.set_xlabel('Average relative abundance\nat time $t$, ' + r'$\left \langle x(t) \right \rangle$', fontsize=12)
@@ -152,6 +170,10 @@ ax_width_global_migration.set_ylabel('Width distribution of relative\nabundance 
 
 ax_width_global_migration.set_xlim([1e-4, 1])
 ax_width_global_migration.set_ylim([0.5e-2, 3e2])
+
+
+
+
 
 
 
@@ -237,6 +259,17 @@ sys.stdout.write("Difference between width dists: KS = %g, P= %g\n" % (KS_statis
 
 #ax_lognormal.text(0.8,0.9,'$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
 #ax_lognormal.text(0.8,0.82, r'$P\nless 0.05$', fontsize=12, color='k', ha='center', va='center', transform=ax_lognormal.transAxes )
+
+
+
+#gamma_no_migration, omega_0_no_migration, phi_no_migration = utils.fit_weakly_damped_oscillator(variance_transfers_no_migration, mean_no_migration)
+#predicted_undamped_oscillator = utils.weakly_damped_oscillator_(variance_transfers_no_migration, mean_no_migration[0], gamma_no_migration, omega_0_no_migration, phi_no_migration)
+#predicted_undamped_oscillator_test = utils.weakly_damped_oscillator_(variance_transfers_no_migration, mean_no_migration[0], 0.03, 40, phi_no_migration)
+
+#ax_mean.plot(variance_transfers_no_migration, predicted_undamped_oscillator, color = 'k', zorder=2)
+
+#ax_mean.plot(variance_transfers_no_migration, predicted_undamped_oscillator_test, color = 'r', zorder=2)
+
 
 
 ax_mean.axhline(0, lw=3, ls=':',color='grey', zorder=1)

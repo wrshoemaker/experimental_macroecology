@@ -39,7 +39,7 @@ for experiment_idx, experiment in enumerate(experiments):
     intercepts = []
     slopes = []
 
-    slops_CIs = []
+    slopes_CIs = []
 
     species_relative_abundances_dict = {}
 
@@ -82,8 +82,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
             #    species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'].append(transfer, afd_no_zeros_i)
 
-
-        means_transfer, variances_transfer = utils.get_species_means_and_variances(rel_s_by_s, zeros=False)
+        means_transfer, variances_transfer, variances_species = utils.get_species_means_and_variances(rel_s_by_s, species)
 
         if len(means_transfer) < 5:
             continue
@@ -173,7 +172,9 @@ for experiment_idx, experiment in enumerate(experiments):
     mean_range = np.linspace(min(means), max(means), num=1000)
     variance_range = (1-mean_range) * mean_range
 
-    ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
+    #ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
+    ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Max. ' + r'$\sigma^{2}_{x}$')
+
     ax_scatter.scatter(means, variances, c= colors, cmap='Blues', alpha=0.8, edgecolors='k', zorder=2)#, c='#87CEEB')
 
     ax_scatter.set_xscale('log', basex=10)

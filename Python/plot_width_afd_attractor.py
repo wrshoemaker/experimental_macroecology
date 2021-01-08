@@ -23,6 +23,8 @@ species_names_p, species_transfers_p, mean_relative_abundances_p, mean_absolute_
 # get the ESVs that are in that weird cluster for Pseudo
 species_names_p_outliers = species_names_p[ (mean_relative_abundances_p > -0.3)  & (mean_absolute_differences_p  > -4)]
 outlying_species = set(species_names_p_outliers)
+sys.stdout.write("Outlying ESV for Pseudomonadaceae: %s\n" % list(outlying_species)[0])
+# GCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCACGCAGGCGGTCTGTCAAGTCGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCGAAACTGGCAGGCTGGAGTCTTGTAGAGGGGGGTAGAATTCCAGGTGTAGCGGTGAAATGCGTAGAGATCTGGAGGAATACCGGTGGCGAAGGCGGCCCCCTGGACAAAGACTGACGCTCAGGTGCGAAAGCGTGGGG
 ### BLAST shows that this ESV belongs to Enterobacteriaceae
 
 width_colors_a = [utils.rgb_alcaligenaceae[width_transfer_] for width_transfer_ in variance_transfers_a]
@@ -84,6 +86,8 @@ x_log10_range_a =  np.linspace(min(mean_relative_abundances_filter_a) , max(mean
 y_log10_fit_range_a = 10 ** (slope_a*x_log10_range_a + intercept_a)
 ax_scatter_a.set_title(utils.attractor_latex_dict[attractors[0]], fontsize=12, fontweight='bold' )
 
+ax_scatter_a.axvline(x=0.5, ls = ':', c='k', lw=2, zorder=1)
+
 
 #transfers_a, slopes_a = calculate_slopes_each_timepoint(species_transfers_a, mean_relative_abundances_a, mean_absolute_differences_a)
 cutoffs_a, slopes_cutoff_a = utils.get_slopes_cutoffs(mean_relative_abundances_a, mean_absolute_differences_a)
@@ -113,7 +117,7 @@ ins_a.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
 ins_a.set_ylabel("Slope", fontsize=8)
 
 ins_a.plot(10**cutoffs_a, slopes_cutoff_a, ls='-', c='k')
-ins_a.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+#ins_a.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
 ins_a.axhline(2/3, lw=1.5, ls='--',color='k', zorder=1)
 ins_a.axhline(1, lw=1.5, ls='--',color='k', zorder=1)
@@ -153,6 +157,8 @@ y_log10_fit_range_p = 10 ** (slope_p*x_log10_range_p + intercept_p)
 ax_scatter_p.set_title(utils.attractor_latex_dict[attractors[1]], fontsize=12, fontweight='bold' )
 
 
+ax_scatter_p.axvline(x=0.5, ls = ':', c='k', lw=2, zorder=1)
+
 #transfers_p, slopes_p = calculate_slopes_each_timepoint(species_transfers_p_no_outlier, mean_relative_abundances_p_no_outlier, mean_absolute_differences_p_no_outlier)
 cutoffs_p, slopes_cutoff_p = utils.get_slopes_cutoffs(mean_relative_abundances_p_no_outlier, mean_absolute_differences_p_no_outlier)
 
@@ -181,7 +187,7 @@ ins_p.set_xlabel('Max.' + r'$\left \langle x(t) \right \rangle$', fontsize=8)
 ins_p.set_ylabel("Slope", fontsize=8)
 
 ins_p.plot(10**cutoffs_p, slopes_cutoff_p, ls='-', c='k')
-ins_p.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
+#ins_p.axvline(0.1, lw=1.5, ls=':',color='k', zorder=1)
 
 ins_p.axhline(2/3, lw=1.5, ls='--',color='k', zorder=1)
 ins_p.axhline(1, lw=1.5, ls='--',color='k', zorder=1)

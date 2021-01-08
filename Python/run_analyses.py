@@ -1919,10 +1919,67 @@ def occupancy_vs_likelihood():
 
 
 
+def run_corr_analysis():
+
+    fig = plt.figure(figsize = (4*len(utils.carbons), 4)) #
+    fig.subplots_adjust(bottom= 0.15,  wspace=0.25)
+
+    for carbon_idx, carbon in enumerate(carbons):
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s(carbon)
+
+        corr_dict = utils.get_null_correlations(s_by_s, species, comm_rep_list)
+
+        corr_obs = [corr_dict[species_pair]['correlation_obs'] for species_pair in corr_dict.keys()]
+        corr_null = [corr_dict[species_pair]['correlation_null_mean'] for species_pair in corr_dict.keys()]
+
+        corr_obs = np.asarray(corr_obs)
+        corr_null = np.asarray(corr_null)
+
+
+        print(sum(corr_obs > corr_null) /  len(corr_obs))
+
+        ax_i = plt.subplot2grid((1, 1*len(carbons)), (0, carbon_idx), colspan=1)
+
+
+        ax_i.hist(corr_obs, 25, density=True, histtype='step', color='b', alpha=0.75)
+        ax_i.hist(corr_null, 20, density=True, histtype='step', color='grey', alpha=0.75)
+
+        ax_i.set_yscale('log', basey=10)
+
+
+    fig.subplots_adjust(hspace=0.15, wspace=0.15)
+    fig.savefig(utils.directory + "/figs/correlation.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
 
 
 
-occupancy_vs_likelihood()
+
+def test_truncated_gamma():
+
+
+    sample = np.random.gamma(4, size=100)
+
+    print(sample)
+
+
+
+
+
+
+s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(migration='Parent_migration',inocula=40,communities=None)
+
+print(species)
+
+print(s_by_s)
+
+print(1 in s_by_s)
+
+
+
+#test_truncated_gamma()
+
+#occupancy_vs_likelihood()
 
 #plot_predicted_occupancies()
 #plot_per_timeseries_perdict_occupancy()
