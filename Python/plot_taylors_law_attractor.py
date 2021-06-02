@@ -35,7 +35,10 @@ for experiment_idx, experiment in enumerate(experiments):
 
         t_test_dict[experiment][transfer] = {}
 
-        relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        #relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
         means, variances, species_to_keep = utils.get_species_means_and_variances(relative_s_by_s, species)
         attractor_dict = utils.get_attractor_status(migration=experiment[0], inocula=experiment[1])
@@ -148,8 +151,10 @@ for experiment_idx, experiment in enumerate(experiments):
 
         null_test_dict[experiment][transfer] = {}
 
-        relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        #relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=experiment[0],inocula=experiment[1])
 
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
         means, variances, species_to_keep = utils.get_species_means_and_variances(relative_s_by_s, species)
         attractor_dict = utils.get_attractor_status(migration=experiment[0], inocula=experiment[1])
@@ -333,8 +338,8 @@ ax_intercept.tick_params(axis=u'y',length=0)
 
 
 
-ax_slope.set_xlim([-2.1, 0.1 ])
-ax_intercept.set_xlim([-3.1, 0.15  ])
+#ax_slope.set_xlim([-2.1, 0.1 ])
+#ax_intercept.set_xlim([-3.1, 0.15  ])
 
 ax_slope.axvline(0, lw=3, ls=':',color='k', zorder=1)
 ax_intercept.axvline(0, lw=3, ls=':',color='k', zorder=1)

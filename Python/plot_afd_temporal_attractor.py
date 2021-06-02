@@ -2,13 +2,14 @@ from __future__ import division
 import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.lines import Line2D
 
 import scipy.stats as stats
 from scipy.stats import gamma
 
 #from macroecotools import obs_pred_rsquare
 import utils
-from matplotlib import cm
 
 from itertools import combinations
 import statsmodels.stats.multitest as multitest
@@ -37,6 +38,8 @@ import statsmodels.stats.multitest as multitest
 
 
 
+#experiments = [('No_migration',4)]#, ('Parent_migration', 4)  ]
+
 experiments = [('No_migration',4)]#, ('Parent_migration', 4)  ]
 
 transfers = [12, 18]
@@ -44,6 +47,18 @@ transfers = [12, 18]
 
 
 attractor_dict = utils.get_attractor_status(migration='No_migration', inocula=4)
+
+afd_dict_merged_attractors = {}
+
+for transfer in transfers:
+
+    s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration='No_migration',inocula=4)
+    relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+    afd = relative_s_by_s.flatten()
+    afd = afd[afd>0]
+    afd = np.log10(afd)
+
+    afd_dict_merged_attractors[transfer] = afd
 
 
 afd_dict = {}
@@ -54,7 +69,9 @@ for attractor_idx, attractor in enumerate(attractor_dict.keys()):
 
     for transfer in transfers:
 
-        relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration='No_migration',inocula=4)
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration='No_migration',inocula=4)
+        relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
 
         attractor_idxs = [comm_rep_list.index(comm_rep) for comm_rep in comm_rep_list if comm_rep in attractor_dict[attractor] ]
         relative_s_by_s_attractor = relative_s_by_s[:, attractor_idxs]
@@ -67,8 +84,8 @@ for attractor_idx, attractor in enumerate(attractor_dict.keys()):
         afd = afd[afd>0]
         afd = np.log10(afd)
 
-        afd_dict[attractor][transfer] = afd
 
+        afd_dict[attractor][transfer] = afd
 
 
 
@@ -92,16 +109,48 @@ for combo in treatment_combinations:
         afd_experiment_1 = afd_dict[combo[0]][transfer]
         afd_experiment_2 = afd_dict[combo[1]][transfer]
 
+
         D, pvalue = stats.ks_2samp(afd_experiment_1, afd_experiment_2)
+
 
         distances_dict[combo][transfer] = {}
         distances_dict[combo][transfer]['D'] = D
         distances_dict[combo][transfer]['pvalue'] = pvalue
 
+
         combo_pairs.append((combo, transfer))
         pvalues.append(pvalue)
 
         #sys.stdout.write("Transfer %d, %s vs. %s, D = %g, P= %g\n" % (transfer, combo[0][0], combo[1][0], D, pvalue))
+
+
+for attractor in attractor_dict.keys():
+
+    distances_dict[(attractor, 'All')] = {}
+
+    treatment_combinations.append((attractor, 'All'))
+
+    for transfer in transfers:
+
+
+
+        afd_merged_attractors = distances_dict[(attractor, 'All')][transfer] = {}
+
+
+        afd_attractor = afd_dict[attractor][transfer]
+
+        afd_merged_attractors = afd_dict_merged_attractors[transfer]
+
+        D, pvalue = stats.ks_2samp(afd_attractor, afd_merged_attractors)
+
+        afd_merged_attractors = distances_dict[(attractor, 'All')][transfer]['D'] = D
+        afd_merged_attractors = distances_dict[(attractor, 'All')][transfer]['pvalue'] = pvalue
+
+        combo_pairs.append( ((attractor, 'All'), transfer) )
+        pvalues.append(pvalue)
+
+
+
 
 #key_pavalues = [(key, distances_dict[key]['pvalue']) for key in distances_dict.keys()]
 #pvalues = [x[1] for x in key_pavalues]
@@ -127,11 +176,11 @@ for experiment_idx, experiment in enumerate(list(attractor_dict.keys())):
 
     KS_statistic, p_value = stats.ks_2samp(afd_dict[experiment][transfers[0]], afd_dict[experiment][transfers[1]])
 
-    ax.text(0.20,0.8, '$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
-    ax.text(0.18,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    ax.text(0.70,0.8, '$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    ax.text(0.68,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
     ax.set_title(utils.attractor_latex_dict[experiment], fontsize=12, fontweight='bold' )
-    ax.legend(loc="upper left", fontsize=8)
+    ax.legend(loc="upper right", fontsize=8)
     ax.set_xlabel('Relative abundance, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
     ax.set_ylabel('Probability density', fontsize=12)
     ax.set_xlim(-5.5, 0.2)
@@ -147,6 +196,8 @@ ax_distances = plt.subplot2grid((1, len(attractor_dict.keys())+1), (0, 2), colsp
 #label_dict = {(('No_migration', 4), ('Global_migration', 4)): 'No migration vs. Global migration',
 #            (('No_migration', 4), ('Parent_migration', 4)): 'No migration vs. Parent migration',
 #            (('Global_migration', 4), ('Parent_migration', 4)): 'Global migration vs. Parent migration'}
+
+
 
 for combo in treatment_combinations:
 
@@ -195,7 +246,7 @@ ax_distances.set_xlabel('Transfers' , fontsize=12)
 ax_distances.set_ylabel('Kolmogorov–Smirnov distance, '+ r'$D$', fontsize=12)
 
 ax_distances.set_xlim([11, 19])
-ax_distances.set_ylim([-0.05, 0.55 ])
+ax_distances.set_ylim([-0.02, 0.35 ])
 ax_distances.axhline(0, lw=3, ls=':',color='k', zorder=1)
 
 labels = [item.get_text() for item in ax_distances.get_xticklabels()]
@@ -203,6 +254,11 @@ labels = [item.get_text() for item in ax_distances.get_xticklabels()]
 ax_distances.set_xticks([12, 18])
 ax_distances.set_xticklabels([12,18])
 
+legend_elements = [Line2D([0], [0], marker='o', color='w', label='Merged attractors',
+                          markerfacecolor='k', markersize=12)]
+
+
+ax_distances.legend(handles=legend_elements, loc='upper right')
 
 
 #plt.text(0.5,1.1,'No migration', fontsize=12, color='k', ha='center', va='center')

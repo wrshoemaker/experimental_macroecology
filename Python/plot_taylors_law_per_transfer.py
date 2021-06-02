@@ -18,7 +18,8 @@ alpha=0.05
 
 
 
-experiments = [('No_migration',4), ('Global_migration',4), ('Glucose',  np.nan) ]
+#experiments = [('No_migration',4), ('Global_migration',4), ('Glucose',  np.nan) ]
+experiments = [('No_migration',4), ('Global_migration',4) ]
 
 transfer_max_dict = {('No_migration',4):18, ('Global_migration',4):18, ('Glucose', np.nan):12}
 
@@ -57,9 +58,11 @@ for experiment_idx, experiment in enumerate(experiments):
             communities = utils.get_migration_time_series_community_names(migration=experiment[0],inocula=experiment[1])
             communities_keep = [key for key, value in communities.items() if len(value) == transfer_max]
 
-            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(transfer=transfer, migration=experiment[0],inocula=experiment[1], communities=communities )
+            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=experiment[0],inocula=experiment[1], communities=communities_keep )
+
 
         comm_rep_array = np.asarray(comm_rep_list)
+
 
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
@@ -82,7 +85,9 @@ for experiment_idx, experiment in enumerate(experiments):
 
             #    species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'].append(transfer, afd_no_zeros_i)
 
+
         means_transfer, variances_transfer, variances_species = utils.get_species_means_and_variances(rel_s_by_s, species)
+
 
         if len(means_transfer) < 5:
             continue
@@ -135,6 +140,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 
+#fig = plt.figure(figsize = (12, 8)) #
 fig = plt.figure(figsize = (12, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 

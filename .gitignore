@@ -5,3 +5,6 @@ data/migration_ESV_data_table_absabundance_SE.csv
 data/reformat_s_by_s.csv
 Python/.RData
 Python/.Rhistory
+data/NutrientDominance_data_table_totabund_all_mapped_singletons_20210510.csv
+data/migration_data_table_totabund_all_singleton_mapped_20210501.csv
+data/otu_table_psn_v13.txt

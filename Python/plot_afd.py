@@ -27,9 +27,11 @@ for experiment in experiments:
 
     for transfer in transfers:
 
-        relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        #relative_s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=experiment[0],inocula=experiment[1])
+        rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
-        afd = relative_s_by_s.flatten()
+        afd = rel_s_by_s.flatten()
         afd = afd[afd>0]
         afd = np.log10(afd)
 
@@ -62,7 +64,7 @@ def old_fig():
 
         for transfer in transfers:
 
-            colors_experiment_transfer = utils.color_dict[experiment][transfer-1]
+            colors_experiment_transfer = utils.color_dict_range[experiment][transfer-1]
             afd = afd_dict[experiment][transfer]
             label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
 
@@ -138,7 +140,8 @@ for experiment_idx, experiment in enumerate(experiments):
 
     for transfer in transfers:
 
-        colors_experiment_transfer = utils.color_dict[experiment][transfer-1]
+
+        colors_experiment_transfer = utils.color_dict_range[experiment][transfer-1]
         afd = afd_dict[experiment][transfer]
         label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
 
@@ -146,11 +149,11 @@ for experiment_idx, experiment in enumerate(experiments):
 
     KS_statistic, p_value = stats.ks_2samp(afd_dict[experiment][transfers[0]], afd_dict[experiment][transfers[1]])
 
-    ax.text(0.20,0.8, '$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
-    ax.text(0.18,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    ax.text(0.70,0.8, '$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    ax.text(0.68,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
     ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
-    ax.legend(loc="upper left", fontsize=8)
+    ax.legend(loc="upper right", fontsize=8)
     ax.set_xlabel('Relative abundance, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
     ax.set_ylabel('Probability density', fontsize=12)
     ax.set_xlim(-5.5, 0.2)
@@ -171,7 +174,6 @@ for combo in treatment_combinations:
     distances_combo = [distances_dict[combo][transfer]['D'] for transfer in transfers]
     pvalues_combo = [distances_dict[combo][transfer]['pvalue_bh'] for transfer in transfers]
 
-    #colors_experiment_transfer = utils.color_dict[experiment][transfer-1]
 
     ax_distances.plot(transfers, distances_combo, color = 'k', zorder=1)
 
@@ -182,8 +184,8 @@ for combo in treatment_combinations:
         distances_combo_transfer = distances_dict[combo][transfer]['D']
         pvalues_combo_transfer = distances_dict[combo][transfer]['pvalue_bh']
 
-        colors_experiment_transfer_1 = utils.color_dict[combo[0]][transfer-1]
-        colors_experiment_transfer_2 = utils.color_dict[combo[1]][transfer-1]
+        colors_experiment_transfer_1 = utils.color_dict_range[combo[0]][transfer-1]
+        colors_experiment_transfer_2 = utils.color_dict_range[combo[1]][transfer-1]
 
         if pvalues_combo_transfer < 0.05:
 
@@ -211,7 +213,7 @@ ax_distances.set_xlabel('Transfers' , fontsize=12)
 ax_distances.set_ylabel('Kolmogorov–Smirnov distance, '+ r'$D$', fontsize=12)
 
 ax_distances.set_xlim([11, 19])
-ax_distances.set_ylim([-0.05, 0.55 ])
+ax_distances.set_ylim([-0.02, 0.35 ])
 ax_distances.axhline(0, lw=3, ls=':',color='k', zorder=1)
 
 labels = [item.get_text() for item in ax_distances.get_xticklabels()]

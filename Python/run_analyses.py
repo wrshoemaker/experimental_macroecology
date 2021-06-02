@@ -842,17 +842,24 @@ def plot_taylors_law_migration(zeros=False, transfer=18):
     fig = plt.figure(figsize = (8, 8)) #
     fig.subplots_adjust(bottom= 0.15)
 
+    migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
+
 
     for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        #s_by_s, species, comm_rep_list = utils.get_relative_s_by_s_migration(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+        rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+        #print(rel_s_by_s)
 
         mean_rel_abundances = []
         var_rel_abundances = []
 
-        for afd in s_by_s:
+        for afd in rel_s_by_s:
 
             afd_no_zeros = afd[afd>0]
+
 
             if len(afd_no_zeros) < 3:
                 continue
@@ -879,7 +886,7 @@ def plot_taylors_law_migration(zeros=False, transfer=18):
         y_log10_null_range = 10 ** (slope_null*x_log10_range + intercept)
 
 
-        ax_plot.set_title(titles[migration_innoculum_idx], fontsize=12, fontweight='bold' )
+        ax_plot.set_title(utils.titles_dict[migration_innoculum], fontsize=12, fontweight='bold' )
 
         ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
         ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
@@ -1186,13 +1193,15 @@ def plot_predicted_occupancies_migration():
     fig = plt.figure(figsize = (12, 12)) #
     fig.subplots_adjust(bottom= 0.15)
 
-    for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
+    for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
 
-        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration=migration_innoculum[0], inocula=migration_innoculum[1])
+        #s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration(migration=migration_innoculum[0], inocula=migration_innoculum[1])
+
+        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration=migration_innoculum[0], inocula=migration_innoculum[1])
 
         occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
 
-        ax_plot = plt.subplot2grid((2, 2),plot_idxs[migration_innoculum_idx], colspan=1)
+        ax_plot = plt.subplot2grid((2, 2), plot_idxs[migration_innoculum_idx], colspan=1)
         ax_plot.plot([0.01,1],[0.01,1], lw=3,ls='--',c='k',zorder=1)
         ax_plot.scatter(occupancies, predicted_occupancies, alpha=0.8,zorder=2)#, c='#87CEEB')
 
@@ -1201,7 +1210,7 @@ def plot_predicted_occupancies_migration():
         ax_plot.set_xlabel('Observed occupancy', fontsize=14)
         ax_plot.set_ylabel('Predicted occupancy', fontsize=14)
 
-        ax_plot.set_title(titles[migration_innoculum_idx], fontsize=16, fontweight='bold' )
+        ax_plot.set_title(utils.titles_dict[migration_innoculum], fontsize=16, fontweight='bold' )
 
 
     fig.text(0.5, 0.97, "Transfer 18", va='center', ha='center', fontweight='bold',fontsize=16)
@@ -1445,6 +1454,8 @@ def plot_taylors_law_migration_merged_treatments(zeros=False):
             ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
 
             ax_plot.set_title(title, fontsize=12, fontweight='bold' )
+
+
 
             ax_plot.legend(loc="lower right", fontsize=8)
 
@@ -1955,26 +1966,10 @@ def run_corr_analysis():
 
 
 
-def test_truncated_gamma():
-
-
-    sample = np.random.gamma(4, size=100)
-
-    print(sample)
 
 
 
-
-
-
-s_by_s, species, comm_rep_list = utils.get_s_by_s_migration(migration='Parent_migration',inocula=40,communities=None)
-
-print(species)
-
-print(s_by_s)
-
-print(1 in s_by_s)
-
+plot_predicted_occupancies_migration()
 
 
 #test_truncated_gamma()
@@ -2019,7 +2014,7 @@ print(1 in s_by_s)
 
 #plot_taylors_time_series()
 
-#plot_taylors_law_migration()
+#plot_taylors_law_migration(zeros=False)
 
 
 
