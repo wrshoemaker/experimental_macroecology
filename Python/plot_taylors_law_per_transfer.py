@@ -12,8 +12,8 @@ import utils
 
 from matplotlib import cm
 
-color_range =  np.linspace(0.0, 1.0, 18)
-rgb = cm.get_cmap('Blues')( color_range )
+#color_range =  np.linspace(0.0, 1.0, 18)
+#rgb = cm.get_cmap('Blues')( color_range )
 alpha=0.05
 
 
@@ -56,10 +56,10 @@ for experiment_idx, experiment in enumerate(experiments):
         else:
 
             communities = utils.get_migration_time_series_community_names(migration=experiment[0],inocula=experiment[1])
-            communities_keep = [key for key, value in communities.items() if len(value) == transfer_max]
+            communities_keep = [str(key) for key, value in communities.items() if len(value) == transfer_max]
+
 
             s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=experiment[0],inocula=experiment[1], communities=communities_keep )
-
 
         comm_rep_array = np.asarray(comm_rep_list)
 
@@ -93,7 +93,10 @@ for experiment_idx, experiment in enumerate(experiments):
             continue
 
 
-        colors_transfer = [color_range[transfer-1] for i in range(len(means_transfer))]
+        #colors_transfer = [color_range[transfer-1] for i in range(len(means_transfer))]
+        colors_transfer = [utils.color_dict_range[experiment][transfer-1] for i in range(len(means_transfer))]
+
+
 
         transfers.append(transfer)
         means.extend(list(means_transfer))
@@ -181,7 +184,10 @@ for experiment_idx, experiment in enumerate(experiments):
     #ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
     ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Max. ' + r'$\sigma^{2}_{x}$')
 
-    ax_scatter.scatter(means, variances, c= colors, cmap='Blues', alpha=0.8, edgecolors='k', zorder=2)#, c='#87CEEB')
+    #colors_scatter = [utils.color_dict_range[t] for t in transfers]
+
+
+    ax_scatter.scatter(means, variances, c=colors, cmap=utils.color_dict_range[experiment], alpha=0.8, edgecolors='k', zorder=2)#, c='#87CEEB')
 
     ax_scatter.set_xscale('log', basex=10)
     ax_scatter.set_yscale('log', basey=10)
@@ -193,7 +199,9 @@ for experiment_idx, experiment in enumerate(experiments):
 
     ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw = 3, zorder=1)
 
-    slope_colors = [color_range[t-1] for t in transfers]
+    #slope_colors = [color_range[t-1] for t in transfers]
+    slope_colors = [utils.color_dict_range[experiment][t-1] for t in transfers]
+
 
     ax_slopes.errorbar(transfers, slopes, slops_CIs,linestyle='-', marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
     ax_slopes.scatter(transfers, slopes, c=slope_colors , cmap='Blues', edgecolors='k', alpha=1, zorder=3)#, c='#87CEEB')

@@ -937,7 +937,9 @@ def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',ino
         if (int(line[4]) == transfer) and (treatment_line == migration) and (int(line[3]) == inocula):
 
             sample_line = line[5]
+            sample_line = sample_line.strip()
             sample_line = re.sub(r'["]', '', sample_line)
+
             #sample_line = int(sample_line)
 
             esv_line = line[6]
@@ -955,10 +957,10 @@ def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',ino
 
                     sys.stdout.write("Relative abundance already in dictionary!!\n" )
 
+
                 count_dict[esv_line][sample_line] = float(line[7])
 
             else:
-
 
                 if sample_line not in communities:
                     continue
