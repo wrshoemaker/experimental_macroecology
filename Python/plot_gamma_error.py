@@ -33,8 +33,8 @@ for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_in
         occupancies = occupancies[np.logical_not(np.isnan(predicted_occupancies))]
         predicted_occupancies = predicted_occupancies[np.logical_not(np.isnan(predicted_occupancies))]
 
-
-        mae = np.mean(np.absolute(occupancies - predicted_occupancies))
+        # relative error
+        mae = np.mean(np.absolute(occupancies - predicted_occupancies) / occupancies)
 
         mae_dict[migration_innoculum][transfer]['All'] = {}
 
@@ -61,7 +61,6 @@ for migration_innoculum in migration_innocula:
         for transfer in transfers:
 
             s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
-
 
             attractor_idxs = [comm_rep_list.index(comm_rep) for comm_rep in comm_rep_list if comm_rep in attractor_dict[attractor] ]
             s_by_s_attractor = s_by_s[:, attractor_idxs]
@@ -132,7 +131,7 @@ ax_migration.set_xlim([-0.3, max(x_tick_idxs)+0.3])
 ax_migration.set_xticks(x_tick_idxs)
 ax_migration.set_xticklabels(x_tick_labels, fontsize=8)
 
-ax_migration.set_ylabel('Gamma mean absolute error', fontsize=12)
+ax_migration.set_ylabel('Mean relative error of the gamma', fontsize=12)
 #ax_migration.text(0.5, -0.1, "Transfer", fontweight='bold', fontsize=14, color='k', ha='center', va='center', transform=ax.transAxes )
 ax_migration.text(0.5, -0.2, "Transfer", fontsize=14, color='k', ha='center', va='center', transform=ax_migration.transAxes )
 
@@ -170,12 +169,12 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
     if migration_innoculum_idx == 0:
         ax_attractors.axvline(ax_attractors_count-0.5, lw=1.5, ls='-',color='k', zorder=1)
 
-    ax_attractors.text((migration_innoculum_idx/len(migration_innocula)) + legend_offsets[migration_innoculum_idx], -0.15, utils.titles_new_line_dict[migration_innoculum], fontsize=12, color='k', ha='center', va='center', transform=ax_attractors.transAxes)
+    ax_attractors.text((migration_innoculum_idx/len(migration_innocula)) + legend_offsets[migration_innoculum_idx], -0.15, utils.titles_new_line_dict[migration_innoculum], fontsize=11, color='k', ha='center', va='center', transform=ax_attractors.transAxes)
 
 
 
 
-ax_attractors.set_ylabel('Gamma mean absolute error', fontsize=12)
+ax_attractors.set_ylabel('Mean relative error of the gamma', fontsize=12)
 
 ax_attractors.set_xlim([-0.5, ax_attractors_count-0.5])
 
@@ -188,10 +187,10 @@ ax_attractors.set_xticklabels(x_tick_labels_attractor, fontsize=7)
 
 legend_elements = [Line2D([0], [0], marker='o', color='none', markerfacecolor=utils.get_color_attractor('Alcaligenaceae', 12), label='Alcaligenaceae', markeredgecolor='k', markersize=6),
                     Line2D([0], [0], marker='o', color='none', markerfacecolor=utils.get_color_attractor('Pseudomonadaceae', 12), label='Pseudomonadaceae', markeredgecolor='k', markersize=6),
-                    Line2D([0], [0], marker='o', color='none', markerfacecolor=utils.get_color_attractor('All', 12), label='All attractors', markeredgecolor='k', markersize=6)]
+                    Line2D([0], [0], marker='o', color='none', markerfacecolor=utils.get_color_attractor('All', 12), label='Both attractors', markeredgecolor='k', markersize=6)]
 
 
-ax_attractors.legend(handles=legend_elements, loc='upper center', prop={'size': 5})
+ax_attractors.legend(handles=legend_elements, loc='upper left', prop={'size': 5})
 
 
 
