@@ -991,6 +991,92 @@ def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',ino
 
 
 
+# ,"Replicate","Carbon.Source.Group","Carbon.Source","Experiment_name","Transfer","nCS"
+
+
+
+
+
+def get_s_by_s_resource(transfer=1,carbon_source_group='single',carbon_source='glucose',n_carbon_sources=1):
+    # migration options, 'No_migration', 'Parent_migration', 'Global_migration'
+
+    otu = open(directory + '/data/NutrientDominance_data_table_totabund_all_mapped_singletons_20210510.csv')
+    otu_first_line = otu.readline()
+    otu_first_line = otu_first_line.strip().split(',')
+
+    count_dict = {}
+    all_treatments = []
+    for line in otu:
+        line = line.strip().split(',')
+
+        print(line)
+        continue
+
+        treatment_line = line[1]
+        treatment_line = re.sub(r'["]', '', treatment_line)
+
+        all_treatments.append(treatment_line)
+
+
+        if (int(line[4]) == transfer) and (treatment_line == migration) and (int(line[3]) == inocula):
+
+            sample_line = line[5]
+            sample_line = sample_line.strip()
+            sample_line = re.sub(r'["]', '', sample_line)
+
+            #sample_line = int(sample_line)
+
+            esv_line = line[6]
+            esv_line = re.sub(r'["]', '', esv_line)
+
+            if esv_line not in count_dict:
+                count_dict[esv_line] = {}
+
+            if communities == None:
+
+                if sample_line not in count_dict[esv_line]:
+                    count_dict[esv_line][sample_line] = 0
+
+                if count_dict[esv_line][sample_line] > 0:
+
+                    sys.stdout.write("Relative abundance already in dictionary!!\n" )
+
+
+                count_dict[esv_line][sample_line] = float(line[7])
+
+            else:
+
+                if sample_line not in communities:
+                    continue
+
+                if sample_line not in count_dict[esv_line]:
+                    count_dict[esv_line][sample_line] = 0
+
+                if count_dict[esv_line][sample_line] > 0:
+
+                    sys.stdout.write("Relative abundance already in dictionary!!\n" )
+
+                count_dict[esv_line][sample_line] = float(line[7])
+
+
+
+    otu.close()
+
+
+
+    s_by_s_df = pd.DataFrame(count_dict)
+    s_by_s_df = s_by_s_df.fillna(0)
+    #s_by_s = s_by_s_df.values
+    s_by_s = s_by_s_df.values.T
+    # it's a relativized S by S matrix
+    return s_by_s, s_by_s_df.columns.to_list(), s_by_s_df.index.to_list()
+
+
+
+
+
+
+
 
 
 

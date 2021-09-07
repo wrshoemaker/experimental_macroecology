@@ -1,5 +1,6 @@
 from __future__ import division
-import os, sys
+import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,14 +15,14 @@ from matplotlib import cm
 
 #color_range =  np.linspace(0.0, 1.0, 18)
 #rgb = cm.get_cmap('Blues')( color_range )
-alpha=0.05
-
+alpha = 0.05
 
 
 #experiments = [('No_migration',4), ('Global_migration',4), ('Glucose',  np.nan) ]
-experiments = [('No_migration',4), ('Global_migration',4) ]
+experiments = [('No_migration', 4), ('Global_migration', 4)]
 
-transfer_max_dict = {('No_migration',4):18, ('Global_migration',4):18, ('Glucose', np.nan):12}
+transfer_max_dict = {('No_migration', 4): 18,
+                     ('Global_migration', 4): 18, ('Glucose', np.nan): 12}
 
 #s_by_s_1, species_1, comm_rep_list_1 = utils.get_s_by_s("Glucose", transfer=1)
 
@@ -48,77 +49,77 @@ for experiment_idx, experiment in enumerate(experiments):
 
         if experiment[0] == 'Glucose':
 
-            s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
+            s_by_s, species, comm_rep_list = utils.get_s_by_s(
+                "Glucose", transfer=transfer)
             #if transfer==1:
             #    communities_keep = comm_rep_list
             #    s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
 
         else:
 
-            communities = utils.get_migration_time_series_community_names(migration=experiment[0],inocula=experiment[1])
-            communities_keep = [str(key) for key, value in communities.items() if len(value) == transfer_max]
+            communities = utils.get_migration_time_series_community_names(
+                migration=experiment[0], inocula=experiment[1])
+            communities_keep = [
+                str(key) for key, value in communities.items() if len(value) == transfer_max]
 
-
-            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=experiment[0],inocula=experiment[1], communities=communities_keep )
+            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(
+                transfer=transfer, migration=experiment[0], inocula=experiment[1], communities=communities_keep)
 
         comm_rep_array = np.asarray(comm_rep_list)
-
 
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
         #for afd_idx, afd in enumerate(rel_s_by_s):
 
-            #species_i = species[afd_idx]
+        #species_i = species[afd_idx]
 
-            #if species_i not in species_relative_abundances_dict:
-            #    species_relative_abundances_dict[species_i] = {}
+        #if species_i not in species_relative_abundances_dict:
+        #    species_relative_abundances_dict[species_i] = {}
 
-            #afd_no_zeros = afd[afd>0]
-            #comm_rep_array_no_zeros = comm_rep_array[afd>0]
+        #afd_no_zeros = afd[afd>0]
+        #comm_rep_array_no_zeros = comm_rep_array[afd>0]
 
-            #for comm_rep_array_no_zeros_i, afd_no_zeros_i in zip(comm_rep_array_no_zeros, afd_no_zeros):
+        #for comm_rep_array_no_zeros_i, afd_no_zeros_i in zip(comm_rep_array_no_zeros, afd_no_zeros):
 
-            #    if comm_rep_array_no_zeros_i not in species_relative_abundances_dict[species_i]:
-            #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i] = {}
-            #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'] = []
-            #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['relative_abundances'] = []
+        #    if comm_rep_array_no_zeros_i not in species_relative_abundances_dict[species_i]:
+        #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i] = {}
+        #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'] = []
+        #        species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['relative_abundances'] = []
 
-            #    species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'].append(transfer, afd_no_zeros_i)
+        #    species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'].append(transfer, afd_no_zeros_i)
 
-
-        means_transfer, variances_transfer, variances_species = utils.get_species_means_and_variances(rel_s_by_s, species)
-
+        means_transfer, variances_transfer, variances_species = utils.get_species_means_and_variances(
+            rel_s_by_s, species)
 
         if len(means_transfer) < 5:
             continue
 
-
         #colors_transfer = [color_range[transfer-1] for i in range(len(means_transfer))]
-        colors_transfer = [utils.color_dict_range[experiment][transfer-1] for i in range(len(means_transfer))]
-
-
+        colors_transfer = [utils.color_dict_range[experiment]
+                           [transfer-1] for i in range(len(means_transfer))]
 
         transfers.append(transfer)
         means.extend(list(means_transfer))
         variances.extend(list(variances_transfer))
         colors.extend(colors_transfer)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_transfer), np.log10(variances_transfer))
+        slope, intercept, r_value, p_value, std_err = stats.linregress(
+            np.log10(means_transfer), np.log10(variances_transfer))
 
-        s_xx, s_yy, s_xy = utils.get_pair_stats(np.log10(means_transfer), np.log10(variances_transfer))
+        s_xx, s_yy, s_xy = utils.get_pair_stats(
+            np.log10(means_transfer), np.log10(variances_transfer))
 
         t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
 
         #maximim likelihood estimator
-        mse = sum((np.log10(variances) - (intercept + slope*np.log10(means)))**2) / (len(means)-2)
+        mse = sum((np.log10(variances) - (intercept + slope
+                  * np.log10(means)))**2) / (len(means)-2)
         #sigma_hat = np.sqrt((1/len(means_transfer))*(s_yy-slope*s_xy)
         slope_CI = t*np.sqrt(mse/s_xx)
-
 
         slopes.append(slope)
         intercepts.append(intercept)
         slopes_CIs.append(slope_CI)
-
 
     transfers = np.asarray(transfers)
     means = np.asarray(means)
@@ -140,17 +141,14 @@ for experiment_idx, experiment in enumerate(experiments):
     experiment_dict[experiment]['slops_CIs'] = slopes_CIs
 
 
-
-
-
 #fig = plt.figure(figsize = (12, 8)) #
-fig = plt.figure(figsize = (12, 8)) #
-fig.subplots_adjust(bottom= 0.15)
+fig = plt.figure(figsize=(12, 8))
+fig.subplots_adjust(bottom=0.15)
 
 for experiment_idx, experiment in enumerate(experiments):
 
-    ax_scatter = plt.subplot2grid((2, 3), (0, experiment_idx))#, colspan=1)
-    ax_slopes = plt.subplot2grid((2, 3), (1, experiment_idx))#, colspan=1)
+    ax_scatter = plt.subplot2grid((2, 3), (0, experiment_idx))  # , colspan=1)
+    ax_slopes = plt.subplot2grid((2, 3), (1, experiment_idx))  # , colspan=1)
 
     #ax_scatter = plt.subplot2grid((1, 2), (0, 0), colspan=1)
     #ax_slopes = plt.subplot2grid((1, 2), (0, 1), colspan=1)
@@ -164,9 +162,7 @@ for experiment_idx, experiment in enumerate(experiments):
     slopes = experiment_dict[experiment]['slopes']
     slops_CIs = experiment_dict[experiment]['slops_CIs']
 
-
     transfer_max = transfer_max_dict[experiment]
-
 
     # run slope test
     #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
@@ -182,36 +178,38 @@ for experiment_idx, experiment in enumerate(experiments):
     variance_range = (1-mean_range) * mean_range
 
     #ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
-    ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Max. ' + r'$\sigma^{2}_{x}$')
+    ax_scatter.plot(mean_range, variance_range, lw=3, ls=':',
+                    c='k', label='Max. ' + r'$\sigma^{2}_{x}$')
 
     #colors_scatter = [utils.color_dict_range[t] for t in transfers]
 
-
-    ax_scatter.scatter(means, variances, c=colors, cmap=utils.color_dict_range[experiment], alpha=0.8, edgecolors='k', zorder=2)#, c='#87CEEB')
+    ax_scatter.scatter(means, variances, c=colors,
+                       cmap=utils.color_dict_range[experiment], alpha=0.8, edgecolors='k', zorder=2)  # , c='#87CEEB')
 
     ax_scatter.set_xscale('log', basex=10)
     ax_scatter.set_yscale('log', basey=10)
     ax_scatter.set_xlabel('Average relative\nabundance', fontsize=12)
     ax_scatter.set_ylabel('Variance of relative abundance', fontsize=10)
     ax_scatter.legend(loc="lower right", fontsize=8)
-    ax_scatter.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
+    ax_scatter.set_title(
+        utils.titles_dict[experiment], fontsize=12, fontweight='bold')
 
-
-    ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw = 3, zorder=1)
+    ax_slopes.axhline(y=2, color='darkgrey', linestyle=':', lw=3, zorder=1)
 
     #slope_colors = [color_range[t-1] for t in transfers]
     slope_colors = [utils.color_dict_range[experiment][t-1] for t in transfers]
 
-
-    ax_slopes.errorbar(transfers, slopes, slops_CIs,linestyle='-', marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
-    ax_slopes.scatter(transfers, slopes, c=slope_colors , cmap='Blues', edgecolors='k', alpha=1, zorder=3)#, c='#87CEEB')
+    ax_slopes.errorbar(transfers, slopes, slops_CIs, linestyle='-',
+                       marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
+    ax_slopes.scatter(transfers, slopes, c=slope_colors, cmap='Blues',
+                      edgecolors='k', alpha=1, zorder=3)  # , c='#87CEEB')
     ax_slopes.set_xlabel('Transfer', fontsize=12)
     ax_slopes.set_ylabel('Slope', fontsize=10)
 
     #ax_slopes.set_ylim(-1, 3)
 
 
-
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/taylors_law_time_series_all.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_time_series_all.pdf",
+            format='pdf', bbox_inches="tight", pad_inches=0.5, dpi=600)
 plt.close()
