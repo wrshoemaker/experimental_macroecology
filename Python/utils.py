@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 import bisect
-
+import random
+from collections import Counter
 from scipy import stats, signal, optimize
 
 from matplotlib import cm
@@ -92,6 +93,44 @@ titles_no_inocula_dict = {('No_migration',4): 'No migration',
 
 
 
+def subsample_sad(sad, replace=True, n_subsample = 10):
+
+    s = len(sad)
+
+    relative_sad = sad / sum(sad)
+
+    if replace == True:
+
+        # sampling WITH replacement
+        # write function to sample SAD without replacement
+        individuals_subsample = np.random.choice(range(s), size=n_subsample, replace=True, p=relative_sad)
+
+        species_subsample, sad_subsample = np.unique(individuals_subsample, return_counts=True)
+
+
+    else:
+
+        all_individuals = []
+        for idx, i in enumerate(range(len(sad))):
+            all_individuals.extend( [i]* sad[idx] )
+
+        subsample_individuals = random.sample(all_individuals, n_subsample)
+
+        species_counts = Counter(subsample_individuals)
+
+        sad_subsample = list(species_counts.values())
+
+        sad_subsample.sort(reverse=True)
+
+        sad_subsample = np.asarray(sad_subsample)
+
+    return sad_subsample
+
+
+
+
+
+
 def bootstrap_estimate_ks(array_1, array_2, size=50, n=10000):
 
     ks_statistic_bs = []
@@ -108,8 +147,8 @@ def bootstrap_estimate_ks(array_1, array_2, size=50, n=10000):
 
         ks_statistic_bs.append(ks_statistic_bs_i)
 
-    ks_statistic_bs = numpy.asarray(ks_statistic_bs)
-    ks_statistic_bs = numpy.sort(ks_statistic_bs)
+    ks_statistic_bs = np.asarray(ks_statistic_bs)
+    ks_statistic_bs = np.sort(ks_statistic_bs)
 
     ks_ci_025 = ks_statistic_bs[int(n*0.025)]
     ks_ci_975 = ks_statistic_bs[int(n*0.975)]
@@ -126,13 +165,13 @@ def run_permutational_ks_test(array_1, array_2, n=10000):
 
     ks_statistic, p_value = stats.ks_2samp(array_1, array_2)
 
-    array_merged = numpy.concatenate([array_1, array_2])
+    array_merged = np.concatenate([array_1, array_2])
 
     ks_null = []
 
     for n_i in range(n):
 
-        numpy.random.shuffle(array_merged)
+        np.random.shuffle(array_merged)
 
         array_1_null = array_merged[:len(array_1)]
         array_2_null = array_merged[len(array_1):]
@@ -141,7 +180,7 @@ def run_permutational_ks_test(array_1, array_2, n=10000):
 
         ks_null.append(ks_statistic_null)
 
-    ks_null = numpy.asarray(ks_null)
+    ks_null = np.asarray(ks_null)
 
     p_value = sum(ks_null>ks_statistic) / n
 

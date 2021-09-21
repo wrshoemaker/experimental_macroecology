@@ -45,8 +45,8 @@ class pln_gen(rv_discrete):
                     #abundances, approx fails for lower abundances -
                     #assume it gets better for abundance > 50
                     V = sigma ** 2
-                    pmf_i = 1 / sqrt(2 * pi * V) / x_i * \
-                           exp(-(np.log(x_i) - mu) ** 2 / (2 * V)) * \
+                    pmf_i = 1 / sqrt(2 * np.pi * V) / x_i * \
+                           np.exp(-(np.log(x_i) - mu) ** 2 / (2 * V)) * \
                            (1 + 1 / (2 * x_i * V) * ((np.log(x_i) - mu) ** 2 / V + \
                                                     np.log(x_i) - mu- 1))
                 else:
@@ -63,7 +63,7 @@ class pln_gen(rv_discrete):
                         ub = 10
                     else:
                         ub = x_i
-                    term1 = ((2 * pi * sigma ** 2) ** -0.5)/ factorial(x_i)
+                    term1 = ((2 * np.pi * sigma ** 2) ** -0.5)/ factorial(x_i)
                     #integrate low end where peak is so it finds peak
                     eq = lambda t: np.exp(t * x_i - np.exp(t) - ((t - mu) / sigma) ** 2 / 2)
                     term2a = integrate.quad(eq, -np.inf, np.log(ub), full_output = 0, limit = 500)
@@ -127,8 +127,97 @@ pln = pln_gen(name='pln', longname='Poisson lognormal',
               shapes = 'mu, sigma, lower_trunc')
 
 
+
+def pln_ll(x, mu, sigma, lower_trunc = True):
+    """Log-likelihood of a truncated Poisson lognormal distribution
+
+    Method derived from Bulmer 1974 Biometrics 30:101-110
+
+    Bulmer equation A1
+
+    Adapted from Brian McGill's MATLAB function of the same name that was
+    originally developed as part of the Palamedes software package by the
+    National Center for Ecological Analysis and Synthesis working group on
+    Tools and Fresh Approaches for Species Abundance Distributions
+    (http://www.nceas.ucsb.edu/projects/11121)
+
+    """
+    x = np.array(x)
+    #uniq_counts = itemfreq(x)
+    unique_vals, counts = np.unique(x, return_counts=True)
+    #unique_vals, counts = zip(*uniq_counts)
+    plik = pln.logpmf(unique_vals, mu, sigma, lower_trunc)
+    ll = 0
+    for i, count in enumerate(counts):
+        ll += count * plik[i]
+    return ll
+
+
+
+def pln_solver(ab, lower_trunc = True):
+    """Given abundance data, solve for MLE of pln parameters mu and sigma
+
+    Adapted from MATLAB code by Brian McGill that was originally developed as
+    part of the Palamedes software package by the National Center for Ecological
+    Analysis and Synthesis working group on Tools and Fresh Approaches for
+    Species Abundance Distributions (http://www.nceas.ucsb.edu/projects/11121)
+
+    """
+    ab = np.array(ab)
+    if lower_trunc is True:
+        ab = check_for_support(ab, lower = 1)
+    else: ab = check_for_support(ab, lower = 0)
+    mu0 = np.mean(np.log(ab[ab > 0]))
+    sig0 = np.std(np.log(ab[ab > 0]))
+    def pln_func(x):
+        return -pln_ll(ab, x[0], np.exp(x[1]), lower_trunc)
+    mu, logsigma = optimize.fmin_l_bfgs_b(pln_func, x0 = [mu0, np.log(sig0)], approx_grad = True, \
+                                          bounds = [(None, None), (np.log(10**-16), None)])[0]
+    sigma = np.exp(logsigma)
+    ll_ = pln_ll(ab, mu, sigma, lower_trunc)
+    return mu, sigma, ll_
+
+
+def check_for_support(x, lower = 0, upper = np.inf, warning = True):
+    """Check if x (list or array) contains values out of support [lower, upper]
+
+    If it does, remove the values and optionally print out a warning.
+    This function is used for solvers of distributions with support smaller than (-inf, inf).
+
+    """
+    if (min(x) < lower) or (max(x) > upper):
+        if warning:
+            print("Warning: Out-of-support values in the input are removed.")
+    x = np.array([element for element in x if lower <= element <= upper])
+    return x
+
+
+
+# fit PLN to MAD
+
+
+# get SADs
 ab = [400, 40, 30, 10,4,3,2,1,1,1,1,1,1,1,1]
 ab = np.asarray(ab)
+
+
+# ancestor richness = 1533
+# richness in treatments at transfer 18 = 29,18,30,26
+# 25/1533 = 0.016
+
+
+# merge ancestral SADs to get probability vector for multinomial sampling
+# delta% survive, get non zero carrying capacities
+# Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
+
+#s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',inocula=4)
+#mean_abundance = np.mean(s_by_s, axis=1)
+#mu, sigma, ll_pln = pln_solver(mean_abundance)
+mu=3.4533926814573506
+sigma=2.6967286975393754
+K_to_keep = pln._rvs(mu, sigma, lower_trunc=True, size=40)
+print(K_to_keep)
+print(pln._rvs(mu, sigma, lower_trunc=True, size=40))
 
 # get number of specis to keep
 delta = 0.9
@@ -137,7 +226,6 @@ S_to_keep = np.random.binomial(len(ab), p=delta)
 ab_to_keep = np.random.choice(ab, size=S_to_keep, replace=False)
 # assign carrying capacities
 K_to_keep = pln._rvs(2, 3, lower_trunc=True, size=S_to_keep)
-### to-do fit pln to sads to get idea of parameter range
 
 
 # number replicates
@@ -212,7 +300,7 @@ def simulate_slm(migration_treatment='parent'):
         q[t + 1,:,:] = q[t,:,:] + (dt*(m/np.exp(q[t,:,:]))*(1/tau)*(1 - (sigma/2) - (np.exp(q[t,:,:]) / K_to_keep))) + (noise_variable * np.random.randn(reps, len(ab_to_keep)))
 
 
-    
+
     x = np.exp(q)
     # replace negative q values with zero
     x[x<0] = 0
@@ -234,4 +322,4 @@ def simulate_slm(migration_treatment='parent'):
 
 
 
-simulate_slm()
+#simulate_slm()
