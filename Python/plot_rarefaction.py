@@ -20,6 +20,21 @@ iter = 100
 intermediate_filename = utils.directory + "/data/subsample_richness.dat"
 treatments = ['Parent_migration.4.T18', 'No_migration.4.T18', 'No_migration.40.T18', 'Global_migration.4.T18', 'Parent_migration.NA.T0']
 
+color_dict = {'Parent_migration.4.T18': utils.color_dict_range[('Parent_migration', 4)][13],
+                'No_migration.4.T18': utils.color_dict_range[('No_migration',4)][13],
+                'No_migration.40.T18': utils.color_dict_range[('No_migration',40)][13],
+                'Global_migration.4.T18': utils.color_dict_range[('Global_migration',4)][13],
+                'Parent_migration.NA.T0': 'k'}
+
+
+label_dict = {'Parent_migration.4.T18': 'Parent migration, low inoculum',
+                'No_migration.4.T18': 'No migration, low inoculum',
+                'No_migration.40.T18': 'No migration, high inoculum',
+                'Global_migration.4.T18': 'Global migration, low inoculum',
+                'Parent_migration.NA.T0': 'Parent community'}
+
+
+
 #def chao_richness(subsampled_sad, n):
 #    f_1 = subsampled_sad.count(1)
 #    f_2 = subsampled_sad.count(2)
@@ -135,63 +150,141 @@ def load_subsample_richness_dict():
 
 
 #make_subsample_richness_dict()
-rarefaction_dict = load_subsample_richness_dict()
-
-color_dict = {'Parent_migration.4.T18': utils.color_dict_range[('Parent_migration', 4)][13],
-                'No_migration.4.T18': utils.color_dict_range[('No_migration',4)][13],
-                'No_migration.40.T18': utils.color_dict_range[('No_migration',40)][13],
-                'Global_migration.4.T18': utils.color_dict_range[('Global_migration',4)][13],
-                'Parent_migration.NA.T0': 'k'}
-
-
-label_dict = {'Parent_migration.4.T18': 'Parent migration, low inoculum',
-                'No_migration.4.T18': 'No migration, low inoculum',
-                'No_migration.40.T18': 'No migration, high inoculum',
-                'Global_migration.4.T18': 'Global migration, low inoculum',
-                'Parent_migration.NA.T0': 'Source community'}
 
 
 
 
-fig, ax = plt.subplots(figsize=(4,4))
+def plot_rarefaction():
 
-for treatment in treatments:
+    rarefaction_dict = load_subsample_richness_dict()
 
-    ax.plot([-100000, -1000], [-100000,-1000], lw=1.5, c=color_dict[treatment], label=label_dict[treatment])
+    fig, ax = plt.subplots(figsize=(4,4))
 
+    for treatment in treatments:
 
-for sample, rarefied_richness in rarefaction_dict.items():
-
-    sample_split = sample.rsplit('.',1)[0]
-
-    if sample_split == 'Parent_migration.NA.T0':
-        alpha=0.7
-    else:
-        alpha=0.05
-
-    richness = rarefaction_dict[sample]
-    n_range_sample = n_range[:len(richness)]
-
-    ax.plot(n_range_sample, richness, lw=1.5, alpha=alpha, c=color_dict[sample_split])
+        ax.plot([-100000, -1000], [-100000,-1000], lw=1.5, c=color_dict[treatment], label=label_dict[treatment])
 
 
+    for sample, rarefied_richness in rarefaction_dict.items():
 
-ax.set_title('Transfer 18', fontsize=13)
+        sample_split = sample.rsplit('.',1)[0]
 
-ax.set_xlim(-500.5, 26000)
-ax.set_ylim(0.8, 1600)
+        if sample_split == 'Parent_migration.NA.T0':
+            alpha=0.7
+        else:
+            alpha=0.05
+
+        richness = rarefaction_dict[sample]
+        n_range_sample = n_range[:len(richness)]
+
+        ax.plot(n_range_sample, richness, lw=1.5, alpha=alpha, c=color_dict[sample_split])
 
 
-#ax.axhline(1533, lw=1.5, ls=':',color='k', zorder=1)
+    ax.set_title('Transfer 18', fontsize=13)
+
+    ax.set_xlim(-500.5, 26000)
+    ax.set_ylim(0.8, 1600)
+    #ax.axhline(1533, lw=1.5, ls=':',color='k', zorder=1)
+    ax.set_yscale('log', basey=10)
+
+    ax.set_xlabel('Number of reads', fontsize=12)
+    ax.set_ylabel('Subsampled ASV richness w/out replacement', fontsize=10)
+
+    ax.legend(loc="lower right", fontsize=8)
+
+    fig_name = utils.directory + '/figs/rarefied_richness.png'
+    fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+    plt.close()
 
 
-ax.set_yscale('log', basey=10)
 
-ax.set_xlabel('Number of reads', fontsize=12)
-ax.set_ylabel('Subsampled ASV richness w/out replacement', fontsize=10)
 
-ax.legend(loc="lower right", fontsize=8)
+########
+# plot initial vs final abundance
 
-fig_name = utils.directory + '/figs/rarefied_richness.png'
-fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
-plt.close()
+
+def plot_initial_vs_final_abundance():
+
+    count_dict = get_otu_dict()
+
+    mean_rel_abund_all_treatments_dict = {}
+
+    for treatment in ['No_migration.4.T18', 'No_migration.40.T18', 'Parent_migration.NA.T0']:
+
+        #mean_abundance_dict[treatment] = {}
+        #samples_to_keep = [sample for sample in samples if treatment in sample]
+        count_dict_to_keep = {key: value for key, value in count_dict.items() if treatment in key}
+        abundance_dict = {}
+        n_samples = len(count_dict_to_keep)
+        for sample, asv_dict in count_dict_to_keep.items():
+            N = sum(asv_dict.values())
+            for asv, abundance in asv_dict.items():
+                if asv not in abundance_dict:
+                    abundance_dict[asv] = []
+                abundance_dict[asv].append(abundance/N)
+
+
+        for asv, rel_abundance_list in abundance_dict.items():
+            mean_rel_abundance = sum(rel_abundance_list)/n_samples
+            if asv not in mean_rel_abund_all_treatments_dict:
+                mean_rel_abund_all_treatments_dict[asv] = {}
+            mean_rel_abund_all_treatments_dict[asv][treatment] = mean_rel_abundance
+
+
+    fig = plt.figure(figsize = (8, 4)) #
+    fig.subplots_adjust(bottom= 0.15,  wspace=0.25)
+
+    ax_4 = plt.subplot2grid((1, 2), (0, 0), colspan=1)
+    ax_40 = plt.subplot2grid((1, 2), (0, 1), colspan=1)
+
+    source_4 = []
+    final_4 = []
+
+    source_40 = []
+    final_40 = []
+
+    for asv, mean_rel_abundance_dict in mean_rel_abund_all_treatments_dict.items():
+
+        if ('Parent_migration.NA.T0' in mean_rel_abundance_dict) and ('No_migration.4.T18' in mean_rel_abundance_dict):
+            source_4.append(mean_rel_abundance_dict['Parent_migration.NA.T0'])
+            final_4.append(mean_rel_abundance_dict['No_migration.4.T18'])
+
+        if ('Parent_migration.NA.T0' in mean_rel_abundance_dict) and ('No_migration.40.T18' in mean_rel_abundance_dict):
+            source_40.append(mean_rel_abundance_dict['Parent_migration.NA.T0'])
+            final_40.append(mean_rel_abundance_dict['No_migration.40.T18'])
+
+
+    ax_4.scatter(source_4, final_4, alpha=0.8, c=color_dict['No_migration.4.T18'].reshape(1,-1), zorder=2)#, c='#87CEEB')
+    ax_40.scatter(source_40, final_40, alpha=0.8, c=color_dict['No_migration.40.T18'].reshape(1,-1), zorder=2)#, c='#87CEEB')
+
+
+    # regressions
+    slope_4, intercept_4, r_value_4, p_value_4, std_err_4 = stats.linregress(np.log10(source_4), np.log10(final_4))
+    slope_40, intercept_40, r_value_40, p_value_40, std_err_40 = stats.linregress(np.log10(source_40), np.log10(final_40))
+
+
+    ax_4.text(0.85,0.885, r'$P \nless 0.05$', fontsize=10, color='k', ha='center', va='center', transform=ax_4.transAxes)
+    ax_40.text(0.15,0.885, r'$P \nless 0.05$', fontsize=10, color='k', ha='center', va='center', transform=ax_40.transAxes)
+
+
+
+    ax_4.set_xscale('log', basex=10)
+    ax_4.set_yscale('log', basey=10)
+
+    ax_40.set_xscale('log', basex=10)
+    ax_40.set_yscale('log', basey=10)
+
+    ax_4.set_xlabel('Mean relative abundance\nParent community', fontsize=11)
+    ax_4.set_ylabel('Mean relative abundance\nNo migration, low inoculum, transfer 18', fontsize=11)
+
+    ax_40.set_xlabel('Mean relative abundance\nParent community', fontsize=11)
+    ax_40.set_ylabel('Mean relative abundance\nNo migration, high inoculum, transfer 18', fontsize=11)
+
+
+    fig.subplots_adjust(wspace=0.35, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/initial_vs_final_abundance.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
+
+
+#plot_rarefaction()
+plot_initial_vs_final_abundance()
