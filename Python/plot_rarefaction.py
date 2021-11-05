@@ -209,7 +209,7 @@ def plot_initial_vs_final_abundance():
 
     mean_rel_abund_all_treatments_dict = {}
 
-    for treatment in ['No_migration.4.T18', 'No_migration.40.T18', 'Parent_migration.NA.T0']:
+    for treatment in ['No_migration.4.T18', 'No_migration.40.T18', 'Global_migration.4.T18', 'Parent_migration.4.T18', 'Parent_migration.NA.T0']:
 
         #mean_abundance_dict[treatment] = {}
         #samples_to_keep = [sample for sample in samples if treatment in sample]
@@ -231,54 +231,56 @@ def plot_initial_vs_final_abundance():
             mean_rel_abund_all_treatments_dict[asv][treatment] = mean_rel_abundance
 
 
-    fig = plt.figure(figsize = (8, 4)) #
+    fig = plt.figure(figsize = (8, 8)) #
     fig.subplots_adjust(bottom= 0.15,  wspace=0.25)
 
-    ax_4 = plt.subplot2grid((1, 2), (0, 0), colspan=1)
-    ax_40 = plt.subplot2grid((1, 2), (0, 1), colspan=1)
+    plot_idx = [(0, 0), (0, 1), (1, 0), (1, 1)]
 
-    source_4 = []
-    final_4 = []
+    for treatment_idx, treatment in enumerate(['No_migration.4.T18', 'No_migration.40.T18', 'Global_migration.4.T18', 'Parent_migration.4.T18']):
 
-    source_40 = []
-    final_40 = []
+        source = []
+        final = []
 
-    for asv, mean_rel_abundance_dict in mean_rel_abund_all_treatments_dict.items():
+        for asv, mean_rel_abundance_dict in mean_rel_abund_all_treatments_dict.items():
 
-        if ('Parent_migration.NA.T0' in mean_rel_abundance_dict) and ('No_migration.4.T18' in mean_rel_abundance_dict):
-            source_4.append(mean_rel_abundance_dict['Parent_migration.NA.T0'])
-            final_4.append(mean_rel_abundance_dict['No_migration.4.T18'])
-
-        if ('Parent_migration.NA.T0' in mean_rel_abundance_dict) and ('No_migration.40.T18' in mean_rel_abundance_dict):
-            source_40.append(mean_rel_abundance_dict['Parent_migration.NA.T0'])
-            final_40.append(mean_rel_abundance_dict['No_migration.40.T18'])
+            if ('Parent_migration.NA.T0' in mean_rel_abundance_dict) and (treatment in mean_rel_abundance_dict):
+                source.append(mean_rel_abundance_dict['Parent_migration.NA.T0'])
+                final.append(mean_rel_abundance_dict[treatment])
 
 
-    ax_4.scatter(source_4, final_4, alpha=0.8, c=color_dict['No_migration.4.T18'].reshape(1,-1), zorder=2)#, c='#87CEEB')
-    ax_40.scatter(source_40, final_40, alpha=0.8, c=color_dict['No_migration.40.T18'].reshape(1,-1), zorder=2)#, c='#87CEEB')
+        ax = plt.subplot2grid((2, 2), plot_idx[treatment_idx], colspan=1)
 
 
-    # regressions
-    slope_4, intercept_4, r_value_4, p_value_4, std_err_4 = stats.linregress(np.log10(source_4), np.log10(final_4))
-    slope_40, intercept_40, r_value_40, p_value_40, std_err_40 = stats.linregress(np.log10(source_40), np.log10(final_40))
+        ax.plot([0.9*(10**-7),1.01], [0.9*(10**-7),1.01], lw=3,ls='--',c='k',zorder=1)
+        ax.scatter(source, final, alpha=0.8, c=color_dict[treatment].reshape(1,-1), zorder=2)#, c='#87CEEB')
+
+        # regressions
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(source), np.log10(final))
+
+        t_value = (slope - 1)/std_err
+        p_value = stats.t.sf(np.abs(t_value), len(source)-2)
+        p_value_to_plot = utils.get_p_value(p_value)
+
+        print(slope, p_value)
+        ax.text(0.15,0.92, r'$\beta=$' + str(round(slope,3)), fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
+        ax.text(0.15,0.84, r'$t=$' + str(round(t_value,3)), fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
+        ax.text(0.15,0.76, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
 
 
-    ax_4.text(0.85,0.885, r'$P \nless 0.05$', fontsize=10, color='k', ha='center', va='center', transform=ax_4.transAxes)
-    ax_40.text(0.15,0.885, r'$P \nless 0.05$', fontsize=10, color='k', ha='center', va='center', transform=ax_40.transAxes)
+        #print(slope, p_value)
+
+        #if p_value < 0.05:
+        #    ax.text(0.15,0.885, r'$P < 0.05$', fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes)
+
+        #else:
+        #    ax.text(0.15,0.885, r'$P \nless 0.05$', fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes)
+
+        ax.set_xscale('log', basex=10)
+        ax.set_yscale('log', basey=10)
 
 
-
-    ax_4.set_xscale('log', basex=10)
-    ax_4.set_yscale('log', basey=10)
-
-    ax_40.set_xscale('log', basex=10)
-    ax_40.set_yscale('log', basey=10)
-
-    ax_4.set_xlabel('Mean relative abundance\nParent community', fontsize=11)
-    ax_4.set_ylabel('Mean relative abundance\nNo migration, low inoculum, transfer 18', fontsize=11)
-
-    ax_40.set_xlabel('Mean relative abundance\nParent community', fontsize=11)
-    ax_40.set_ylabel('Mean relative abundance\nNo migration, high inoculum, transfer 18', fontsize=11)
+        ax.set_xlabel('Mean relative abundance\n' + label_dict['Parent_migration.NA.T0'], fontsize=11)
+        ax.set_ylabel('Mean relative abundance\n' + label_dict[treatment] + ', transfer 18', fontsize=10)
 
 
     fig.subplots_adjust(wspace=0.35, hspace=0.3)

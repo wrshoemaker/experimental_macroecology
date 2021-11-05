@@ -307,7 +307,7 @@ def simulate_slm(migration_treatment='parent'):
     x[(np.isnan(x)) | np.isneginf(x) | np.isinf(x)] = 0
 
 
-    #print(x)
+    print(x)
 
     #fig, ax = plt.subplots(figsize=(4,4))
     #ax.scatter(t, x[:,4, 5], alpha=0.7, s=4)
@@ -320,6 +320,7 @@ def simulate_slm(migration_treatment='parent'):
 
 
 
+simulate_slm()
 
 
 #simulate_slm()

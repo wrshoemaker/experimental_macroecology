@@ -11,6 +11,9 @@ from scipy import stats, signal, optimize
 
 from matplotlib import cm
 
+np.seterr(divide='ignore', invalid='ignore')
+
+
 family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
                 'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',
                 'Lachnospiraceae':'deepskyblue', 'Pseudomonadaceae':'darkviolet'}
@@ -854,6 +857,64 @@ def predict_occupancy(s_by_s, totreads=np.asarray([])):
     predicted_occupancies_no_zeros = predicted_occupancies[occupancies>0]
 
     return occupancies_no_zeros, predicted_occupancies_no_zeros
+
+
+
+def calculate_theta(s_by_s, totreads=np.asarray([])):
+
+    s_by_s_presence_absence = np.where(s_by_s > 0, 1, 0)
+
+    occupancies = s_by_s_presence_absence.sum(axis=1) / s_by_s_presence_absence.shape[1]
+
+    #rel_s_by_s_np = (s_by_s/s_by_s.sum(axis=0))
+    # calcualte total reads if no argument is passed
+    # sloppy quick fix
+    if len(totreads) == 0:
+        totreads = s_by_s.sum(axis=0)
+
+    # calculate mean and variance excluding zeros
+    # tf = mean relative abundances
+    tf = []
+    for afd in s_by_s:
+        afd_no_zeros = afd[afd>0]
+        tf.append(np.mean(afd_no_zeros/ totreads[afd>0]))
+        #tf.append(np.mean(afd_no_zeros/s_by_s.sum(axis=0)[afd>0]))
+
+    #tf = np.mean(rel_abundances)
+    tf = np.asarray(tf)
+    # go through and calculate the variance for each species
+
+    tvpf_list = []
+    for afd in s_by_s:
+        afd_no_zeros = afd[afd>0]
+
+        N_reads = s_by_s.sum(axis=0)[np.nonzero(afd)[0]]
+        #N_reads = s_by_s.sum(axis=0)[afd>0]
+
+        tvpf_list.append(np.mean(  (afd_no_zeros**2 - afd_no_zeros) / (totreads[afd>0]**2) ))
+
+    #tvpf = np.mean(tvpf_list)
+    tvpf = np.asarray(tvpf_list)
+
+    f = occupancies*tf
+    vf= occupancies*tvpf
+
+    # there's this command in Jacopo's code %>% mutate(vf = vf - f^2 )%>%
+    # It's applied after f and vf are calculated, so I think I can use it
+    # This should be equivalent to the mean and variance including zero
+    vf = vf - (f**2)
+
+    beta = (f**2)/vf
+    theta = f/beta
+
+    return theta**-1
+
+    #predicted_occupancies = []
+    # each species has it's own beta and theta, which is used to calculate predicted occupancy
+    #for beta_i, theta_i in zip(beta,theta):
+
+    #    predicted_occupancies.append(1 - np.mean( ((1+theta_i*totreads)**(-1*beta_i ))   ))
+
 
 
 def group_ESVs(s_by_s, species, comm_rep_list, taxonomic_level='genus'):

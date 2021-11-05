@@ -19,6 +19,7 @@ experiments = [('No_migration',4), ('Parent_migration', 4)  ]
 
 #experiments_transfers = [[('No_migration',4), 12 ], [('No_migration',4), 18 ], [('Parent_migration',4), 12 ], [('Parent_migration',4), 18 ], [('No_migration',40), 18], [('Global_migration',4), ] ]
 
+zeros=True
 
 
 fig = plt.figure(figsize = (12, 8)) #
@@ -40,7 +41,7 @@ for experiment_idx, experiment in enumerate(experiments):
         s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=experiment[0],inocula=experiment[1])
         relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
-        means, variances, species_to_keep = utils.get_species_means_and_variances(relative_s_by_s, species)
+        means, variances, species_to_keep = utils.get_species_means_and_variances(relative_s_by_s, species, zeros=zeros)
         attractor_dict = utils.get_attractor_status(migration=experiment[0], inocula=experiment[1])
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
@@ -83,7 +84,7 @@ for experiment_idx, experiment in enumerate(experiments):
             relative_s_by_s_attractor = relative_s_by_s_attractor[attractor_species_idx]
 
 
-            means_attractor, variances_attractor, attractor_species_to_keep = utils.get_species_means_and_variances(relative_s_by_s_attractor, attractor_species)
+            means_attractor, variances_attractor, attractor_species_to_keep = utils.get_species_means_and_variances(relative_s_by_s_attractor, attractor_species, zeros=zeros)
             slope_attractor, intercept_attractor, r_value_attractor, p_value_attractor, std_err_attractor = stats.linregress(np.log10(means_attractor), np.log10(variances_attractor))
 
             mse_attractor = sum((np.log10(variances_attractor) - (intercept_attractor + slope_attractor*np.log10(means_attractor)))**2)
@@ -156,7 +157,7 @@ for experiment_idx, experiment in enumerate(experiments):
         s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=experiment[0],inocula=experiment[1])
         relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
-        means, variances, species_to_keep = utils.get_species_means_and_variances(relative_s_by_s, species)
+        means, variances, species_to_keep = utils.get_species_means_and_variances(relative_s_by_s, species, zeros=zeros)
         attractor_dict = utils.get_attractor_status(migration=experiment[0], inocula=experiment[1])
 
 
@@ -173,7 +174,7 @@ for experiment_idx, experiment in enumerate(experiments):
             relative_s_by_s_attractor = relative_s_by_s_attractor[attractor_species_idx]
 
 
-            means_attractor, variances_attractor, attractor_species_to_keep = utils.get_species_means_and_variances(relative_s_by_s_attractor, attractor_species)
+            means_attractor, variances_attractor, attractor_species_to_keep = utils.get_species_means_and_variances(relative_s_by_s_attractor, attractor_species, zeros=zeros)
             #slope_attractor, intercept_attractor, r_value_attractor, p_value_attractor, std_err_attractor = stats.linregress(np.log10(means_attractor), np.log10(variances_attractor))
 
             species_idx = [np.where(species_to_keep == attractor_species_to_keep_i)[0][0] for attractor_species_to_keep_i in attractor_species_to_keep]
@@ -369,7 +370,7 @@ ax_intercept.text(-0.07,0.75, 'Parent migration', fontsize=9, rotation=90, color
 
 
 #wspace=0.3, hspace=0.3
-fig_name = utils.directory + '/figs/taylors_law_attractor.pdf'
+fig_name = utils.directory + '/figs/taylors_law_attractor.png'
 fig.subplots_adjust(wspace=0.3, hspace=0.4)
-fig.savefig(fig_name, format='pdf', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
 plt.close()
