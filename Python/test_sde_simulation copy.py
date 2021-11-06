@@ -227,7 +227,7 @@ s_parent = len(prob_mean_rel_abundances)
 delta = 0.016
 n_reads = 10**4.4
 n_non_zero_k = int(delta*len(prob_mean_rel_abundances))
-
+reps = 100
 
 # merge ancestral SADs to get probability vector for multinomial sampling
 # delta% survive, get non zero carrying capacities
@@ -251,22 +251,7 @@ inoc_rel_abund = np.append(inoc_rel_abund_non_zero, np.zeros(len(inoc_rel_abund)
 # make the vector of carrying capacities
 k = np.append(k_to_keep, np.zeros(len(inoc_rel_abund) - len(k_to_keep)))
 
-#print(np.append(inoc_rel_abund_non_zero, [0]))
 
-
-#inoc_rel_abund = np.sort(inoc_rel_abund)
-#n_zero_inocula = sum(inoc_rel_abund==0)
-#inoc_rel_abund_non_zero = inoc_rel_abund[n_zero_inocula:]
-#print(inoc_rel_abund)
-# make sure all carrying capacities get assigned a non-zero initial abundance
-#print(, len(prob_mean_rel_abundances))
-# get number of specis to keep
-#s_to_keep = np.random.binomial(s_parent, p=delta)
-#inoculum =
-# get abundances of those species
-#ab_to_keep = np.random.choice(ab, size=s_to_keep, replace=False)
-# assign carrying capacities
-#k_to_keep = pln._rvs(2, 3, lower_trunc=True, size=s_to_keep)
 #unique_vals, counts = np.unique(ab, return_counts=True)
 #S_0=200
 #sad_0 = pln._rvs(0.3, 3, lower_trunc=True, size=S_0)
@@ -274,7 +259,7 @@ k = np.append(k_to_keep, np.zeros(len(inoc_rel_abund) - len(k_to_keep)))
 
 
 
-def simulate_slm(migration_treatment='parent'):
+def simulate_slm(migration_treatment='none'):
 
     tau = 1
     sigma = 0.02

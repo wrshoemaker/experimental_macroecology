@@ -13,6 +13,8 @@ import utils
 from matplotlib import cm
 
 
+zeros = True
+
 migration_innocula = [[('No_migration',4), ('No_migration',40)], [('Global_migration',4), ('Parent_migration',4)]]
 
 fig = plt.figure(figsize = (8, 8)) #
@@ -29,14 +31,14 @@ for migration_innoculum_row_idx, migration_innoculum_row in enumerate(migration_
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
 
-        means, variances, species_to_keep = utils.get_species_means_and_variances(rel_s_by_s, ESVs)
+        means, variances, species_to_keep = utils.get_species_means_and_variances(rel_s_by_s, ESVs, zeros=zeros)
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
 
 
         ax_plot = plt.subplot2grid((2, 2), (migration_innoculum_row_idx, migration_innoculum_column_idx), colspan=1)
 
-        ax_plot.scatter(means, variances, alpha=0.8, c=utils.color_dict[migration_innoculum_column], edgecolors='k')#, c='#87CEEB')
+        ax_plot.scatter(means, variances, alpha=0.8, c=utils.color_dict[migration_innoculum_column].reshape(1,-1), edgecolors='k')#, c='#87CEEB')
 
         x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
         y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
@@ -75,5 +77,5 @@ for migration_innoculum_row_idx, migration_innoculum_row in enumerate(migration_
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.5)
-fig.savefig(utils.directory + "/figs/taylors_law_migration.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

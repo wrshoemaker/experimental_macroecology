@@ -149,7 +149,15 @@ def load_subsample_richness_dict():
     return b
 
 
-#make_subsample_richness_dict()
+
+
+
+
+
+def test_mean_abundance_dist():
+
+    mean_rel_abundances = utils.estimate_mean_abundances_parent()
+
 
 
 
@@ -261,10 +269,10 @@ def plot_initial_vs_final_abundance():
         p_value = stats.t.sf(np.abs(t_value), len(source)-2)
         p_value_to_plot = utils.get_p_value(p_value)
 
-        print(slope, p_value)
         ax.text(0.15,0.92, r'$\beta=$' + str(round(slope,3)), fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
         ax.text(0.15,0.84, r'$t=$' + str(round(t_value,3)), fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
         ax.text(0.15,0.76, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
+        ax.text(0.18,0.68, r'$\rho^{2}=$' + str(round(r_value**2,4)), fontsize=10, color='k', ha='center', va='center', transform=ax.transAxes )
 
 
         #print(slope, p_value)
@@ -289,4 +297,8 @@ def plot_initial_vs_final_abundance():
 
 
 #plot_rarefaction()
-plot_initial_vs_final_abundance()
+#plot_initial_vs_final_abundance()
+
+
+
+estimate_mean_abundances_parent()

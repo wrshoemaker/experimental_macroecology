@@ -245,7 +245,6 @@ def plot_observed_vs_predicted_occupancy():
             ax.set_ylabel('Predicted occupancy', fontsize=9)
             ax.tick_params(axis='both', which='minor', labelsize=6)
             ax.tick_params(axis='both', which='major', labelsize=6)
-
             ax.set_title('%s\nTransfer %d' % (utils.titles_dict[migration_innoculum], transfer), fontsize=9)
 
 

@@ -1693,3 +1693,84 @@ def get_intersecting_timepoints(transfers_1, observations_1, transfers_2, observ
     observations_2_intersect = observations_2[sorted_idx_2]
 
     return transfers_intersect, observations_1_intersect, observations_2_intersect
+
+
+
+def estimate_mean_abundances_parent():
+
+    otu = open(directory + '/data/migration_data_table_totabund_all_singleton_mapped_full_wT0_20210918.csv')
+    otu_first_line = otu.readline()
+    otu_first_line = otu_first_line.strip().split(',')
+
+    count_dict = {}
+    all_treatments = []
+
+    for line in otu:
+        line = line.strip().split(',')
+        sample_line_name = line[0]
+        sample_line_name = re.sub(r'["]', '', sample_line_name)
+        treatment_line = line[1]
+        treatment_line = re.sub(r'["]', '', treatment_line)
+        inocula = line[3]
+
+        transfer = int(line[4])
+
+        if transfer == 0:
+
+            sample_line = line[5]
+            sample_line = sample_line.strip()
+            sample_line = re.sub(r'["]', '', sample_line)
+
+            #sample_line = int(sample_line)
+
+            esv_line = line[6]
+            esv_line = re.sub(r'["]', '', esv_line)
+
+
+
+            if sample_line_name not in count_dict:
+                count_dict[sample_line_name] = {}
+
+
+            if esv_line not in count_dict[sample_line_name]:
+                count_dict[sample_line_name][esv_line] = 0
+
+            if count_dict[sample_line_name][esv_line] > 0:
+
+                sys.stdout.write("Relative abundance already in dictionary!!\n" )
+
+            count_dict[sample_line_name][esv_line] = int(line[7])
+
+
+    abundances_dict = {}
+
+    for sample, sample_dict in count_dict.items():
+
+        N = sample_dict.values()
+
+        species = list(sample_dict.keys())
+
+        rel_abundances = np.asarray(list(sample_dict.values())) / sum(sample_dict.values())
+
+        for s_idx, s in enumerate(species):
+
+            if s not in abundances_dict:
+                abundances_dict[s] = []
+
+            abundances_dict[s].append(rel_abundances[s_idx])
+
+    mean_rel_abundances_all = []
+    species_all = []
+
+
+    for species, rel_abundances in abundances_dict.items():
+
+        if len(rel_abundances) < 3:
+
+            rel_abundances.extend([0]*(3-len(rel_abundances)))
+
+
+        mean_rel_abundances_all.append( np.mean(rel_abundances))
+        species_all.append(species)
+
+    return mean_rel_abundances_all, species_all

@@ -16,7 +16,7 @@ from matplotlib import cm
 #color_range =  np.linspace(0.0, 1.0, 18)
 #rgb = cm.get_cmap('Blues')( color_range )
 alpha = 0.05
-
+zeros = True
 
 #experiments = [('No_migration',4), ('Global_migration',4), ('Glucose',  np.nan) ]
 experiments = [('No_migration', 4), ('Global_migration', 4)]
@@ -88,8 +88,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
         #    species_relative_abundances_dict[species_i][comm_rep_array_no_zeros_i]['transfers'].append(transfer, afd_no_zeros_i)
 
-        means_transfer, variances_transfer, variances_species = utils.get_species_means_and_variances(
-            rel_s_by_s, species)
+        means_transfer, variances_transfer, variances_species = utils.get_species_means_and_variances(rel_s_by_s, species, zeros=True)
 
         if len(means_transfer) < 5:
             continue
@@ -210,6 +209,6 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/taylors_law_time_series_all.pdf",
-            format='pdf', bbox_inches="tight", pad_inches=0.5, dpi=600)
+fig.savefig(utils.directory + "/figs/taylors_law_time_series_all.png",
+            format='png', bbox_inches="tight", pad_inches=0.5, dpi=600)
 plt.close()
