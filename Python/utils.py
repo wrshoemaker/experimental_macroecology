@@ -58,6 +58,16 @@ color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_red[12
 attractor_latex_dict = {'Alcaligenaceae': r'$Alcaligenaceae$', 'Pseudomonadaceae': r'$Pseudomonadaceae$'}
 
 
+label_dict = {'Parent_migration.4.T18': 'Parent migration, low inoculum',
+                'No_migration.4.T18': 'No migration, low inoculum',
+                'No_migration.40.T18': 'No migration, high inoculum',
+                'Global_migration.4.T18': 'Global migration, low inoculum',
+                'Parent_migration.NA.T0': 'Parent community'}
+
+
+
+
+
 #from macroeco_distributions import pln, pln_solver, pln_ll
 #from macroecotools import obs_pred_rsquare
 
@@ -1774,3 +1784,74 @@ def estimate_mean_abundances_parent():
         species_all.append(species)
 
     return mean_rel_abundances_all, species_all
+
+
+
+
+def get_otu_dict():
+
+    otu = open(directory + '/data/migration_data_table_totabund_all_singleton_mapped_full_wT0_20210918.csv')
+    otu_first_line = otu.readline()
+    otu_first_line = otu_first_line.strip().split(',')
+
+    count_dict = {}
+    all_treatments = []
+
+    for line in otu:
+        line = line.strip().split(',')
+        sample_line_name = line[0]
+        sample_line_name = re.sub(r'["]', '', sample_line_name)
+        treatment_line = line[1]
+        treatment_line = re.sub(r'["]', '', treatment_line)
+        inocula = line[3]
+
+        transfer = int(line[4])
+
+        if (transfer == 18) or (transfer == 0):
+
+            sample_line = line[5]
+            sample_line = sample_line.strip()
+            sample_line = re.sub(r'["]', '', sample_line)
+
+            #sample_line = int(sample_line)
+
+            esv_line = line[6]
+            esv_line = re.sub(r'["]', '', esv_line)
+
+            if sample_line_name not in count_dict:
+                count_dict[sample_line_name] = {}
+
+
+            if esv_line not in count_dict[sample_line_name]:
+                count_dict[sample_line_name][esv_line] = 0
+
+            if count_dict[sample_line_name][esv_line] > 0:
+
+                sys.stdout.write("Relative abundance already in dictionary!!\n" )
+
+            count_dict[sample_line_name][esv_line] = int(line[7])
+
+    otu.close()
+
+    return count_dict
+
+
+
+
+def make_treatment_csv():
+
+    count_dict = get_otu_dict()
+    samples = list(count_dict.keys())
+    #Parent_migration.4.T18, No_migration.4.T18, No_migration.40.T18, Global_migration.4. T18,Parent_migration.NA.T0
+    # export each as rows = species, columns = samples
+
+    for treatment in treatments:
+
+        #samples_to_keep = [sample for sample in samples if treatment in sample]
+        count_dict_to_keep = {key: value for key, value in count_dict.items() if treatment in key}
+        s_by_s_df = pd.DataFrame(count_dict_to_keep)
+        s_by_s_df = s_by_s_df.fillna(0)
+
+        s_by_s_df = s_by_s_df.reset_index().rename({'index':'ASVs '}, axis = 'columns')
+        # index = True,
+        s_by_s_df.to_csv('%s/data/%s.csv' % (directory, treatment),  header=True)

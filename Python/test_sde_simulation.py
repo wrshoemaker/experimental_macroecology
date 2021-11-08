@@ -1,6 +1,7 @@
 from __future__ import division
 import os
 import sys
+import copy
 from math import factorial, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
@@ -213,150 +214,166 @@ def estimate_pln_lognorm_parameters():
 
 
 
-# write code to get mu and sigma by fitting to jacopo's MAD
-# get SADs
-#ab = [400, 40, 30, 10,4,3,2,1,1,1,1,1,1,1,1]
-#ab = np.asarray(ab)
+def prob_non_zero_k(log_10_x, intercept=1.6207715018444455, slope=1.086147398369049):
+    return 1 / (1 + np.exp( -1 * (intercept + slope*log_10_x) ))
 
-# get parent mean relative abundances
-mean_rel_abundances = utils.estimate_mean_abundances_parent()
-# divide by sum to use as probability
-prob_mean_rel_abundances = mean_rel_abundances/sum(mean_rel_abundances)
-
-s_parent = len(prob_mean_rel_abundances)
-delta = 0.016
-n_reads = 10**4.4
-n_non_zero_k = int(delta*len(prob_mean_rel_abundances))
-
-
-# merge ancestral SADs to get probability vector for multinomial sampling
-# delta% survive, get non zero carrying capacities
-# Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
-
-mu=3.4533926814573506
-sigma=2.6967286975393754
-# non zero carrying capacities
-k_to_keep = pln._rvs(mu, sigma, lower_trunc=True, size=n_non_zero_k)
-# pretty sure the array order is random but let's make sure
-k_to_keep = np.random.permutation(k_to_keep)
-
-inoc_abund = np.random.multinomial(n_reads, prob_mean_rel_abundances)
-inoc_rel_abund = inoc_abund / sum(inoc_abund)
-# get nonzero
-inoc_rel_abund_non_zero = inoc_rel_abund[inoc_rel_abund>0]
-# permute
-inoc_rel_abund_non_zero = np.random.permutation(inoc_rel_abund_non_zero)
-# add the zeros back
-inoc_rel_abund = np.append(inoc_rel_abund_non_zero, np.zeros(len(inoc_rel_abund) - len(inoc_rel_abund_non_zero)))
-# make the vector of carrying capacities
-k = np.append(k_to_keep, np.zeros(len(inoc_rel_abund) - len(k_to_keep)))
-
-#print(np.append(inoc_rel_abund_non_zero, [0]))
-
-
-#inoc_rel_abund = np.sort(inoc_rel_abund)
-#n_zero_inocula = sum(inoc_rel_abund==0)
-#inoc_rel_abund_non_zero = inoc_rel_abund[n_zero_inocula:]
-#print(inoc_rel_abund)
-# make sure all carrying capacities get assigned a non-zero initial abundance
-#print(, len(prob_mean_rel_abundances))
-# get number of specis to keep
-#s_to_keep = np.random.binomial(s_parent, p=delta)
-#inoculum =
-# get abundances of those species
-#ab_to_keep = np.random.choice(ab, size=s_to_keep, replace=False)
-# assign carrying capacities
-#k_to_keep = pln._rvs(2, 3, lower_trunc=True, size=s_to_keep)
-#unique_vals, counts = np.unique(ab, return_counts=True)
-#S_0=200
-#sad_0 = pln._rvs(0.3, 3, lower_trunc=True, size=S_0)
+# use it for log10
 
 
 
 
-def simulate_slm(migration_treatment='parent'):
+def run_simulation(migration_treatment='none'):
 
-    tau = 1
+    # get parent mean relative abundances
+    mean_rel_abundances_parent, species_parent = utils.estimate_mean_abundances_parent()
+    mean_rel_abundances_parent = np.asarray(mean_rel_abundances_parent)
+    # divide by sum to use as probability
+    prob_mean_rel_abundances_parent = mean_rel_abundances_parent/sum(mean_rel_abundances_parent)
+
+    s_parent = len(prob_mean_rel_abundances_parent)
+    delta = 0.016
+    n_reads = 10**4.4
+    n_cells_inoc = 10**8
+    reps = 100
+    n_non_zero_k = int(delta*len(prob_mean_rel_abundances_parent))
+    tau = 3
     sigma = 0.02
-
     # 7 generations per transfer
     # just use units of generations for now
-    dt = 1
+    dt = 7
     # T = generations
     T = 126
+    #T = 10026
     n_time_steps = int(T / dt)  # Number of time steps.
-    t = np.linspace(0., T, n_time_steps)  # Vector of times.
+    #t_gen = np.linspace(0., T, n_time_steps)  # Vector of times.
+    t_gen = np.arange(0, T, dt)
 
+
+    # merge ancestral SADs to get probability vector for multinomial sampling
+    # delta% survive, get non zero carrying capacities
+    # Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
+
+    # redo later to draw carrying capacities from no migration distribution
+    mu_pln=3.4533926814573506
+    sigma_pln=2.6967286975393754
+    # non zero carrying capacities
+    k_to_keep = pln._rvs(mu_pln, sigma_pln, lower_trunc=True, size=n_non_zero_k)
+    # pretty sure the array order is random but let's make sure
+    k_to_keep = np.random.permutation(k_to_keep)
+
+    inoc_abund = np.random.multinomial(n_cells_inoc, prob_mean_rel_abundances_parent)
+    #inoc_rel_abund = inoc_abund / sum(inoc_abund)
+    # get nonzero
+    inoc_abund_non_zero = inoc_abund[inoc_abund>0]
+    # permute
+    inoc_abund_non_zero = np.random.permutation(inoc_abund_non_zero)
+    non_zero_k_weights = np.asarray([prob_non_zero_k(l) for l in np.log10(inoc_abund_non_zero)])
+    non_zero_k_prob = non_zero_k_weights/sum(non_zero_k_weights)
+
+    init_abund_non_zero_with_non_zero_k = np.random.choice(inoc_abund_non_zero, size=len(k_to_keep), replace=False, p=non_zero_k_prob)
+    # probably have initial abundances that are the same... (1/#reads),
+    # make new vector of initial relative abundances, and match with carrying capacities
+    #n_non_zero_k_copy = copy.copy(n_non_zero_k)
+
+    # add zeros
+    inoc_abund_non_zero_set = list(set(inoc_abund_non_zero))
+
+    for i_idx, i in enumerate(inoc_abund_non_zero_set):
+        n_i = sum(inoc_abund_non_zero==i)
+
+        n_non_zero_k_i = sum(init_abund_non_zero_with_non_zero_k==i)
+        n_zero_k_i = n_i - n_non_zero_k_i
+
+        # add zeros for species that have non zero initial abundances, but carrying capacities of zerp
+        k_to_keep = np.append(k_to_keep, [0]*n_zero_k_i)
+        init_abund_non_zero_with_non_zero_k = np.append(init_abund_non_zero_with_non_zero_k, [0]*n_zero_k_i)
+
+
+
+
+    k_to_keep = np.append(k_to_keep, [0]*sum(inoc_abund==0))
+    init_abund = np.append(init_abund_non_zero_with_non_zero_k, [0]*sum(inoc_abund==0))
+
+    k_to_keep_rel = k_to_keep / sum(k_to_keep)
+    init_abund_rel = init_abund / sum(init_abund)
+
+
+    # how to handle relative abundances
+
+
+    #def simulate_slm(migration_treatment='none'):
 
     #  renormalized variables
     noise_variable = np.sqrt( sigma*dt/tau  )
 
-    #np.random.multinomial(ab_to_keep/sum(ab_to_keep))
-
     # create three dimensional vector
     # spcies, replicate, and timestep
 
-    q = np.zeros((n_time_steps, reps, len(ab_to_keep)))
+    q = np.zeros((n_time_steps, reps, len(init_abund_rel)))
 
     for rep in range(reps):
-        x_0 = np.random.multinomial(1000, ab_to_keep/sum(ab_to_keep))
-        #x_0 = x_0/sum(x_0)
+        x_0 = np.random.multinomial(n_cells_inoc, init_abund_rel)
+        x_0 = x_0/sum(x_0)
 
         q_0 = np.log(x_0)
 
         q[0,rep,:] = np.asarray(q_0)
 
 
-    #q[0,:] = np.asarray([x_0]*reps)
-
     for t in range(n_time_steps - 1):
+        # migration only happens at transfers
+        if t in t_gen:
 
-        if migration_treatment == 'global':
+            if migration_treatment == 'global':
 
-            x_global = np.zeros(len(ab_to_keep))
+                x_global = np.zeros(len(init_abund_rel))
 
-            for r in range(reps):
-                q_t_r = q[t, r, :]
-                x_t_r = np.exp(q_t_r)
-                x_t_r[x_t_r<0] = 0
-                x_t_r_sample = np.random.multinomial(1000, x_t_r/sum(x_t_r))
-                x_global += x_t_r_sample
+                for r in range(reps):
+                    q_t_r = q[t, r, :]
+                    x_t_r = np.exp(q_t_r)
+                    x_t_r[x_t_r<0] = 0
+                    x_t_r_sample = np.random.multinomial(1000, x_t_r/sum(x_t_r))
+                    x_global += x_t_r_sample
 
-            m = np.random.multinomial(1000, x_global/sum(x_global), size=reps)
+                m = np.random.multinomial(n_cells_inoc, x_global/sum(x_global), size=reps)
+                m = m/sum(m)
 
-        elif migration_treatment == 'parent':
-            # columns = species
-            # rows = reps
-            m = np.random.multinomial(1000, ab_to_keep/sum(ab_to_keep), size=reps)
+            elif migration_treatment == 'parent':
+                # columns = species
+                # rows = reps
+                m = np.random.multinomial(n_cells_inoc, init_abund_rel, size=reps)
+                m = m/sum(m)
 
-        else:
-            m = np.zeros((reps, len(ab_to_keep)))
+            else:
+                m = np.zeros((reps, len(init_abund_rel)))
 
-        # update array
-        q[t + 1,:,:] = q[t,:,:] + (dt*(m/np.exp(q[t,:,:]))*(1/tau)*(1 - (sigma/2) - (np.exp(q[t,:,:]) / k))) + (noise_variable * np.random.randn(reps, len(ab_to_keep)))
-
-
+            # update array
+            q[t + 1,:,:] = q[t,:,:] + (dt*(m/np.exp(q[t,:,:]))*(1/tau)*(1 - (sigma/2) - (np.exp(q[t,:,:]) / k_to_keep_rel))) + (noise_variable * np.random.randn(reps, len(init_abund_rel)))
 
     x = np.exp(q)
     # replace negative q values with zero
     x[x<0] = 0
     x[(np.isnan(x)) | np.isneginf(x) | np.isinf(x)] = 0
 
-
-    print(x)
-
-    #fig, ax = plt.subplots(figsize=(4,4))
-    #ax.scatter(t, x[:,4, 5], alpha=0.7, s=4)
-    #ax.set_yscale('log', basey=10)
-
-    #fig.subplots_adjust(hspace=0.35,wspace=0.3)
-    #fig_name = "%s/figs/test_simulation.png" % utils.directory
-    #fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
-    #plt.close()
+    return x, t_gen
 
 
 
-simulate_slm()
 
+#126, 10, 1591
+#x = simulate_slm()
 
-#simulate_slm()
+#print(x.shape)
+
+#species_idx = 3
+
+#print(init_abund_rel[species_idx], k_to_keep_rel[species_idx])
+
+#fig, ax = plt.subplots(figsize=(4,4))
+#ax.scatter(t, x[:,4, species_idx], alpha=0.7, s=4)
+#ax.set_yscale('log', basey=10)
+
+#fig.subplots_adjust(hspace=0.35,wspace=0.3)
+#fig_name = "%s/figs/test_simulation.png" % utils.directory
+#fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+#plt.close()

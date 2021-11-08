@@ -91,13 +91,12 @@ for migration_innoculum in migration_innocula:
 
 
 
+            rel_s_by_s_attractor = (s_by_s_attractor/s_by_s_attractor.sum(axis=0))
 
-
-            means = np.mean(s_by_s_attractor, axis=1)
-            vars = np.var(s_by_s_attractor, axis=1)
-
+            means = np.mean(rel_s_by_s_attractor, axis=1)
+            vars = np.var(rel_s_by_s_attractor, axis=1)
+            # ((mean**2)/(var) ) / mean = mean/var)
             thetas = means / vars
-
 
 
             #thetas = utils.calculate_theta(s_by_s_attractor)

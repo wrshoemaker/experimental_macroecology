@@ -190,3 +190,41 @@ def simulate_slm():
 
 
     print(x)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# add the zeros back
+#inoc_rel_abund = np.append(inoc_rel_abund_non_zero, np.zeros(len(inoc_rel_abund) - len(inoc_rel_abund_non_zero)))
+# make the vector of carrying capacities
+#k = np.append(k_to_keep, np.zeros(len(inoc_rel_abund) - len(k_to_keep)))
+
+
+
+
+
+#inoc_rel_abund = np.sort(inoc_rel_abund)
+#n_zero_inocula = sum(inoc_rel_abund==0)
+#inoc_rel_abund_non_zero = inoc_rel_abund[n_zero_inocula:]
+# make sure all carrying capacities get assigned a non-zero initial abundance
+# get number of specis to keep
+#s_to_keep = np.random.binomial(s_parent, p=delta)
+#inoculum =
+# get abundances of those species
+#ab_to_keep = np.random.choice(ab, size=s_to_keep, replace=False)
+# assign carrying capacities
+#k_to_keep = pln._rvs(2, 3, lower_trunc=True, size=s_to_keep)
+#unique_vals, counts = np.unique(ab, return_counts=True)
+#S_0=200
+#sad_0 = pln._rvs(0.3, 3, lower_trunc=True, size=S_0)
