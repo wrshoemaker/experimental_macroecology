@@ -47,7 +47,7 @@ for migration_innoculum in migration_innocula:
 
         s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
         species = np.asarray(species)
-        occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s)
+        occupancies, predicted_occupancies = utils.predict_occupancy(s_by_s, species)
         errors = np.absolute(occupancies - predicted_occupancies)/occupancies
 
         theta_dict = {}

@@ -1,17 +1,22 @@
 from __future__ import division
-import os, sys, re
+import os, sys, re, math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sympy as sp
 
 import bisect
 import random
 from collections import Counter
-from scipy import stats, signal, optimize
+from scipy import stats, signal, optimize, special
 
 from matplotlib import cm
 
 np.seterr(divide='ignore', invalid='ignore')
+
+
+# parameters for simulations
+n_reads = 10**4.4
 
 
 family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
@@ -807,7 +812,7 @@ def plot_color_by_pt_dens(x, y, radius, loglog=0, plot_obj=None):
 
 
 
-def predict_occupancy(s_by_s, totreads=np.asarray([])):
+def predict_occupancy(s_by_s, species, totreads=np.asarray([])):
 
     s_by_s_presence_absence = np.where(s_by_s > 0, 1, 0)
 
@@ -863,10 +868,21 @@ def predict_occupancy(s_by_s, totreads=np.asarray([])):
         #1- mean( (1.+theta*totreads)^(-beta ) )
 
     predicted_occupancies = np.asarray(predicted_occupancies)
-    occupancies_no_zeros = occupancies[occupancies>0]
-    predicted_occupancies_no_zeros = predicted_occupancies[occupancies>0]
 
-    return occupancies_no_zeros, predicted_occupancies_no_zeros
+    idx_to_keep = (~np.isnan(occupancies)) & (~np.isnan(predicted_occupancies)) & (occupancies>0)
+
+    occupancies_no_zeros = occupancies[idx_to_keep]
+    predicted_occupancies_no_zeros = predicted_occupancies[idx_to_keep]
+
+    species = np.asarray(species)
+    species_no_zeros = species[idx_to_keep]
+
+    rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+    mad = np.mean(rel_s_by_s, axis=1)
+    mad_no_zeros = mad[idx_to_keep]
+
+    return occupancies_no_zeros, predicted_occupancies_no_zeros, mad_no_zeros, species_no_zeros
+
 
 
 
@@ -1855,3 +1871,24 @@ def make_treatment_csv():
         s_by_s_df = s_by_s_df.reset_index().rename({'index':'ASVs '}, axis = 'columns')
         # index = True,
         s_by_s_df.to_csv('%s/data/%s.csv' % (directory, treatment),  header=True)
+
+
+
+def Klogn(emp_mad, c, mu0=-19,s0=5):
+    # This function estimates the parameters (mu, s) of the lognormal distribution of K
+    m1 = np.mean(np.log(emp_mad[emp_mad>c]))
+    m2 = np.mean(np.log(emp_mad[emp_mad>c])**2)
+    xmu = sp.symbols('xmu')
+    xs = sp.symbols('xs')
+    eq1 =- m1+xmu + np.sqrt(2/math.pi)*xs*sp.exp(-((np.log(c)-xmu)**2)/2/(xs**2))/(sp.erfc((np.log(c)-xmu)/np.sqrt(2)/xs))
+    eq2 =- m2+xs**2+m1*xmu+np.log(c)*m1-xmu*np.log(c)
+
+    sol = sp.nsolve([eq1,eq2],[xmu,xs],[mu0,s0])
+
+    return(float(sol[0]),float(sol[1]))
+
+
+
+def get_lognorma_mad_prediction(x, mu, sigma, c):
+
+    return np.sqrt(2/math.pi)/sigma*np.exp(-(x-mu)**2 /2/(sigma**2))/special.erfc((np.log(c)-mu)/np.sqrt(2)/sigma)

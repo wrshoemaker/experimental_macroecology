@@ -62,6 +62,11 @@ x_r_rel_no_zeros = x_r_rel[:,~np.all(x_r_rel == 0, axis=0)]
 x_r_rel_no_zeros = x_r_rel_no_zeros[:,np.argsort(x_r_rel_no_zeros[0,:])[::-1]]
 
 
+#
+
+cmap = cm.get_cmap(' ', x_r_rel_no_zeros.shape[1])
+cmap_idx = list(range(x_r_rel_no_zeros.shape[1]))
+np.random.shuffle(cmap_idx)
 
 #print(x_r_rel_no_zeros[np.argsort(x_0)])
 
@@ -80,10 +85,10 @@ for species_trajectory_idx, species_trajectory in enumerate( x_r_rel_no_zeros.T)
     # fill between these two
     # get color map
     #print(y_upper_bound[0], y_lower_bound[0], species_trajectory[0])
-    rgb = mut_freq_colormap()
-    rgb = lighten_color(rgb, amount=0.5)
+    #rgb = mut_freq_colormap()
+    #rgb = lighten_color(rgb, amount=0.5)
     # color=rgb,
-    ax.fill_between(t, y_lower_bound, y_upper_bound, alpha=1)
+    ax.fill_between(t, y_lower_bound, y_upper_bound, color = cmap(cmap_idx[species_trajectory_idx]), alpha=1)
 
     ax.set_xlim(0, max(t ))
     ax.set_ylim(0, 1)
@@ -93,7 +98,6 @@ for species_trajectory_idx, species_trajectory in enumerate( x_r_rel_no_zeros.T)
 
 
     y_upper_bound = y_upper_bound - species_trajectory
-
 
 
 

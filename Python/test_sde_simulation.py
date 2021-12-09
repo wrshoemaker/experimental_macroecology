@@ -222,7 +222,7 @@ def prob_non_zero_k(log_10_x, intercept=1.6207715018444455, slope=1.086147398369
 
 
 
-def run_simulation(migration_treatment='none'):
+def run_simulation(sigma = 0.02, migration_treatment='none'):
 
     # get parent mean relative abundances
     mean_rel_abundances_parent, species_parent = utils.estimate_mean_abundances_parent()
@@ -232,7 +232,6 @@ def run_simulation(migration_treatment='none'):
 
     s_parent = len(prob_mean_rel_abundances_parent)
     delta = 0.016
-    n_reads = 10**4.4
     n_cells_inoc = 10**8
     reps = 100
     n_non_zero_k = int(delta*len(prob_mean_rel_abundances_parent))
@@ -347,8 +346,12 @@ def run_simulation(migration_treatment='none'):
             else:
                 m = np.zeros((reps, len(init_abund_rel)))
 
-            # update array
-            q[t + 1,:,:] = q[t,:,:] + (dt*(m/np.exp(q[t,:,:]))*(1/tau)*(1 - (sigma/2) - (np.exp(q[t,:,:]) / k_to_keep_rel))) + (noise_variable * np.random.randn(reps, len(init_abund_rel)))
+        else:
+            m = np.zeros((reps, len(init_abund_rel)))
+
+        # update array
+        q[t + 1,:,:] = q[t,:,:] + (dt*(m/np.exp(q[t,:,:]))*(1/tau)*(1 - (sigma/2) - (np.exp(q[t,:,:]) / k_to_keep_rel))) + (noise_variable * np.random.randn(reps, len(init_abund_rel)))
+
 
     x = np.exp(q)
     # replace negative q values with zero

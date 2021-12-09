@@ -1959,6 +1959,9 @@ def run_corr_analysis():
         ax_i.set_yscale('log', basey=10)
 
 
+        ax_i.set_title(r'$T_{\mathrm{seed \,bank}}$')
+
+
     fig.subplots_adjust(hspace=0.15, wspace=0.15)
     fig.savefig(utils.directory + "/figs/correlation.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
