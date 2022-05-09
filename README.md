@@ -1,13 +1,16 @@
 # experimental_macroecology
 
 
-For now, all data cleaning and analyses are in `Python/log_normal_analysis.py`. I'll probably change this structure at some point
+For now, all data cleaning and analyses are in `Python/log_normal_analysis.py`. I'll change this structure at some point
 
 
 
 ### Python packages
 
-- macroecotools 
+- macroecotools
 - scipy
 - matplotlib
 - numpy
+
+
+conda activate macroecotools

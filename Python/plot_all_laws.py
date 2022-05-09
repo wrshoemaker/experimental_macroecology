@@ -56,6 +56,8 @@ for transfer in transfers:
         s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration=migration_innoculum[0], inocula=migration_innoculum[1], transfer=transfer)
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
+        #print(migration_innoculum, transfer , s_by_s.shape, len(comm_rep_list))
+
         afd = rel_s_by_s.flatten()
         afd_log10 = np.log(afd[afd>0])
         afd_log10_rescaled = (afd_log10 - np.mean(afd_log10)) / np.std(afd_log10)

@@ -12,8 +12,8 @@ from scipy.stats import gamma
 #from macroecotools import obs_pred_rsquare
 import utils
 
-import test_sde_simulation
-
+#import test_sde_simulation
+import slm_simulation_utils
 
 def lighten_color(color, amount=0.5):
     """
@@ -52,32 +52,33 @@ def mut_freq_colormap():
 
 
 
-x, t = test_sde_simulation.run_simulation()
+#x, t = test_sde_simulation.run_simulation()
+n, k_to_keep, t = slm_simulation_utils.run_simulation(migration_treatment = 'none')
 
 
-x_r = x[:,2,:]
-x_r_rel = (x_r.T/x_r.sum(axis=1)).T
-x_r_rel_no_zeros = x_r_rel[:,~np.all(x_r_rel == 0, axis=0)]
+n_r = n[:,1,:]
+n_r_rel = (n_r.T/n_r.sum(axis=1)).T
+n_r_rel_no_zeros = n_r_rel[:,~np.all(n_r_rel == 0, axis=0)]
 # sort by initial relative abundance
-x_r_rel_no_zeros = x_r_rel_no_zeros[:,np.argsort(x_r_rel_no_zeros[0,:])[::-1]]
+n_r_rel_no_zeros = n_r_rel_no_zeros[:,np.argsort(n_r_rel_no_zeros[0,:])[::-1]]
+
+#print(n_r_rel[-1,:])
+#print(len(n_r_rel[-1,:]))
+#print(k_to_keep)
 
 
-#
-
-cmap = cm.get_cmap(' ', x_r_rel_no_zeros.shape[1])
-cmap_idx = list(range(x_r_rel_no_zeros.shape[1]))
+cmap = cm.get_cmap('ocean', n_r_rel_no_zeros.shape[1])
+cmap_idx = list(range(n_r_rel_no_zeros.shape[1]))
 np.random.shuffle(cmap_idx)
 
-#print(x_r_rel_no_zeros[np.argsort(x_0)])
 
 fig, ax = plt.subplots(figsize=(4,4))
+y_upper_bound = np.asarray([1]*n_r_rel_no_zeros.shape[0])
 
-y_upper_bound = np.asarray([1]*x_r_rel_no_zeros.shape[0])
+for species_trajectory_idx, species_trajectory in enumerate(n_r_rel_no_zeros.T):
 
-for species_trajectory_idx, species_trajectory in enumerate( x_r_rel_no_zeros.T):
-
-    if species_trajectory_idx == x_r_rel_no_zeros.shape[1]-1:
-        y_lower_bound = np.asarray([0]*x_r_rel_no_zeros.shape[0])
+    if species_trajectory_idx == n_r_rel_no_zeros.shape[1]-1:
+        y_lower_bound = np.asarray([0]*n_r_rel_no_zeros.shape[0])
 
     else:
         y_lower_bound = y_upper_bound-species_trajectory
@@ -93,15 +94,13 @@ for species_trajectory_idx, species_trajectory in enumerate( x_r_rel_no_zeros.T)
     ax.set_xlim(0, max(t ))
     ax.set_ylim(0, 1)
 
-
     #ax.plot(times, freqs, '.-', c=rgb, alpha=0.4)
-
 
     y_upper_bound = y_upper_bound - species_trajectory
 
 
 
 
-fig_name = utils.directory + '/figs/slm_timeseries.png'
+fig_name = utils.directory + '/figs/slm_timeseries_.png'
 fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
 plt.close()

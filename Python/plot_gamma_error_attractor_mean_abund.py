@@ -107,10 +107,6 @@ for migration_innoculum in migration_innocula:
             errors_all.append(error_k)
 
 
-
-
-
-
         # plot shape params
         #if len(thetas_p) == 0:
         #    continue

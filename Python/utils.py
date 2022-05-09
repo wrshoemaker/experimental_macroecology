@@ -1,6 +1,9 @@
 from __future__ import division
 import os, sys, re, math
+
 import matplotlib.pyplot as plt
+from matplotlib import cm
+
 import numpy as np
 import pandas as pd
 import sympy as sp
@@ -10,7 +13,7 @@ import random
 from collections import Counter
 from scipy import stats, signal, optimize, special
 
-from matplotlib import cm
+
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -814,6 +817,27 @@ def plot_color_by_pt_dens(x, y, radius, loglog=0, plot_obj=None):
 
 def predict_occupancy(s_by_s, species, totreads=np.asarray([])):
 
+    # get squared inverse cv
+    # assume that entries are read counts.
+    rel_s_by_s_np = (s_by_s/s_by_s.sum(axis=0))
+
+    beta_all = []
+    mean_all = []
+
+    for s in rel_s_by_s_np:
+
+        var = np.var(s)
+        mean = np.mean(s)
+
+        beta = (mean**2)/var
+
+        mean_all.append(mean)
+        beta_all.append(beta)
+
+    beta_all = np.asarray(beta_all)
+    mean_all = np.asarray(mean_all)
+
+
     s_by_s_presence_absence = np.where(s_by_s > 0, 1, 0)
 
     occupancies = s_by_s_presence_absence.sum(axis=1) / s_by_s_presence_absence.shape[1]
@@ -862,9 +886,7 @@ def predict_occupancy(s_by_s, species, totreads=np.asarray([])):
     predicted_occupancies = []
     # each species has it's own beta and theta, which is used to calculate predicted occupancy
     for beta_i, theta_i in zip(beta,theta):
-
         predicted_occupancies.append(1 - np.mean( ((1+theta_i*totreads)**(-1*beta_i ))   ))
-
         #1- mean( (1.+theta*totreads)^(-beta ) )
 
     predicted_occupancies = np.asarray(predicted_occupancies)
@@ -881,7 +903,24 @@ def predict_occupancy(s_by_s, species, totreads=np.asarray([])):
     mad = np.mean(rel_s_by_s, axis=1)
     mad_no_zeros = mad[idx_to_keep]
 
-    return occupancies_no_zeros, predicted_occupancies_no_zeros, mad_no_zeros, species_no_zeros
+    #beta_no_zeros = beta[idx_to_keep]
+    #theta_no_zeros = theta[idx_to_keep]
+    # beta/f
+    #beta_div_f_no_zeros = 1/theta_no_zeros
+
+    beta_no_zeros = beta_all[idx_to_keep]
+
+    return occupancies_no_zeros, predicted_occupancies_no_zeros, mad_no_zeros, beta_no_zeros, species_no_zeros
+
+
+
+
+def calculate_shape_and_rate_params(s_by_s):
+
+
+
+    return mean_all, beta_all
+
 
 
 
