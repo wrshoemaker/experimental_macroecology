@@ -58,15 +58,16 @@ def get_color_attractor(attractor, transfer):
 
 
 color_dict_range = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green, ('No_migration',40): rgb_orange}
-
-
 color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_red[12], ('Parent_migration', 4):rgb_green[12], ('No_migration',40):rgb_orange[12] }
-
 
 attractor_latex_dict = {'Alcaligenaceae': r'$Alcaligenaceae$', 'Pseudomonadaceae': r'$Pseudomonadaceae$'}
 
 
-label_dict = {'Parent_migration.4.T18': 'Parent migration, low inoculum',
+label_dict = {'Parent_migration.4.T12': 'Parent migration, low inoculum',
+                'No_migration.4.T12': 'No migration, low inoculum',
+                'No_migration.40.T12': 'No migration, high inoculum',
+                'Global_migration.4.T12': 'Global migration, low inoculum',
+                'Parent_migration.4.T18': 'Parent migration, low inoculum',
                 'No_migration.4.T18': 'No migration, low inoculum',
                 'No_migration.40.T18': 'No migration, high inoculum',
                 'Global_migration.4.T18': 'Global migration, low inoculum',
@@ -1862,7 +1863,7 @@ def get_otu_dict():
 
         transfer = int(line[4])
 
-        if (transfer == 18) or (transfer == 0):
+        if (transfer == 18) or (transfer == 0) or (transfer == 12):
 
             sample_line = line[5]
             sample_line = sample_line.strip()

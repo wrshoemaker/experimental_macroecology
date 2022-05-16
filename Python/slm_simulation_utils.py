@@ -251,13 +251,14 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     # descendent lines are 500ul in size
     n_cells_transfer = np.random.binomial(n_cells_parent, 0.004/0.5) # number of cells that get transferred between descendent communities
 
-    if migration_treatment == 'parent':
-        n_cells_migration = n_cells_inoc
-    elif migration_treatment == 'global':
-        #n_cells_migration = int(n_cells_descendent * 0.004/0.5)
-        n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5)
-    else:
-        n_cells_migration = 0
+    #if migration_treatment == 'parent':
+    #    #n_cells_migration = n_cells_inoc
+    #    # not sure! ask Alvaro!
+    #    n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5)
+    #elif migration_treatment == 'global':
+    #    n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5)
+    #else:
+    #    n_cells_migration = 0
 
     n_time_steps = int(T / dt)  # Number of time steps.
     t_gen = np.arange(0, T, dt)
@@ -341,17 +342,26 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
                     q_t_r = q[t,r,:]
                     n_t_r = np.exp(q_t_r)
                     n_t_r[n_t_r<0] = 0
+                    n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5)
                     n_t_r_sample = np.random.multinomial(n_cells_migration, n_t_r/sum(n_t_r))
                     n_global += n_t_r_sample
 
                 # diluted 10,000 fold
+                n_cells_global_diluted = np.random.binomial(sum(n_global), 10**-4)
+                # sample to get abundances of diluted global samples
+                n_global_diluted = np.random.multinomial(n_cells_global_diluted, n_global/sum(n_global))
+                #n_global_diluted = np.asarray([np.random.multinomial(l, n_global/sum(n_global)) for l in n_cells_global_diluted])
+
+                # get number of cells transferred from diluted global sample
                 # ask alvaro, but assume for now that the 10,000 fold diluated community is in a volume of size 500uL
-                n_cells_migration_transfer = int((n_cells_migration*reps)*(10**-4)*(0.004/0.5))
-                m = np.random.multinomial(n_cells_migration_transfer, n_global/sum(n_global), size=reps)
+                n_cells_migration_transfer = np.random.binomial(n_cells_global_diluted, 0.004/0.5, size=reps)
+                m = np.asarray([np.random.multinomial(l, n_global_diluted/sum(n_global_diluted)) for l in n_cells_migration_transfer])
 
             elif migration_treatment == 'parent':
-                # columns = species, rows = reps
-                m = np.random.multinomial(n_cells_migration, init_abund_rel, size=reps)
+                # not sure! ask Alvaro!
+                n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5, size=reps)
+                #m = np.random.multinomial(n_cells_migration, init_abund_rel, size=reps)
+                m = np.asarray([np.random.multinomial(l, init_abund_rel) for l in n_cells_migration])
 
             else:
                 m = np.zeros((reps, len(init_abund_rel)))

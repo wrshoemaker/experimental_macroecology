@@ -24,12 +24,13 @@ test_dict = {}
 migration_treatments = ['global', 'parent', 'none']
 for migration_treatment in migration_treatments:
 
+    print(migration_treatment)
+
     mean_error_all = []
 
     for i in range(iter):
-        print(i)
 
-        n, k_to_keep, t = slm_simulation_utils.run_simulation(migration_treatment = 'global')
+        n, k_to_keep, t = slm_simulation_utils.run_simulation(migration_treatment = migration_treatment)
         #n_final = n[-1,0,:]
         #print(n_final)
         n_final = n[-1,:,:]
