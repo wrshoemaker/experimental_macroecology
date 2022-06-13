@@ -15,30 +15,36 @@ from matplotlib import cm
 
 zeros = True
 
-migration_innocula = [[('No_migration',4), ('No_migration',40)], [('Global_migration',4), ('Parent_migration',4)]]
+migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
 
-fig = plt.figure(figsize = (8, 8)) #
+fig = plt.figure(figsize = (16, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 
-for migration_innoculum_row_idx, migration_innoculum_row in enumerate(migration_innocula):
 
-    for migration_innoculum_column_idx, migration_innoculum_column in enumerate(migration_innoculum_row):
+for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
-        title = utils.titles_dict[migration_innoculum_column]
+    for trasfer_idx, transfer in enumerate(utils.transfers):
 
-        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration=migration_innoculum_column[0], inocula=migration_innoculum_column[1])
+        print(migration_innoculum, transfer)
+
+        s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=migration_innoculum[0], inocula=migration_innoculum[1])
+
 
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
-
         means, variances, species_to_keep = utils.get_species_means_and_variances(rel_s_by_s, ESVs, zeros=zeros)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
+        idx_to_keep = means<0.1
 
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means[idx_to_keep]), np.log10(variances[idx_to_keep]))
 
-        ax_plot = plt.subplot2grid((2, 2), (migration_innoculum_row_idx, migration_innoculum_column_idx), colspan=1)
+        #
+        #means = means[idx_to_keep]
+        #variances = variances[idx_to_keep]
 
-        ax_plot.scatter(means, variances, alpha=0.8, c=utils.color_dict[migration_innoculum_column].reshape(1,-1), edgecolors='k')#, c='#87CEEB')
+        ax_plot = plt.subplot2grid((2, 4), (trasfer_idx, migration_innoculum_idx), colspan=1)
+
+        ax_plot.scatter(means, variances, alpha=0.8, c=utils.color_dict[migration_innoculum].reshape(1,-1), edgecolors='k')#, c='#87CEEB')
 
         x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
         y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
@@ -55,7 +61,11 @@ for migration_innoculum_row_idx, migration_innoculum_row in enumerate(migration_
         ax_plot.set_xlabel('Average relative\nabundance', fontsize=12)
         ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
 
-        ax_plot.set_title(title, fontsize=12, fontweight='bold' )
+
+        if trasfer_idx == 0:
+
+            title = utils.titles_dict[migration_innoculum]
+            ax_plot.set_title(title, fontsize=12, fontweight='bold' )
 
 
         t_value = (slope - (utils.slope_null))/std_err
@@ -70,12 +80,15 @@ for migration_innoculum_row_idx, migration_innoculum_row in enumerate(migration_
 
         sys.stdout.write("Slope = %g, t = %g, P= %g\n" % (slope, t_value, p_value))
 
-
-
         ax_plot.legend(loc="lower right", fontsize=8)
 
+        if migration_innoculum_idx == 0:
+
+            ax_plot.text(-0.3,0.5, 'Transfer %d' % transfer, fontsize=12, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax_plot.transAxes )
 
 
-fig.subplots_adjust(wspace=0.3, hspace=0.5)
+
+
+fig.subplots_adjust(wspace=0.28, hspace=0.4)
 fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

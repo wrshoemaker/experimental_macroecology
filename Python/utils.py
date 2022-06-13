@@ -20,7 +20,8 @@ np.seterr(divide='ignore', invalid='ignore')
 
 # parameters for simulations
 n_reads = 10**4.4
-
+c=0.000001
+transfers = [12,18]
 
 family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
                 'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',

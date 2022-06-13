@@ -2,6 +2,7 @@ from __future__ import division
 import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 import scipy.stats as stats
 from scipy.stats import gamma
@@ -16,10 +17,13 @@ import statsmodels.stats.multitest as multitest
 
 #afd_migration_transfer_12
 
+ks_dict_path = "%s/data/afd_ks_dict.pickle" %  utils.directory
+
 afd_dict = {}
 transfers = np.asarray([12, 18])
 
 experiments = [('No_migration',4), ('Global_migration',4), ('Parent_migration', 4)  ]
+treatment_combinations = list(combinations(experiments,2))
 
 for experiment in experiments:
 
@@ -35,102 +39,75 @@ for experiment in experiments:
         afd = afd[afd>0]
         afd = np.log10(afd)
 
+        #afd_rescaled = (afd - np.mean(afd))/np.std(afd)
+
         afd_dict[experiment][transfer] = afd
 
 
 
 
-def old_fig():
 
-    fig = plt.figure(figsize = (4*len(experiments), 4))
-    fig.subplots_adjust(bottom= 0.15)
+def make_ks_dict():
 
-    for transfer in transfers:
+    distances_dict = {}
 
-        for combo in combinations(experiments,2):
+    for combo in treatment_combinations:
+
+        if combo not in distances_dict:
+            distances_dict[combo] = {}
+
+        for transfer in transfers:
+
             afd_experiment_1 = afd_dict[combo[0]][transfer]
             afd_experiment_2 = afd_dict[combo[1]][transfer]
-            KS_statistic, p_value = stats.ks_2samp(afd_experiment_1, afd_experiment_2)
+            ks_statistic, p_value = utils.run_permutational_ks_test(afd_experiment_1, afd_experiment_2)
 
-            sys.stdout.write("Transfer %d, %s vs. %s, D = %g, P= %g\n" % (transfer, combo[0][0], combo[1][0], KS_statistic, p_value))
+            distances_dict[combo][transfer] = {}
+            distances_dict[combo][transfer]['D'] = ks_statistic
+            distances_dict[combo][transfer]['pvalue'] = p_value
 
-
+            #combo_pairs.append((combo, transfer))
+            #pvalues.append(pvalue)
 
 
     for experiment_idx, experiment in enumerate(experiments):
 
-        ax = plt.subplot2grid((1, len(experiments)), (0, experiment_idx), colspan=1)
+        ks_statistic, p_value = utils.run_permutational_ks_test(afd_dict[experiment][transfers[0]], afd_dict[experiment][transfers[1]])
+
+        distances_dict[experiment] = {}
+        distances_dict[experiment]['D'] = ks_statistic
+        distances_dict[experiment]['pvalue'] = p_value
 
 
-        for transfer in transfers:
-
-            colors_experiment_transfer = utils.color_dict_range[experiment][transfer-1]
-            afd = afd_dict[experiment][transfer]
-            label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
-
-            ax.hist(afd, lw=3, alpha=0.8, bins= 15, color=colors_experiment_transfer, histtype='step', label='Transfer %d'%transfer,  density=True)
-
-        KS_statistic, p_value = stats.ks_2samp(afd_dict[experiment][transfers[0]], afd_dict[experiment][transfers[1]])
-
-        ax.text(0.20,0.8, '$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
-        ax.text(0.18,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    with open(ks_dict_path, 'wb') as outfile:
+        pickle.dump(distances_dict, outfile, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-        ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
-        ax.legend(loc="upper left", fontsize=8)
+def load_ks_dict():
 
-        ax.set_xlabel('Log relative abundance', fontsize=12)
-        ax.set_ylabel('Probability density', fontsize=12)
-
-        ax.set_xlim(-5.5, 0.2)
-
-    #ax.set_xscale('log', basex=10)
-
-    fig.subplots_adjust(wspace=0.3, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/afd_temporal.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-    plt.close()
+    dict_ = pickle.load(open(ks_dict_path, "rb"))
+    return dict_
 
 
+#make_ks_dict()
 
-
-
-
-
-
+ks_dict = load_ks_dict()
 
 fig = plt.figure(figsize = (4*(len(experiments) +1), 4))
 fig.subplots_adjust(bottom= 0.15)
 
 
-distances_dict = {}
-combo_pairs = []
-pvalues = []
-treatment_combinations = list(combinations(experiments,2))
-for combo in treatment_combinations:
 
-    if combo not in distances_dict:
-        distances_dict[combo] = {}
-
-    for transfer in transfers:
-
-        afd_experiment_1 = afd_dict[combo[0]][transfer]
-        afd_experiment_2 = afd_dict[combo[1]][transfer]
-        D, pvalue = stats.ks_2samp(afd_experiment_1, afd_experiment_2)
-
-        distances_dict[combo][transfer] = {}
-        distances_dict[combo][transfer]['D'] = D
-        distances_dict[combo][transfer]['pvalue'] = pvalue
-
-        combo_pairs.append((combo, transfer))
-        pvalues.append(pvalue)
+#combo_pairs = []
+#pvalues = []
 
         #sys.stdout.write("Transfer %d, %s vs. %s, D = %g, P= %g\n" % (transfer, combo[0][0], combo[1][0], D, pvalue))
 
 #key_pavalues = [(key, distances_dict[key]['pvalue']) for key in distances_dict.keys()]
 #pvalues = [x[1] for x in key_pavalues]
-reject, pvals_corrected, alphacSidak, alphacBonf = multitest.multipletests(pvalues, alpha=0.05, method='fdr_bh')
-for combo_pair_idx, combo_pair in enumerate(combo_pairs):
-    distances_dict[combo_pair[0]][combo_pair[1]]['pvalue_bh'] = pvals_corrected[combo_pair_idx]
+#reject, pvals_corrected, alphacSidak, alphacBonf = multitest.multipletests(pvalues, alpha=0.05, method='fdr_bh')
+#for combo_pair_idx, combo_pair in enumerate(combo_pairs):
+#    distances_dict[combo_pair[0]][combo_pair[1]]['pvalue_bh'] = pvals_corrected[combo_pair_idx]
 
 
 
@@ -140,23 +117,25 @@ for experiment_idx, experiment in enumerate(experiments):
 
     for transfer in transfers:
 
-
         colors_experiment_transfer = utils.color_dict_range[experiment][transfer-1]
         afd = afd_dict[experiment][transfer]
-        label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
+        #label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
+        label = '%s, transfer %d' %(utils.titles_dict[experiment], transfer)
 
         ax.hist(afd, lw=3, alpha=0.8, bins= 15, color=colors_experiment_transfer, histtype='step', label='Transfer %d'%transfer,  density=True)
 
-    KS_statistic, p_value = stats.ks_2samp(afd_dict[experiment][transfers[0]], afd_dict[experiment][transfers[1]])
 
-    ax.text(0.70,0.8, '$D=%0.3f$' % KS_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    ks_statistic = ks_dict[experiment]['D']
+    p_value = ks_dict[experiment]['pvalue']
+
+    ax.text(0.70,0.8, '$D=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
     ax.text(0.68,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
     ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
     ax.legend(loc="upper right", fontsize=8)
     ax.set_xlabel('Relative abundance, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
     ax.set_ylabel('Probability density', fontsize=12)
-    ax.set_xlim(-5.5, 0.2)
+    #ax.set_xlim(-5.5, 0.2)
 
 #ax.set_xscale('log', basex=10)
 
@@ -171,9 +150,8 @@ label_dict = {(('No_migration', 4), ('Global_migration', 4)): 'No migration vs. 
 
 for combo in treatment_combinations:
 
-    distances_combo = [distances_dict[combo][transfer]['D'] for transfer in transfers]
-    pvalues_combo = [distances_dict[combo][transfer]['pvalue_bh'] for transfer in transfers]
-
+    distances_combo = [ks_dict[combo][transfer]['D'] for transfer in transfers]
+    pvalues_combo = [ks_dict[combo][transfer]['pvalue'] for transfer in transfers]
 
     ax_distances.plot(transfers, distances_combo, color = 'k', zorder=1)
 
@@ -181,15 +159,15 @@ for combo in treatment_combinations:
 
     for transfer in transfers:
 
-        distances_combo_transfer = distances_dict[combo][transfer]['D']
-        pvalues_combo_transfer = distances_dict[combo][transfer]['pvalue_bh']
+        ks_statistic = ks_dict[combo][transfer]['D']
+        p_value = ks_dict[combo][transfer]['pvalue']
 
-        colors_experiment_transfer_1 = utils.color_dict_range[combo[0]][transfer-1]
-        colors_experiment_transfer_2 = utils.color_dict_range[combo[1]][transfer-1]
+        colors_experiment_transfer_1 = utils.color_dict_range[combo[0]][transfer-3]
+        colors_experiment_transfer_2 = utils.color_dict_range[combo[1]][transfer-3]
 
-        if pvalues_combo_transfer < 0.05:
+        if p_value < 0.05:
 
-            ax_distances.text(transfer, distances_combo_transfer+0.025, '*', fontsize=12, color='k', ha='center', va='center')#, transform=ax.transAxes )
+            ax_distances.text(transfer, ks_statistic+0.025, '*', fontsize=12, color='k', ha='center', va='center')#, transform=ax.transAxes )
 
 
         marker_style = dict(color='k', marker='o',
@@ -198,7 +176,7 @@ for combo in treatment_combinations:
 
         #ax_distances.plot(transfer, distances_combo_transfer, alpha=1, edgecolors='k', marker=marker_dict[combo], s = 120, label=label_dict[combo], zorder=2)
 
-        ax_distances.plot(transfer, distances_combo_transfer, markersize = 16,   \
+        ax_distances.plot(transfer, ks_statistic, markersize = 16,   \
             linewidth=2,  alpha=1, zorder=3, fillstyle='left', **marker_style)
 
 #transfers
@@ -225,5 +203,5 @@ ax_distances.set_xticklabels([12,18])
 #print(list(ax_distances.get_xticklabels()))
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/afd_temporal.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/afd_temporal.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

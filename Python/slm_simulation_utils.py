@@ -214,12 +214,10 @@ def estimate_pln_lognorm_parameters():
 
 
 
-def prob_non_zero_k(log_10_x, intercept=1.6207715018444455, slope=1.086147398369049):
+def prob_non_zero_k(log_10_x, intercept=0.7123794529201377, slope=0.9410534572734155):
     return 1 / (1 + np.exp( -1 * (intercept + slope*log_10_x) ))
 
 # use it for log10
-
-
 
 
 
@@ -230,10 +228,12 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     # T = generations
     # tau units of number of generations
     # dt = gens. per-transfer
+    noise_term = np.sqrt( sigma*dt/tau  ) # compound paramter, for conveinance
 
     # get parent mean relative abundances
     mean_rel_abundances_parent, species_parent = utils.estimate_mean_abundances_parent()
     mean_rel_abundances_parent = np.asarray(mean_rel_abundances_parent)
+
     # divide by sum to use as probability
     prob_mean_rel_abundances_parent = mean_rel_abundances_parent/sum(mean_rel_abundances_parent)
     richness_parent = len(prob_mean_rel_abundances_parent)
@@ -245,20 +245,9 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     # soil in parent mixed with 100ml, aliquots taken from this culture
     n_cells_parent = 10**12
     # innoculation of replicate populations done with 4ul, 0.004 / 100
-    n_cells_inoc = np.random.binomial(n_cells_parent, 0.004 / 100) # number of cells initially transferred
-    n_cells_descendent = 10**10
-
+    # large innoculation = 40uL, 0.4/100
     # descendent lines are 500ul in size
-    n_cells_transfer = np.random.binomial(n_cells_parent, 0.004/0.5) # number of cells that get transferred between descendent communities
-
-    #if migration_treatment == 'parent':
-    #    #n_cells_migration = n_cells_inoc
-    #    # not sure! ask Alvaro!
-    #    n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5)
-    #elif migration_treatment == 'global':
-    #    n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5)
-    #else:
-    #    n_cells_migration = 0
+    n_cells_descendent = 10**10
 
     n_time_steps = int(T / dt)  # Number of time steps.
     t_gen = np.arange(0, T, dt)
@@ -269,42 +258,48 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     sigma_pln=2.6967286975393754
     # non zero carrying capacities
     k_to_keep = pln._rvs(mu_pln, sigma_pln, lower_trunc=True, size=n_non_zero_k)
-    # pretty sure the array order is random but let's make sure
+    # randomize order
     k_to_keep = np.random.permutation(k_to_keep)
-    inoc_abund = np.random.multinomial(n_cells_inoc, prob_mean_rel_abundances_parent)
-    inoc_abund_non_zero = inoc_abund[inoc_abund>0] # get nonzero
-    inoc_abund_non_zero = np.random.permutation(inoc_abund_non_zero) # permute
-    # the probability that a species has a non-zero carrying capicity given its abundance in the parent communit
-    non_zero_k_weights = np.asarray([prob_non_zero_k(l) for l in np.log10(inoc_abund_non_zero)])
+    #inoc_abund = np.random.multinomial(n_cells_inoc, prob_mean_rel_abundances_parent)
+    #inoc_abund_non_zero = inoc_abund[inoc_abund>0] # get nonzero
+    #inoc_abund_non_zero = np.random.permutation(inoc_abund_non_zero) # permute
+
+    # the probability that a species has a non-zero carrying capicity given its abundance in the parent community
+    non_zero_k_weights = np.asarray([prob_non_zero_k(l) for l in np.log10(mean_rel_abundances_parent)])
     non_zero_k_prob = non_zero_k_weights/sum(non_zero_k_weights)
-    init_abund_non_zero_with_non_zero_k = np.random.choice(inoc_abund_non_zero, size=len(k_to_keep), replace=False, p=non_zero_k_prob)
-    # probably have initial abundances that are the same... (1/#reads),
-    # make new vector of initial relative abundances, match with carrying capacities, and add zeros
-    inoc_abund_non_zero_set = list(set(inoc_abund_non_zero))
-    for i_idx, i in enumerate(inoc_abund_non_zero_set):
-        n_i = sum(inoc_abund_non_zero==i)
-        n_non_zero_k_i = sum(init_abund_non_zero_with_non_zero_k==i)
-        n_zero_k_i = n_i - n_non_zero_k_i
-        # add zeros for species that have non zero initial abundances, but carrying capacities of zerp
-        k_to_keep = np.append(k_to_keep, [0]*n_zero_k_i)
-        init_abund_non_zero_with_non_zero_k = np.append(init_abund_non_zero_with_non_zero_k, [0]*n_zero_k_i)
+    idx_mean_rel_abundances_parent = np.arange(mean_rel_abundances_parent)
+    # select index of parent abundances with non-zero k
+    idx_non_zero_k = np.random.choice(idx_mean_rel_abundances_parent, size=n_non_zero_k, replace=False, p=non_zero_k_prob)
+    # select index of parent abundances with zero k
+    idx_zero_k = np.delete(idx_mean_rel_abundances_parent, idx_non_zero_k)
+    # sort the initial abundances by non-zero/zero k status
+    init_abund_rel = mean_rel_abundances_parent[numpy.concatenate([idx_non_zero_k, idx_zero_k])]
 
-    k_to_keep = np.append(k_to_keep, [0]*sum(inoc_abund==0))
-    #k_to_keep = (k_to_keep/sum(k_to_keep)) * n_cells_descendent
+
+    # make vector of initial relative abundances, match with carrying capacities, and add zeros
+    #inoc_abund_non_zero_set = list(set(inoc_abund_non_zero))
+    #for i_idx, i in enumerate(inoc_abund_non_zero_set):
+    #    n_i = sum(inoc_abund_non_zero==i)
+    #    n_non_zero_k_i = sum(init_abund_non_zero_with_non_zero_k==i)
+    #    n_zero_k_i = n_i - n_non_zero_k_i
+    #    # add zeros for species that have non zero initial abundances, but carrying capacities of zerp
+    #    k_to_keep = np.append(k_to_keep, [0]*n_zero_k_i)
+    #    init_abund_non_zero_with_non_zero_k = np.append(init_abund_non_zero_with_non_zero_k, [0]*n_zero_k_i)
+
+    k_to_keep = np.append(k_to_keep, [0]*len(idx_zero_k))
+    # turn into absolute abundances
     k_to_keep = np.random.multinomial(n_cells_descendent, k_to_keep/sum(k_to_keep))
-    #k_to_keep_rel = k_to_keep / sum(k_to_keep)
 
-    init_abund = np.append(init_abund_non_zero_with_non_zero_k, [0]*sum(inoc_abund==0))
-    init_abund_rel = init_abund / sum(init_abund)
+    #init_abund = np.append(init_abund_non_zero_with_non_zero_k, [0]*sum(inoc_abund==0))
+    #init_abund_rel = init_abund / sum(init_abund)
 
-    noise_term = np.sqrt( sigma*dt/tau  ) # compound paramter, for conveinance
     # create three dimensional vector
     # spcies, replicate, and timestep
-
 
     # create array for innnocumum
     n_0_inoc = np.zeros((reps, len(init_abund)))
     for rep in range(reps):
+        n_cells_inoc = np.random.binomial(n_cells_parent, 0.004/0.5) # number of cells that get transferred between descendent communities
         n_0_inoc[rep,:] = np.random.multinomial(n_cells_inoc, init_abund_rel)
     q_0_inoc = np.log(n_0_inoc)
     # migration only happens at transfers, no migration when experiment is set up
@@ -327,6 +322,8 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
         # make empty array for innoculation sampling
         n_t_inoc = np.zeros((reps, len(init_abund)))
         for rep in range(reps):
+            # draw number cells,
+            n_cells_transfer = np.random.binomial(n_cells_descendent, 0.004/0.5) # number of cells that get transferred between descendent communities
             n_t_inoc[rep,:] = np.random.multinomial(n_cells_transfer, prob_n_t_minus_1[rep,:])
         q_t_inoc = np.log(n_t_inoc)
 
@@ -359,9 +356,9 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
 
             elif migration_treatment == 'parent':
                 # not sure! ask Alvaro!
-                n_cells_migration = np.random.binomial(n_cells_descendent, 0.004/0.5, size=reps)
-                #m = np.random.multinomial(n_cells_migration, init_abund_rel, size=reps)
-                m = np.asarray([np.random.multinomial(l, init_abund_rel) for l in n_cells_migration])
+                n_cells_migration = np.random.binomial(n_cells_parent, 0.004/0.5, size=reps)
+                #m = np.asarray([np.random.multinomial(l, init_abund_rel) for l in n_cells_migration])
+                m = np.asarray([np.random.multinomial(l, prob_mean_rel_abundances_parent) for l in n_cells_migration])
 
             else:
                 m = np.zeros((reps, len(init_abund_rel)))

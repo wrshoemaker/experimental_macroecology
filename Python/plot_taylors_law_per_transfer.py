@@ -102,11 +102,13 @@ for experiment_idx, experiment in enumerate(experiments):
         variances.extend(list(variances_transfer))
         colors.extend(colors_transfer)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(
-            np.log10(means_transfer), np.log10(variances_transfer))
+        idx_to_keep = means_transfer<0.9
+        means_transfer = means_transfer[idx_to_keep]
+        variances_transfer = variances_transfer[idx_to_keep]
 
-        s_xx, s_yy, s_xy = utils.get_pair_stats(
-            np.log10(means_transfer), np.log10(variances_transfer))
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_transfer), np.log10(variances_transfer))
+
+        s_xx, s_yy, s_xy = utils.get_pair_stats(np.log10(means_transfer), np.log10(variances_transfer))
 
         t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
 

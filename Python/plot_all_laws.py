@@ -16,7 +16,7 @@ from scipy.special import erf
 
 remove_zeros = True
 
-c=0.000001
+
 
 prevalence_range = np.logspace(-4, 1, num=1000)
 
@@ -96,7 +96,7 @@ for transfer in transfers:
         ax_mad.scatter(bins_mean_mad, prob_to_plot, alpha=0.4, c=color_)
 
 
-        mu, sigma = utils.Klogn(mad, c)
+        mu, sigma = utils.Klogn(mad, utils.c)
         all_mu.append(mu)
         all_sigma.append(sigma)
         #mu_2, sigma_2 = utils.Klogn(mad, 0.00001)

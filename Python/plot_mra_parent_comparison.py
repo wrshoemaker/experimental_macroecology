@@ -21,7 +21,10 @@ mean_rel_abundances_parent, species_parent = utils.estimate_mean_abundances_pare
 
 species_in_descendants = []
 
-for migration_innoculum in utils.migration_innocula:
+# exclude parent migration
+migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
+
+for migration_innoculum in migration_innocula: #utils.migration_innocula:
 
     s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration=migration_innoculum[0], inocula=migration_innoculum[1])
     rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
@@ -64,10 +67,6 @@ mean_rel_abundances_parent_log10 = np.log10(mean_rel_abundances_parent)
 
 
 
-#D, p = stats.ks_2samp(mean_rel_abundances_parent_present_log10, mean_rel_abundances_parent_absent_log10)
-
-#print(D, p)
-
 #fig, ax = plt.subplots(figsize=(4,4))
 #fig.subplots_adjust(bottom= 0.15)
 
@@ -78,33 +77,41 @@ ax_hist = plt.subplot2grid((1, 2), (0,0))
 ax_regression = plt.subplot2grid((1, 2), (0,1))
 
 
-ax_hist.hist(mean_rel_abundances_parent_present_log10, lw=3, alpha=0.8, bins= 15, color='dodgerblue', histtype='step', density=True, label='Present in descendents')
-ax_hist.hist(mean_rel_abundances_parent_absent_log10, lw=3, alpha=0.8, bins= 15, color='k', histtype='step', density=True, label='Absent in descendents')
+ax_hist.hist(mean_rel_abundances_parent_present_log10, lw=2.5, alpha=0.8, bins= 12, color='k', ls='-', histtype='step', density=True, label='Present in descendents')
+ax_hist.hist(mean_rel_abundances_parent_absent_log10, lw=2.5, alpha=0.8, bins= 12, color='k', ls=':', histtype='step', density=True, label='Absent in descendents')
 
-ax_hist.set_xlabel('Mean relative abundance\nin parent community, ' +  r'$\mathrm{log}_{10}$', fontsize=12)
+ax_hist.set_xlabel('Relative abundance\nin parent community, ' +  r'$\mathrm{log}_{10}$', fontsize=12)
 ax_hist.set_ylabel('Probability density', fontsize=12)
 ax_hist.legend(loc="upper right", fontsize=8)
+
+#ks_statistic, p_value = utils.run_permutational_ks_test(mean_rel_abundances_parent_present_log10, mean_rel_abundances_parent_absent_log10)
+ks_statistic = 0.3899878193141073
+p_value = 0
+
+ax_hist.text(0.8,0.81, r'$D = {{{}}}$'.format(str(round(ks_statistic, 3))), fontsize=11, color='k', ha='center', va='center', transform=ax_hist.transAxes)
+ax_hist.text(0.8,0.73, r'$P < 0.05$', fontsize=11, color='k', ha='center', va='center', transform=ax_hist.transAxes)
 
 
 #ax.axvline(n_reads_all_log10_mean, lw=2, ls='--',color='k', zorder=1, label='Mean of ' + r'$\mathrm{log}_{10} $')
 
-ax_regression.scatter(mean_rel_abundances_parent_log10, presnt_in_descendants, color='dodgerblue', alpha=0.5)
+ax_regression.scatter(mean_rel_abundances_parent_log10, presnt_in_descendants, color='k', alpha=0.3)
 
-ax_regression.set_xlabel('Mean relative abundance\nin parent community, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
-ax_regression.set_ylabel('Presence in descendant communities', fontsize=12)
+ax_regression.set_xlabel('Relative abundance\nin parent community, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
+ax_regression.set_ylabel('Present in descendant communities', fontsize=12)
 
-#
-
+ax_regression.set_yticks([0,1])
+ax_regression.set_yticklabels(['0', '1'])
 
 model = LogisticRegression(solver='liblinear', random_state=0).fit(mean_rel_abundances_parent_log10.reshape(-1, 1), presnt_in_descendants)
 #prediction = model.predict_proba(mean_rel_abundances_parent_log10)
 #model = LogisticRegression(solver='liblinear', random_state=0)
-slope = model.coef_[0][0] # 1.086147398369049
-intercept = model.intercept_[0] # 1.6207715018444455
+slope = model.coef_[0][0] # 0.9410534572734155
+intercept = model.intercept_[0] # 0.7123794529201377
+
 # p(x) = 1 / (1 + np.exp( -1 * (intercept + slope*x) ))
 range = np.linspace(min(mean_rel_abundances_parent_log10), max(mean_rel_abundances_parent_log10), num=1000, endpoint=True)
 prediction = [model.predict_proba([[value]])[0][1] for value in range]
-ax_regression.plot(range, prediction, c='k', ls='-', label='Logistic regression')
+ax_regression.plot(range, prediction, c='k', ls='-', lw=2.5, label='Logistic regression')
 ax_regression.legend(loc="center left", fontsize=8)
 
 
