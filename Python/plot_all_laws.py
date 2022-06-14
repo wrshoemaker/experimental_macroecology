@@ -64,11 +64,19 @@ for transfer in transfers:
 
         color_ = utils.color_dict_range[migration_innoculum][transfer-3]
         color_ = color_.reshape(1,-1)
-        label_ = utils.titles_dict[migration_innoculum] + ', transfer ' + str(transfer)
+
+
+
         hist, bin_edges = np.histogram(afd_log10_rescaled, density=True, bins=10)
         #bins_mean = [0.5 * (bin_edges[i] + bin_edges[i+1]) for i in range(0, len(bin_edges)-1 )]
         bins_mean = [bin_edges[i+1] for i in range(0, len(bin_edges)-1 )]
-        ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_)#, label=label_)
+
+        if transfer == 18:
+            label_ = utils.titles_dict[migration_innoculum]
+            ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_, label=label_)
+        else:
+            ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_)
+
 
         # taylors law
         means = []
@@ -102,7 +110,7 @@ for transfer in transfers:
         #mu_2, sigma_2 = utils.Klogn(mad, 0.00001)
 
         # occupancy
-        occupancies, predicted_occupancies, mad_occupancies, species_occupances = utils.predict_occupancy(s_by_s, ESVs)
+        occupancies, predicted_occupancies, mad_occupancies, beta_occupancies, species_occupances = utils.predict_occupancy(s_by_s, ESVs)
         ax_occupancy.scatter(occupancies, predicted_occupancies, alpha=0.5, c=color_, s=18, zorder=2)#, linewidth=0.8, edgecolors='k')
 
         # errors
@@ -147,7 +155,7 @@ k_trigamma = special.polygamma(1,k)
 gammalog = k*k_trigamma*x_range - np.exp(np.sqrt(k_trigamma)*x_range + k_digamma) - np.log(special.gamma(k)) + k*k_digamma + np.log10(np.exp(1))
 
 ax_afd.plot(x_range, 10**gammalog, 'k', label='Gamma', lw=2)
-ax_afd.legend(loc="upper right", fontsize=8)
+ax_afd.legend(loc="upper right", fontsize=6.2)
 #ax_afd.set_yscale('log', basey=10)
 # trigamma = second derivatives of the logarithm of the gamma function
 # digamma = first derivatives of the logarithm of the gamma function

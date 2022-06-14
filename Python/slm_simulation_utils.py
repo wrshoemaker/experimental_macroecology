@@ -223,7 +223,7 @@ def prob_non_zero_k(log_10_x, intercept=0.7123794529201377, slope=0.941053457273
 
 
 
-def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_treatment='none'):
+def run_simulation(sigma = 0.9, tau = 0.8, dt = 7, T = 126, reps = 92, migration_treatment='none'):
     # just use units of generations for now
     # T = generations
     # tau units of number of generations
@@ -238,9 +238,10 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     prob_mean_rel_abundances_parent = mean_rel_abundances_parent/sum(mean_rel_abundances_parent)
     richness_parent = len(prob_mean_rel_abundances_parent)
     # delta = % of species that survive, used to draw non zero carrying capacities
-    delta = 0.016
+    #delta = 0.016
+    delta = 56/richness_parent
     # draw from binomial distribution
-    n_non_zero_k = np.random.binomial(len(prob_mean_rel_abundances_parent), delta)
+    n_non_zero_k = np.random.binomial(richness_parent, delta)
 
     # soil in parent mixed with 100ml, aliquots taken from this culture
     n_cells_parent = 10**12
@@ -260,20 +261,21 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     k_to_keep = pln._rvs(mu_pln, sigma_pln, lower_trunc=True, size=n_non_zero_k)
     # randomize order
     k_to_keep = np.random.permutation(k_to_keep)
-    #inoc_abund = np.random.multinomial(n_cells_inoc, prob_mean_rel_abundances_parent)
     #inoc_abund_non_zero = inoc_abund[inoc_abund>0] # get nonzero
-    #inoc_abund_non_zero = np.random.permutation(inoc_abund_non_zero) # permute
 
     # the probability that a species has a non-zero carrying capicity given its abundance in the parent community
     non_zero_k_weights = np.asarray([prob_non_zero_k(l) for l in np.log10(mean_rel_abundances_parent)])
     non_zero_k_prob = non_zero_k_weights/sum(non_zero_k_weights)
-    idx_mean_rel_abundances_parent = np.arange(mean_rel_abundances_parent)
+    idx_mean_rel_abundances_parent = np.arange(len(mean_rel_abundances_parent))
     # select index of parent abundances with non-zero k
     idx_non_zero_k = np.random.choice(idx_mean_rel_abundances_parent, size=n_non_zero_k, replace=False, p=non_zero_k_prob)
     # select index of parent abundances with zero k
     idx_zero_k = np.delete(idx_mean_rel_abundances_parent, idx_non_zero_k)
     # sort the initial abundances by non-zero/zero k status
-    init_abund_rel = mean_rel_abundances_parent[numpy.concatenate([idx_non_zero_k, idx_zero_k])]
+    idx_non_zero_and_zero = np.concatenate([idx_non_zero_k, idx_zero_k])
+    # sort parent relative abundances and probability
+    init_abund_rel = mean_rel_abundances_parent[idx_non_zero_and_zero]
+    prob_mean_rel_abundances_parent = prob_mean_rel_abundances_parent[idx_non_zero_and_zero]
 
 
     # make vector of initial relative abundances, match with carrying capacities, and add zeros
@@ -290,26 +292,23 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
     # turn into absolute abundances
     k_to_keep = np.random.multinomial(n_cells_descendent, k_to_keep/sum(k_to_keep))
 
-    #init_abund = np.append(init_abund_non_zero_with_non_zero_k, [0]*sum(inoc_abund==0))
-    #init_abund_rel = init_abund / sum(init_abund)
-
     # create three dimensional vector
     # spcies, replicate, and timestep
-
     # create array for innnocumum
-    n_0_inoc = np.zeros((reps, len(init_abund)))
+    n_0_inoc = np.zeros((reps, len(init_abund_rel)))
     for rep in range(reps):
         n_cells_inoc = np.random.binomial(n_cells_parent, 0.004/0.5) # number of cells that get transferred between descendent communities
         n_0_inoc[rep,:] = np.random.multinomial(n_cells_inoc, init_abund_rel)
+
     q_0_inoc = np.log(n_0_inoc)
     # migration only happens at transfers, no migration when experiment is set up
     m_0 = np.zeros((reps, len(init_abund_rel)))
 
     def discrete_slm(q_array, m):
         # q_array = array of replicate and species
-        return q_array + (dt*(m/np.exp(q_array))*(1/tau)*(1 - (sigma/2) - (np.exp(q_array) / k_to_keep))) + (noise_term * np.random.randn(reps, len(init_abund)))
+        return q_array + (dt*(m/np.exp(q_array))*(1/tau)*(1 - (sigma/2) - (np.exp(q_array) / k_to_keep))) + (noise_term * np.random.randn(reps, len(init_abund_rel)))
 
-    q = np.zeros((n_time_steps, reps, len(init_abund)))
+    q = np.zeros((n_time_steps, reps, len(init_abund_rel)))
     q[0,:,:] = discrete_slm(q_0_inoc, m_0)
 
     for t in range(1, n_time_steps): # t = transfer number
@@ -320,10 +319,11 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
         prob_n_t_minus_1 = (n_t_minus_1.T / np.sum(n_t_minus_1, axis=1)).T
 
         # make empty array for innoculation sampling
-        n_t_inoc = np.zeros((reps, len(init_abund)))
+        n_t_inoc = np.zeros((reps, len(init_abund_rel)))
         for rep in range(reps):
             # draw number cells,
             n_cells_transfer = np.random.binomial(n_cells_descendent, 0.004/0.5) # number of cells that get transferred between descendent communities
+
             n_t_inoc[rep,:] = np.random.multinomial(n_cells_transfer, prob_n_t_minus_1[rep,:])
         q_t_inoc = np.log(n_t_inoc)
 
@@ -347,25 +347,32 @@ def run_simulation(sigma = 1, tau = 3, dt = 7, T = 126, reps = 92, migration_tre
                 n_cells_global_diluted = np.random.binomial(sum(n_global), 10**-4)
                 # sample to get abundances of diluted global samples
                 n_global_diluted = np.random.multinomial(n_cells_global_diluted, n_global/sum(n_global))
-                #n_global_diluted = np.asarray([np.random.multinomial(l, n_global/sum(n_global)) for l in n_cells_global_diluted])
 
                 # get number of cells transferred from diluted global sample
                 # ask alvaro, but assume for now that the 10,000 fold diluated community is in a volume of size 500uL
-                n_cells_migration_transfer = np.random.binomial(n_cells_global_diluted, 0.004/0.5, size=reps)
+                #n_cells_migration_transfer = np.random.binomial(n_cells_global_diluted, 0.004/0.5, size=reps)
+                n_cells_migration_transfer = np.random.binomial(n_cells_global_diluted, 0.004/(reps*0.004), size=reps)
                 m = np.asarray([np.random.multinomial(l, n_global_diluted/sum(n_global_diluted)) for l in n_cells_migration_transfer])
 
             elif migration_treatment == 'parent':
                 # not sure! ask Alvaro!
-                n_cells_migration = np.random.binomial(n_cells_parent, 0.004/0.5, size=reps)
-                #m = np.asarray([np.random.multinomial(l, init_abund_rel) for l in n_cells_migration])
+                # 0.004/0.5
+                # size of PARENT community, n = 100 mL
+                n_cells_migration = np.random.binomial(n_cells_parent, 0.004/109900, size=reps)
                 m = np.asarray([np.random.multinomial(l, prob_mean_rel_abundances_parent) for l in n_cells_migration])
 
             else:
                 m = np.zeros((reps, len(init_abund_rel)))
 
+
+        #if migration_treatment == 'global':
+        #    if t > 12:
+        #        print(m)
+
         # update array
         #q[t + 1,:,:] = q[t,:,:] + (dt*(m/np.exp(q[t,:,:]))*(1/tau)*(1 - (sigma/2) - (np.exp(q[t,:,:]) / k_to_keep))) + (noise_term * np.random.randn(reps, len(init_abund)))
         q[t,:,:] = discrete_slm(q_t_inoc, m)
+
 
     n = np.exp(q)
     # replace negative q values with zero

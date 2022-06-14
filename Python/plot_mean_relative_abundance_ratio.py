@@ -111,8 +111,14 @@ def parent_migration_fig():
         ax_compare.set_ylim(ax_compare_min*0.5, 1.1)
         ax_compare.set_title('Transfer %s' % transfer, fontsize=14 )
 
-        rho = np.corrcoef(np.log10(no_migration_treatment_all), np.log10(migration_treatment_all))[0,1]
+        #rho = np.corrcoef(np.log10(no_migration_treatment_all), np.log10(migration_treatment_all))[0,1]
+
+        rho, p_value = utils.run_permutation_corr(np.log10(no_migration_treatment_all), np.log10(migration_treatment_all))
+        p_value_to_plot = utils.get_p_value(p_value)
+
         ax_compare.text(0.2,0.92, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes )
+        ax_compare.text(0.18,0.8, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes)
+
 
         ax_compare.set_xlabel('Mean rel. abundance, no migration, ' + r'$\left< x \right>_{\mathrm{no\, mig}}$', fontsize=10)
         ax_compare.set_ylabel('Mean rel. abundance, parent, ' + r'$\left< x \right>_{\mathrm{parent}}$', fontsize=10)
@@ -190,7 +196,7 @@ def parent_migration_fig():
 
 
     fig.subplots_adjust(wspace=0.35, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 
@@ -242,8 +248,14 @@ def global_migration_fig():
         ax_mean.set_ylim(ax_mean_min*0.5, 1.1)
         ax_mean.set_title('Transfer %s' % transfer, fontsize=14 )
 
-        rho = np.corrcoef(np.log10(no_migration_treatment_mean_all), np.log10(migration_treatment_mean_all))[0,1]
-        ax_mean.text(0.2,0.9, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_mean.transAxes )
+        #rho = np.corrcoef(np.log10(no_migration_treatment_mean_all), np.log10(migration_treatment_mean_all))[0,1]
+
+        rho, p_value_rho = utils.run_permutation_corr(np.log10(no_migration_treatment_mean_all), np.log10(migration_treatment_mean_all))
+
+        p_value_to_plot = utils.get_p_value(p_value_rho)
+
+        ax_mean.text(0.2,0.9, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_mean.transAxes)
+        ax_mean.text(0.18,0.8, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_mean.transAxes)
 
         ax_mean.set_xlabel('Mean rel. abundance, no migration, ' + r'$\left< x \right>_{\mathrm{no\, mig}}$', fontsize=10)
         ax_mean.set_ylabel('Mean rel. abundance, global, ' + r'$\left< x \right>_{\mathrm{global}}$', fontsize=10)
@@ -267,8 +279,14 @@ def global_migration_fig():
         ax_cv.set_ylim(ax_cv_min*0.1, ax_cv_max*1.3)
         ax_cv.set_title('Transfer %s' % transfer, fontsize=14 )
 
-        rho = np.corrcoef(np.log10(no_migration_treatment_cv_all), np.log10(migration_treatment_cv_all))[0,1]
+        #rho = np.corrcoef(np.log10(no_migration_treatment_cv_all), np.log10(migration_treatment_cv_all))[0,1]
+        rho, p_value_rho = utils.run_permutation_corr(np.log10(no_migration_treatment_cv_all), np.log10(migration_treatment_cv_all))
+
+        print(rho, p_value_rho)
+        p_value_to_plot = utils.get_p_value(p_value_rho)
+
         ax_cv.text(0.2,0.9, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_cv.transAxes )
+        ax_cv.text(0.18,0.8, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_cv.transAxes )
 
         ax_cv.set_xlabel('CV rel. abundance, no migration, ' + r'$\left< x \right>_{\mathrm{no\, mig}}$', fontsize=10)
         ax_cv.set_ylabel('CV rel. abundance, global, ' + r'$\left< x \right>_{\mathrm{global}}$', fontsize=10)

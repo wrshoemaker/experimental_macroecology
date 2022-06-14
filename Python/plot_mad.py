@@ -60,7 +60,7 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
 
         mu_all = np.asarray(mu_all)
         sigma_all = np.asarray(sigma_all)
-        ax.scatter(mu_all, sigma_all, alpha=1, c=color_all, zorder=2)
+        ax.scatter(mu_all, sigma_all, alpha=1, c=color_all, zorder=2, label=utils.titles_dict[migration_innoculum])
 
 
         #print(10**(np.log10(mu_all[1]) - np.log10(mu_all[0])))
@@ -82,6 +82,8 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
         #bins_mean = [0.5 * (bin_edges[i] + bin_edges[i+1]) for i in range(0, len(bin_edges)-1 )]
         #bins_mean = [bin_edges[i+1] for i in range(0, len(bin_edges)-1 )]
         #ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_)#, label=label_)
+
+ax.legend(loc="lower left", fontsize=8)
 
 
 fig_name = utils.directory + '/figs/mad_compare.png'

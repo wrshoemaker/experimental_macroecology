@@ -102,10 +102,10 @@ titles_new_line_dict = {('No_migration',4):'No migration\nlow inoculum', ('No_mi
 
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
 
-titles_dict = {('No_migration',4): 'No migration, low inoculum',
-                ('No_migration',40): 'No migration, high inoculum',
-                ('Global_migration',4): 'Global migration, low inoculum',
-                ('Parent_migration',4): 'Parent migration, low inoculum',
+titles_dict = {('No_migration',4): 'No migration, low inoc.',
+                ('No_migration',40): 'No migration, high inoc.',
+                ('Global_migration',4): 'Global migration, low inoc.',
+                ('Parent_migration',4): 'Parent migration, low inoc.',
                 ('Glucose', np.nan): 'Glucose' }
 
 
@@ -184,7 +184,7 @@ def bootstrap_estimate_ks(array_1, array_2, size=50, n=10000):
 
 
 
-def run_permutational_ks_test(array_1, array_2, n=10000):
+def run_permutation_ks_test(array_1, array_2, n=10000):
 
     ks_statistic, p_value = stats.ks_2samp(array_1, array_2)
 
@@ -211,6 +211,31 @@ def run_permutational_ks_test(array_1, array_2, n=10000):
 
 
 
+
+def run_permutation_corr(array_1, array_2, n=10000):
+
+    rho = np.corrcoef(array_1, array_2)[0,1]
+
+    array_merged = np.concatenate([array_1, array_2])
+
+    null_all = []
+
+    for n_i in range(n):
+
+        np.random.shuffle(array_merged)
+
+        array_1_null = array_merged[:len(array_1)]
+        array_2_null = array_merged[len(array_1):]
+
+        rho_null = np.corrcoef(array_1_null, array_2_null)[0,1]
+
+        null_all.append(rho_null)
+
+    null_all = np.asarray(null_all)
+
+    p_value = sum(np.absolute(null_all)>np.absolute(rho))/n
+
+    return rho, p_value
 
 
 
@@ -491,6 +516,11 @@ def get_species_means_and_variances(rel_s_by_s, species_list, min_observations=3
     mean_rel_abundances = np.asarray(mean_rel_abundances)
     var_rel_abundances = np.asarray(var_rel_abundances)
     species_to_keep = np.asarray(species_to_keep)
+
+    idx_to_keep = (mean_rel_abundances>0) & (var_rel_abundances>0)
+    mean_rel_abundances = mean_rel_abundances[idx_to_keep]
+    var_rel_abundances = var_rel_abundances[idx_to_keep]
+    species_to_keep = species_to_keep[idx_to_keep]
 
     return mean_rel_abundances, var_rel_abundances, species_to_keep
 
