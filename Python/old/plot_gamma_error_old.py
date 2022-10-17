@@ -532,7 +532,7 @@ def mean_rel_abundance_attractors():
 
 
 
-
+plot_mean_rel_error()
 
 #mean_rel_abundance_attractors()
 

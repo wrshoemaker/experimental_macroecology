@@ -21,14 +21,52 @@ zeros = True
 #experiments = [('No_migration',4), ('Global_migration',4), ('Glucose',  np.nan) ]
 experiments = [('No_migration', 4), ('Global_migration', 4)]
 
-transfer_max_dict = {('No_migration', 4): 18,
-                     ('Global_migration', 4): 18, ('Glucose', np.nan): 12}
+transfer_max_dict = {('No_migration', 4): 18, ('Global_migration', 4): 18, ('Glucose', np.nan): 12}
 
 #s_by_s_1, species_1, comm_rep_list_1 = utils.get_s_by_s("Glucose", transfer=1)
 
 
-experiment_dict = {}
+def get_bootstrapped_ci_regression_params(x, y, iter=1000, loglog=True):
 
+    if loglog == True:
+        x = np.log10(x)
+        y = np.log10(y)
+
+    idx_ = np.arange(len(x))
+
+    slope_resample = []
+    intercept_resample = []
+    for i in range(iter):
+        idx_resample = np.random.choice(idx_, size=len(idx_), replace=True)
+
+        x_resample = x[idx_resample]
+        y_resample = y[idx_resample]
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+
+        slope_resample.append(slope)
+        intercept_resample.append(intercept)
+
+    slope_resample = np.asarray(slope_resample)
+    slope_resample = np.sort(slope_resample)
+
+    intercept_resample = np.asarray(intercept_resample)
+    intercept_resample = np.sort(intercept_resample)
+
+    slope_ci_lower = slope_resample[int(iter*0.025)]
+    slope_ci_upper = slope_resample[int(iter*0.975)]
+
+    intercept_ci_lower = intercept_resample[int(iter*0.025)]
+    intercept_ci_upper = intercept_resample[int(iter*0.975)]
+
+
+    return slope_ci_lower, slope_ci_upper, intercept_ci_lower, intercept_ci_upper
+
+
+
+
+
+experiment_dict = {}
 for experiment_idx, experiment in enumerate(experiments):
 
     transfer_max = transfer_max_dict[experiment]
@@ -38,32 +76,31 @@ for experiment_idx, experiment in enumerate(experiments):
     variances = []
     colors = []
 
-    intercepts = []
-    slopes = []
+    intercept_all = []
+    slope_all = []
 
-    slopes_CIs = []
+    slope_ci_lower_all = []
+    slope_ci_upper_all = []
+
+    intercept_ci_lower_all = []
+    intercept_ci_upper_all = []
 
     species_relative_abundances_dict = {}
-
     for transfer in range(1, transfer_max+1):
 
         if experiment[0] == 'Glucose':
 
-            s_by_s, species, comm_rep_list = utils.get_s_by_s(
-                "Glucose", transfer=transfer)
+            s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
             #if transfer==1:
             #    communities_keep = comm_rep_list
             #    s_by_s, species, comm_rep_list = utils.get_s_by_s("Glucose", transfer=transfer)
 
         else:
 
-            communities = utils.get_migration_time_series_community_names(
-                migration=experiment[0], inocula=experiment[1])
-            communities_keep = [
-                str(key) for key, value in communities.items() if len(value) == transfer_max]
+            communities = utils.get_migration_time_series_community_names(migration=experiment[0], inocula=experiment[1])
+            communities_keep = [str(key) for key, value in communities.items() if len(value) == transfer_max]
 
-            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(
-                transfer=transfer, migration=experiment[0], inocula=experiment[1], communities=communities_keep)
+            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=experiment[0], inocula=experiment[1], communities=communities_keep)
 
         comm_rep_array = np.asarray(comm_rep_list)
 
@@ -109,37 +146,60 @@ for experiment_idx, experiment in enumerate(experiments):
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means_transfer), np.log10(variances_transfer))
 
         s_xx, s_yy, s_xy = utils.get_pair_stats(np.log10(means_transfer), np.log10(variances_transfer))
-
         t = stats.t.ppf(1-(alpha/2), len(means_transfer)-2)
-
         #maximim likelihood estimator
-        mse = sum((np.log10(variances) - (intercept + slope
-                  * np.log10(means)))**2) / (len(means)-2)
+        mse = sum((np.log10(variances) - (intercept + slope * np.log10(means)))**2) / (len(means)-2)
         #sigma_hat = np.sqrt((1/len(means_transfer))*(s_yy-slope*s_xy)
-        slope_CI = t*np.sqrt(mse/s_xx)
+        slope_ci = t*np.sqrt(mse/s_xx)
 
-        slopes.append(slope)
-        intercepts.append(intercept)
-        slopes_CIs.append(slope_CI)
+        intercept_ci = t*np.sqrt(mse*((1/len(means_transfer)) + ((np.mean(np.log10(means))**2)/s_xx)))
+
+        slope_ci_lower = slope - slope_ci
+        slope_ci_upper = slope + slope_ci
+
+        intercept_ci_lower = intercept - intercept_ci
+        intercept_ci_upper = intercept + intercept_ci
+
+
+        #slope_ci_lower, slope_ci_upper, intercept_ci_lower, intercept_ci_upper = get_bootstrapped_ci_regression_params(means_transfer, variances_transfer)
+
+        slope_all.append(slope)
+        intercept_all.append(intercept)
+
+        slope_ci_lower_all.append(slope_ci_lower)
+        slope_ci_upper_all.append(slope_ci_upper)
+
+        intercept_ci_lower_all.append(intercept_ci_lower)
+        intercept_ci_upper_all.append(intercept_ci_upper)
 
     transfers = np.asarray(transfers)
     means = np.asarray(means)
     variances = np.asarray(variances)
     colors = np.asarray(colors)
 
-    intercepts = np.asarray(intercepts)
-    slopes = np.asarray(slopes)
-    slopes_CIs = np.asarray(slopes_CIs)
+    slope_all = np.asarray(slope_all)
+    intercept_all = np.asarray(intercept_all)
+
+    slope_ci_lower_all = np.asarray(slope_ci_lower_all)
+    slope_ci_upper_all = np.asarray(slope_ci_upper_all)
+    intercept_ci_lower_all = np.asarray(intercept_ci_lower_all)
+    intercept_ci_upper_all = np.asarray(intercept_ci_upper_all)
+
 
     experiment_dict[experiment] = {}
-
     experiment_dict[experiment]['transfers'] = transfers
     experiment_dict[experiment]['means'] = means
     experiment_dict[experiment]['variances'] = variances
     experiment_dict[experiment]['colors'] = colors
-    experiment_dict[experiment]['intercepts'] = intercepts
-    experiment_dict[experiment]['slopes'] = slopes
-    experiment_dict[experiment]['slops_CIs'] = slopes_CIs
+
+    experiment_dict[experiment]['slope_all'] = slope_all
+    experiment_dict[experiment]['intercept_all'] = intercept_all
+
+    experiment_dict[experiment]['slope_ci_lower_all'] = slope_ci_lower_all
+    experiment_dict[experiment]['slope_ci_upper_all'] = slope_ci_upper_all
+
+    experiment_dict[experiment]['intercept_ci_lower_all'] = intercept_ci_lower_all
+    experiment_dict[experiment]['intercept_ci_upper_all'] = intercept_ci_upper_all
 
 
 #fig = plt.figure(figsize = (12, 8)) #
@@ -148,8 +208,9 @@ fig.subplots_adjust(bottom=0.15)
 
 for experiment_idx, experiment in enumerate(experiments):
 
-    ax_scatter = plt.subplot2grid((2, 3), (0, experiment_idx))  # , colspan=1)
-    ax_slopes = plt.subplot2grid((2, 3), (1, experiment_idx))  # , colspan=1)
+    ax_scatter = plt.subplot2grid((3, 3), (0, experiment_idx))  # , colspan=1)
+    ax_slopes = plt.subplot2grid((3, 3), (1, experiment_idx))  # , colspan=1)
+    ax_intercepts = plt.subplot2grid((3, 3), (2, experiment_idx))  # , colspan=1)
 
     #ax_scatter = plt.subplot2grid((1, 2), (0, 0), colspan=1)
     #ax_slopes = plt.subplot2grid((1, 2), (0, 1), colspan=1)
@@ -159,12 +220,16 @@ for experiment_idx, experiment in enumerate(experiments):
     variances = experiment_dict[experiment]['variances']
     colors = experiment_dict[experiment]['colors']
 
-    intercepts = experiment_dict[experiment]['intercepts']
-    slopes = experiment_dict[experiment]['slopes']
-    slops_CIs = experiment_dict[experiment]['slops_CIs']
+    slope_all = experiment_dict[experiment]['slope_all']
+    intercept_all = experiment_dict[experiment]['intercept_all']
+
+    slope_ci_lower_all = experiment_dict[experiment]['slope_ci_lower_all']
+    slope_ci_upper_all = experiment_dict[experiment]['slope_ci_upper_all']
+
+    intercept_ci_lower_all = experiment_dict[experiment]['intercept_ci_lower_all']
+    intercept_ci_upper_all = experiment_dict[experiment]['intercept_ci_upper_all']
 
     transfer_max = transfer_max_dict[experiment]
-
     # run slope test
     #t, p = stats.ttest_ind(dnds_treatment[0], dnds_treatment[1], equal_var=False)
     #t_value = (slope - (slope_null))/std_err
@@ -179,17 +244,15 @@ for experiment_idx, experiment in enumerate(experiments):
     variance_range = (1-mean_range) * mean_range
 
     #ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
-    ax_scatter.plot(mean_range, variance_range, lw=3, ls=':',
-                    c='k', label='Max. ' + r'$\sigma^{2}_{x}$')
+    ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c='k', label='Max. ' + r'$\sigma^{2}_{x}$')
 
     #colors_scatter = [utils.color_dict_range[t] for t in transfers]
 
-    ax_scatter.scatter(means, variances, c=colors,
-                       cmap=utils.color_dict_range[experiment], alpha=0.8, edgecolors='k', zorder=2)  # , c='#87CEEB')
+    ax_scatter.scatter(means, variances, c=colors, cmap=utils.color_dict_range[experiment], alpha=0.8, edgecolors='k', zorder=2)  # , c='#87CEEB')
 
     ax_scatter.set_xscale('log', basex=10)
     ax_scatter.set_yscale('log', basey=10)
-    ax_scatter.set_xlabel('Average relative\nabundance', fontsize=12)
+    ax_scatter.set_xlabel('Mean relative abundance', fontsize=11)
     ax_scatter.set_ylabel('Variance of relative abundance', fontsize=10)
     ax_scatter.legend(loc="lower right", fontsize=8)
     ax_scatter.set_title(
@@ -200,14 +263,24 @@ for experiment_idx, experiment in enumerate(experiments):
     #slope_colors = [color_range[t-1] for t in transfers]
     slope_colors = [utils.color_dict_range[experiment][t-1] for t in transfers]
 
-    ax_slopes.errorbar(transfers, slopes, slops_CIs, linestyle='-',
+    ax_slopes.errorbar(transfers, slope_all, yerr=(slope_all-slope_ci_lower_all, slope_ci_upper_all-slope_all), linestyle='-',
                        marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
-    ax_slopes.scatter(transfers, slopes, c=slope_colors, cmap='Blues',
+    ax_slopes.scatter(transfers, slope_all, c=slope_colors, cmap='Blues',
                       edgecolors='k', alpha=1, zorder=3)  # , c='#87CEEB')
     ax_slopes.set_xlabel('Transfer', fontsize=12)
     ax_slopes.set_ylabel('Slope', fontsize=10)
 
+
+
+    # intercepts
+    ax_intercepts.errorbar(transfers, intercept_all, yerr=(intercept_all-intercept_ci_lower_all, intercept_ci_upper_all-intercept_all), linestyle='-', marker='o', c='k', elinewidth=1.5, alpha=1, zorder=2)
+    ax_intercepts.scatter(transfers, intercept_all, c=slope_colors, cmap='Blues', edgecolors='k', alpha=1, zorder=3)  # , c='#87CEEB')
+    ax_intercepts.set_xlabel('Transfer', fontsize=12)
+    ax_intercepts.set_ylabel('Intercept', fontsize=10)
+
     #ax_slopes.set_ylim(-1, 3)
+    ax_slopes.set_ylim([1.3, 2.1])
+    ax_intercepts.set_ylim([-3.5, 1])
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)

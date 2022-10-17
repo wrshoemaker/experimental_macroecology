@@ -9,3 +9,8 @@ data/NutrientDominance_data_table_totabund_all_mapped_singletons_20210510.csv
 data/migration_data_table_totabund_all_singleton_mapped_20210501.csv
 data/otu_table_psn_v13.txt
 data/migration_data_table_totabund_all_singleton_mapped_full_wT0_20210918.csv
+n_reads.pickle
+data/simulation_global_rho.pickle
+data/n_reads.pickle
+data/simulation_migration_all.pickle
+data/simulation_parent_rho.pickle

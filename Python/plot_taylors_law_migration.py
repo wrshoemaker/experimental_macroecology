@@ -25,10 +25,7 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
     for trasfer_idx, transfer in enumerate(utils.transfers):
 
-        print(migration_innoculum, transfer)
-
         s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=migration_innoculum[0], inocula=migration_innoculum[1])
-
 
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
@@ -36,7 +33,10 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
         idx_to_keep = means<0.1
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means[idx_to_keep]), np.log10(variances[idx_to_keep]))
+        #means = means[idx_to_keep]
+        #variances = variances[idx_to_keep]
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
 
         #
         #means = means[idx_to_keep]
@@ -77,8 +77,11 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
         ax_plot.text(0.2,0.8, r'$t=$' + str(round(t_value,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_plot.transAxes )
         ax_plot.text(0.2,0.7, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_plot.transAxes )
 
+        print(migration_innoculum, transfer)
 
         sys.stdout.write("Slope = %g, t = %g, P= %g\n" % (slope, t_value, p_value))
+        sys.stdout.write("Intercept = %g\n" % (intercept))
+        print(slope, intercept)
 
         ax_plot.legend(loc="lower right", fontsize=8)
 

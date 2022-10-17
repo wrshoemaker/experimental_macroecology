@@ -1,5 +1,5 @@
 from __future__ import division
-import os, sys, re, math
+import os, sys, re, math, pickle
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -22,7 +22,8 @@ np.seterr(divide='ignore', invalid='ignore')
 n_reads = 10**4.4
 c=0.000001
 transfers = [12,18]
-
+transfers_all = list(range(1,19))
+alpha = 0.05
 family_colors = {'Alcaligenaceae':'darkorange', 'Comamonadaceae': 'darkred',
                 'Enterobacteriaceae':'dodgerblue', 'Enterococcaceae':'limegreen',
                 'Lachnospiraceae':'deepskyblue', 'Pseudomonadaceae':'darkviolet'}
@@ -98,9 +99,8 @@ titles_new_line = ['No migration\nlow inoculum', 'No migration\nhigh inoculum', 
 
 
 titles_new_line_dict = {('No_migration',4):'No migration\nlow inoculum', ('No_migration',40):'No migration\nhigh inoculum', ('Global_migration',4):'Global migration\nlow inoculum', ('Parent_migration',4):'Parent migration\nlow inoculum'}
-
-
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
+
 
 titles_dict = {('No_migration',4): 'No migration, low inoc.',
                 ('No_migration',40): 'No migration, high inoc.',
@@ -113,6 +113,33 @@ titles_no_inocula_dict = {('No_migration',4): 'No migration',
                 ('Global_migration',4): 'Global migration',
                 ('Parent_migration',4): 'Parent migration',
                 ('Glucose', np.nan): 'Glucose' }
+
+
+
+def get_dist_read_counts(make_dist=False):
+
+    n_reads_path = '%s/data/n_reads.pickle' % directory
+
+    if make_dist == True:
+
+        n_reads_all = []
+        for migration_innoculum in migration_innocula:
+
+            for transfer in [12,18]:
+
+                s_by_s, species, comm_rep_list = get_s_by_s_migration_test_singleton(transfer=transfer,migration=migration_innoculum[0],inocula=migration_innoculum[1])
+                n_reads = s_by_s.sum(axis=0)
+                n_reads_all.extend(n_reads.tolist())
+
+        with open(n_reads_path, 'wb') as f:
+            pickle.dump(n_reads_all, f)
+
+    else:
+
+        with open(n_reads_path, 'rb') as handle:
+            n_reads_dict = pickle.load(handle)
+        return n_reads_dict
+
 
 
 
@@ -554,6 +581,7 @@ def get_temporal_patterns(migration_innoculum, attractor=None):
     species_mean_relative_abundances_for_width = []
     species_width_distribution_ratios = []
     species_width_distribution_transfers = []
+    species_width_distribution_species = []
     species_transfers = []
     species_names = []
 
@@ -610,6 +638,7 @@ def get_temporal_patterns(migration_innoculum, attractor=None):
             species_width_distribution_ratios.extend(width_distribution_ratios)
             species_mean_relative_abundances_for_width.extend([mean_relative_abundance]*len(width_distribution_ratios))
             species_width_distribution_transfers.extend([int(transfer)]*len(width_distribution_ratios))
+            species_width_distribution_species.extend([species]*len(width_distribution_ratios))
 
             species_transfers.append(int(transfer))
             species_names.append(species)
@@ -659,8 +688,8 @@ def get_temporal_patterns(migration_innoculum, attractor=None):
     species_mean_absolute_differences = np.asarray(species_mean_absolute_differences)
 
     species_width_distribution_ratios = np.asarray(species_width_distribution_ratios)
-
     species_width_distribution_transfers = np.asarray(species_width_distribution_transfers)
+    species_width_distribution_species = np.asarray(species_width_distribution_species)
 
     species_mean_relative_abundances_for_width = np.asarray(species_mean_relative_abundances_for_width)
 
@@ -668,7 +697,7 @@ def get_temporal_patterns(migration_innoculum, attractor=None):
     species_transfers = np.asarray(species_transfers)
     species_names = np.asarray(species_names)
 
-    return species_names, species_transfers, species_mean_relative_abundances, species_mean_absolute_differences, species_width_distribution_transfers, species_width_distribution_ratios,species_mean_relative_abundances_for_width, variance_width_distribution_transfers, variance_width_distribution, mean_width_distribution
+    return species_names, species_transfers, species_mean_relative_abundances, species_mean_absolute_differences, species_width_distribution_species, species_width_distribution_transfers, species_width_distribution_ratios, species_mean_relative_abundances_for_width, variance_width_distribution_transfers, variance_width_distribution, mean_width_distribution
 
 
 
@@ -1894,29 +1923,29 @@ def get_otu_dict():
 
         transfer = int(line[4])
 
-        if (transfer == 18) or (transfer == 0) or (transfer == 12):
+        #if (transfer == 18) or (transfer == 0) or (transfer == 12):
 
-            sample_line = line[5]
-            sample_line = sample_line.strip()
-            sample_line = re.sub(r'["]', '', sample_line)
+        sample_line = line[5]
+        sample_line = sample_line.strip()
+        sample_line = re.sub(r'["]', '', sample_line)
 
-            #sample_line = int(sample_line)
+        #sample_line = int(sample_line)
 
-            esv_line = line[6]
-            esv_line = re.sub(r'["]', '', esv_line)
+        esv_line = line[6]
+        esv_line = re.sub(r'["]', '', esv_line)
 
-            if sample_line_name not in count_dict:
-                count_dict[sample_line_name] = {}
+        if sample_line_name not in count_dict:
+            count_dict[sample_line_name] = {}
 
 
-            if esv_line not in count_dict[sample_line_name]:
-                count_dict[sample_line_name][esv_line] = 0
+        if esv_line not in count_dict[sample_line_name]:
+            count_dict[sample_line_name][esv_line] = 0
 
-            if count_dict[sample_line_name][esv_line] > 0:
+        if count_dict[sample_line_name][esv_line] > 0:
 
-                sys.stdout.write("Relative abundance already in dictionary!!\n" )
+            sys.stdout.write("Relative abundance already in dictionary!!\n" )
 
-            count_dict[sample_line_name][esv_line] = int(line[7])
+        count_dict[sample_line_name][esv_line] = int(line[7])
 
     otu.close()
 
