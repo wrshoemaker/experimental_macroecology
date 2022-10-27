@@ -360,6 +360,6 @@ def calculate_all_likelihoods(carbon_source, alfapriorq_list, betapriorq_all):
 
 
 
-for carbon in utils.carbons:
+#for carbon in utils.carbons:
 
-    calculate_all_likelihoods(carbon, alfapriorq_list, betapriorq_all)
+#    calculate_all_likelihoods(carbon, alfapriorq_list, betapriorq_all)

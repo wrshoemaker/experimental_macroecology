@@ -25,6 +25,8 @@ transfers = np.asarray([12, 18])
 experiments = [('No_migration',4), ('Global_migration',4), ('Parent_migration', 4)  ]
 treatment_combinations = list(combinations(experiments,2))
 
+rescaled_status_all = ['afd', 'afd_rescaled']
+
 for experiment in experiments:
 
     afd_dict[experiment] = {}
@@ -39,10 +41,11 @@ for experiment in experiments:
         afd = afd[afd>0]
         afd = np.log10(afd)
 
-        #afd_rescaled = (afd - np.mean(afd))/np.std(afd)
+        afd_rescaled = (afd - np.mean(afd))/np.std(afd)
 
-        afd_dict[experiment][transfer] = afd
-
+        afd_dict[experiment][transfer] = {}
+        afd_dict[experiment][transfer]['afd'] = afd
+        afd_dict[experiment][transfer]['afd_rescaled'] = afd_rescaled
 
 
 
@@ -58,25 +61,36 @@ def make_ks_dict():
 
         for transfer in transfers:
 
-            afd_experiment_1 = afd_dict[combo[0]][transfer]
-            afd_experiment_2 = afd_dict[combo[1]][transfer]
-            ks_statistic, p_value = utils.run_permutational_ks_test(afd_experiment_1, afd_experiment_2)
-
             distances_dict[combo][transfer] = {}
-            distances_dict[combo][transfer]['D'] = ks_statistic
-            distances_dict[combo][transfer]['pvalue'] = p_value
 
-            #combo_pairs.append((combo, transfer))
-            #pvalues.append(pvalue)
+            for rescaled_status in rescaled_status_all:
+
+                print(combo, transfer, rescaled_status)
+
+                afd_experiment_1 = afd_dict[combo[0]][transfer][rescaled_status]
+                afd_experiment_2 = afd_dict[combo[1]][transfer][rescaled_status]
+
+                ks_statistic, p_value = utils.run_permutation_ks_test(afd_experiment_1, afd_experiment_2, n=1000)
+
+                distances_dict[combo][transfer][rescaled_status] = {}
+                distances_dict[combo][transfer][rescaled_status]['D'] = ks_statistic
+                distances_dict[combo][transfer][rescaled_status]['pvalue'] = p_value
+
 
 
     for experiment_idx, experiment in enumerate(experiments):
 
-        ks_statistic, p_value = utils.run_permutational_ks_test(afd_dict[experiment][transfers[0]], afd_dict[experiment][transfers[1]])
-
         distances_dict[experiment] = {}
-        distances_dict[experiment]['D'] = ks_statistic
-        distances_dict[experiment]['pvalue'] = p_value
+
+        for rescaled_status in rescaled_status_all:
+
+            print(experiment, rescaled_status)
+
+            ks_statistic, p_value = utils.run_permutation_ks_test(afd_dict[experiment][transfers[0]][rescaled_status], afd_dict[experiment][transfers[1]][rescaled_status], n=1000)
+
+            distances_dict[experiment][rescaled_status] = {}
+            distances_dict[experiment][rescaled_status]['D'] = ks_statistic
+            distances_dict[experiment][rescaled_status]['pvalue'] = p_value
 
 
     with open(ks_dict_path, 'wb') as outfile:
@@ -93,7 +107,7 @@ def load_ks_dict():
 
 ks_dict = load_ks_dict()
 
-fig = plt.figure(figsize = (4*(len(experiments) +1), 4))
+fig = plt.figure(figsize = (4*(len(experiments) +1), 8))
 fig.subplots_adjust(bottom= 0.15)
 
 
@@ -111,35 +125,43 @@ fig.subplots_adjust(bottom= 0.15)
 
 
 
-for experiment_idx, experiment in enumerate(experiments):
+for rescaled_status_idx, rescaled_status in enumerate(rescaled_status_all):
 
-    ax = plt.subplot2grid((1, len(experiments)+1), (0, experiment_idx), colspan=1)
+    if rescaled_status == 'afd':
+        x_label = 'Relative abundance, ' +  r'$\mathrm{log}_{10}$'
 
-    for transfer in transfers:
+    else:
+        x_label = 'Rescaled relative abundance, ' +  r'$\mathrm{log}_{10}$'
 
-        colors_experiment_transfer = utils.color_dict_range[experiment][transfer-1]
-        afd = afd_dict[experiment][transfer]
-        #label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
-        label = '%s, transfer %d' %(utils.titles_dict[experiment], transfer)
+    for experiment_idx, experiment in enumerate(experiments):
 
-        ax.hist(afd, lw=3, alpha=0.8, bins= 15, color=colors_experiment_transfer, histtype='step', label='Transfer %d'%transfer,  density=True)
+        ax = plt.subplot2grid((2, len(experiments)+1), (rescaled_status_idx, experiment_idx), colspan=1)
+
+        for transfer in transfers:
+
+            colors_experiment_transfer = utils.color_dict_range[experiment][transfer-1]
+            afd = afd_dict[experiment][transfer][rescaled_status]
+            #label = '%s, transfer %d' %(utils.titles_no_inocula_dict[experiment], transfer)
+            label = '%s, transfer %d' %(utils.titles_dict[experiment], transfer)
+
+            ax.hist(afd, lw=3, alpha=0.8, bins= 15, color=colors_experiment_transfer, histtype='step', label='Transfer %d'%transfer,  density=True)
 
 
-    ks_statistic = ks_dict[experiment]['D']
-    p_value = ks_dict[experiment]['pvalue']
+        ks_statistic = ks_dict[experiment][rescaled_status]['D']
+        p_value = ks_dict[experiment][rescaled_status]['pvalue']
 
-    ax.text(0.70,0.8, '$D=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
-    ax.text(0.68,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+        ax.text(0.70,0.8, '$D=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+        ax.text(0.68,0.73, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
-    ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
-    ax.legend(loc="upper right", fontsize=8)
-    ax.set_xlabel('Relative abundance, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
-    ax.set_ylabel('Probability density', fontsize=12)
-    #ax.set_xlim(-5.5, 0.2)
+        ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
+        ax.legend(loc="upper right", fontsize=8)
+        ax.set_xlabel(x_label, fontsize=12)
+        ax.set_ylabel('Probability density', fontsize=12)
+        #ax.set_xlim(-5.5, 0.2)
 
-#ax.set_xscale('log', basex=10)
 
-ax_distances = plt.subplot2grid((1, len(experiments)+1), (0, 3), colspan=1)
+
+
 marker_dict = {(('No_migration', 4), ('Global_migration', 4)): 'D',
                                     (('No_migration', 4), ('Parent_migration', 4)): 'X',
                                     (('Global_migration', 4), ('Parent_migration', 4)): 'o'}
@@ -148,56 +170,61 @@ label_dict = {(('No_migration', 4), ('Global_migration', 4)): 'No migration vs. 
             (('No_migration', 4), ('Parent_migration', 4)): 'No migration vs. Parent migration',
             (('Global_migration', 4), ('Parent_migration', 4)): 'Global migration vs. Parent migration'}
 
-for combo in treatment_combinations:
 
-    distances_combo = [ks_dict[combo][transfer]['D'] for transfer in transfers]
-    pvalues_combo = [ks_dict[combo][transfer]['pvalue'] for transfer in transfers]
+for rescaled_status_idx, rescaled_status in enumerate(rescaled_status_all):
 
-    ax_distances.plot(transfers, distances_combo, color = 'k', zorder=1)
+    ax_distances = plt.subplot2grid((2, len(experiments)+1), (rescaled_status_idx, 3), colspan=1)
 
-for combo in treatment_combinations:
+    for combo in treatment_combinations:
 
-    for transfer in transfers:
+        distances_combo = [ks_dict[combo][transfer][rescaled_status]['D'] for transfer in transfers]
+        pvalues_combo = [ks_dict[combo][transfer][rescaled_status]['pvalue'] for transfer in transfers]
 
-        ks_statistic = ks_dict[combo][transfer]['D']
-        p_value = ks_dict[combo][transfer]['pvalue']
-
-        colors_experiment_transfer_1 = utils.color_dict_range[combo[0]][transfer-3]
-        colors_experiment_transfer_2 = utils.color_dict_range[combo[1]][transfer-3]
-
-        if p_value < 0.05:
-
-            ax_distances.text(transfer, ks_statistic+0.025, '*', fontsize=12, color='k', ha='center', va='center')#, transform=ax.transAxes )
+        ax_distances.plot(transfers, distances_combo, color = 'k', zorder=1)
 
 
-        marker_style = dict(color='k', marker='o',
-                            markerfacecoloralt=colors_experiment_transfer_1,
-                            markerfacecolor=colors_experiment_transfer_2)
+    for combo in treatment_combinations:
 
-        #ax_distances.plot(transfer, distances_combo_transfer, alpha=1, edgecolors='k', marker=marker_dict[combo], s = 120, label=label_dict[combo], zorder=2)
+        for transfer in transfers:
 
-        ax_distances.plot(transfer, ks_statistic, markersize = 16,   \
-            linewidth=2,  alpha=1, zorder=3, fillstyle='left', **marker_style)
+            ks_statistic = ks_dict[combo][transfer][rescaled_status]['D']
+            p_value = ks_dict[combo][transfer][rescaled_status]['pvalue']
 
-#transfers
+            colors_experiment_transfer_1 = utils.color_dict_range[combo[0]][transfer-3]
+            colors_experiment_transfer_2 = utils.color_dict_range[combo[1]][transfer-3]
+
+            if p_value < 0.05:
+
+                ax_distances.text(transfer, ks_statistic+0.025, '*', fontsize=12, color='k', ha='center', va='center')#, transform=ax.transAxes )
 
 
-#legend_elements = [Line2D([0], [0], color='k', ls='--', lw=1.5, label='Mean ' + r'$\left | \beta_{1} -1 \right |$'),
-#                    Line2D([0], [0], color='k', ls=':', lw=1.5, label='Null')]
-#ax_distances.legend(handles=legend_elements, loc='upper left')
-#ax_distances.legend(loc="upper right", fontsize=6, markerscale=0.5)
+            marker_style = dict(color='k', marker='o',
+                                markerfacecoloralt=colors_experiment_transfer_1,
+                                markerfacecolor=colors_experiment_transfer_2)
 
-ax_distances.set_xlabel('Transfers' , fontsize=12)
-ax_distances.set_ylabel('Kolmogorov–Smirnov distance, '+ r'$D$', fontsize=12)
+            #ax_distances.plot(transfer, distances_combo_transfer, alpha=1, edgecolors='k', marker=marker_dict[combo], s = 120, label=label_dict[combo], zorder=2)
 
-ax_distances.set_xlim([11, 19])
-ax_distances.set_ylim([-0.02, 0.35 ])
-ax_distances.axhline(0, lw=3, ls=':',color='k', zorder=1)
+            ax_distances.plot(transfer, ks_statistic, markersize = 16, linewidth=2,  alpha=1, zorder=3, fillstyle='left', **marker_style)
 
-labels = [item.get_text() for item in ax_distances.get_xticklabels()]
+    #transfers
 
-ax_distances.set_xticks([12, 18])
-ax_distances.set_xticklabels([12,18])
+
+    #legend_elements = [Line2D([0], [0], color='k', ls='--', lw=1.5, label='Mean ' + r'$\left | \beta_{1} -1 \right |$'),
+    #                    Line2D([0], [0], color='k', ls=':', lw=1.5, label='Null')]
+    #ax_distances.legend(handles=legend_elements, loc='upper left')
+    #ax_distances.legend(loc="upper right", fontsize=6, markerscale=0.5)
+
+    ax_distances.set_xlabel('Transfers' , fontsize=12)
+    ax_distances.set_ylabel('Kolmogorov–Smirnov distance, '+ r'$D$', fontsize=12)
+
+    ax_distances.set_xlim([11, 19])
+    ax_distances.set_ylim([-0.02, 0.35 ])
+    ax_distances.axhline(0, lw=3, ls=':',color='k', zorder=1)
+
+    labels = [item.get_text() for item in ax_distances.get_xticklabels()]
+
+    ax_distances.set_xticks([12, 18])
+    ax_distances.set_xticklabels([12,18])
 
 
 #print(list(ax_distances.get_xticklabels()))

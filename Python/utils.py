@@ -209,6 +209,49 @@ def bootstrap_estimate_ks(array_1, array_2, size=50, n=10000):
 
 
 
+def run_permutation_paired_t_test(array_1, array_2, n=10000, sided='less'):
+
+    delta = array_1 - array_2
+
+    mean_delta = np.mean(delta)
+    se_delta = np.std(delta)/np.sqrt(len(delta))
+    t = mean_delta/se_delta
+
+    merged_array = np.stack((array_1, array_2)).T
+
+    t_null_all = []
+    for n_i in range(n):
+
+        merged_array = merged_array[np.arange(len(merged_array))[:,None], np.random.randn(*merged_array.shape).argsort(axis=1)]
+        delta_null = merged_array[:,0] - merged_array[:,1]
+
+        mean_delta_null = np.mean(delta_null)
+        se_delta_null = np.std(delta_null)/np.sqrt(len(delta_null))
+        t_null = mean_delta_null/se_delta_null
+        t_null_all.append(t_null)
+
+    t_null_all = np.asarray(t_null_all)
+
+    if sided == 'less':
+        p_value = sum(t < t_null_all)/n
+
+    elif sided == 'greater':
+        p_value = sum(t > t_null_all)/n
+
+    else:
+        p_value = sum(np.absolute(t) > np.absolute(t_null_all))/n
+
+    return t, p_value
+
+
+
+
+
+    print(t_null_all)
+
+    # permutation
+
+
 
 
 def run_permutation_ks_test(array_1, array_2, n=10000):
@@ -1152,6 +1195,7 @@ def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',ino
 
     count_dict = {}
     all_treatments = []
+    sample_line_all = []
     for line in otu:
         line = line.strip().split(',')
         treatment_line = line[1]
@@ -1159,14 +1203,17 @@ def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',ino
 
         all_treatments.append(treatment_line)
 
-
         if (int(line[4]) == transfer) and (treatment_line == migration) and (int(line[3]) == inocula):
+
+            #print(line)
 
             sample_line = line[5]
             sample_line = sample_line.strip()
             sample_line = re.sub(r'["]', '', sample_line)
 
             #sample_line = int(sample_line)
+
+            sample_line_all.append(sample_line)
 
             esv_line = line[6]
             esv_line = re.sub(r'["]', '', esv_line)
@@ -1201,9 +1248,7 @@ def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',ino
                 count_dict[esv_line][sample_line] = float(line[7])
 
 
-
     otu.close()
-
 
 
     s_by_s_df = pd.DataFrame(count_dict)

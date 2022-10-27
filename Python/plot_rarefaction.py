@@ -39,7 +39,7 @@ color_dict = {'Parent_migration.4.T18': utils.color_dict_range[('Parent_migratio
 
 def make_subsample_richness_dict():
 
-    count_dict = get_otu_dict()
+    count_dict = utils.get_otu_dict()
 
     rarefaction_dict = {}
     for sample, sad_dict in count_dict.items():

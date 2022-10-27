@@ -39,6 +39,10 @@ for experiment_idx, experiment in enumerate(experiments):
 
     cv_delta_null_dict = {}
 
+    cv_over_time_dict = {}
+    cv_over_time_dict['cv_delta'] = {}
+    cv_over_time_dict['cv'] = {}
+
     communities = utils.get_migration_time_series_community_names(migration=experiment[0], inocula=experiment[1])
     communities_keep = [str(key) for key, value in communities.items() if len(value) == 18]
 
@@ -126,11 +130,14 @@ for experiment_idx, experiment in enumerate(experiments):
             log_abundance_ratio_all.append(log_abundance_ratio_after_5)
             transfers_all.append(tuples_t_filter_first_timepoints_after_5)
 
-            #if (len(log_abundance_ratio_before) >= 5) and (len(log_abundance_ratio_after) >= 5):
-            #    cv_before =  np.std(log_abundance_ratio_before)/np.absolute(np.mean(log_abundance_ratio_before))
-            #    cv_after = np.std(log_abundance_ratio_after)/np.absolute(np.mean(log_abundance_ratio_after))
+            if (len(log_abundance_ratio_before) >= 5) and (len(log_abundance_ratio_after) >= 5):
+                cv_before =  np.std(log_abundance_ratio_before)/np.absolute(np.mean(log_abundance_ratio_before))
+                cv_after = np.std(log_abundance_ratio_after)/np.absolute(np.mean(log_abundance_ratio_after))
 
-            #    delta_cv = cv_after - cv_before
+                delta_cv = cv_after - cv_before
+                print(experiment, delta_cv)
+
+
             #    delta_cv_all.append(delta_cv)
 
             for t_idx, t in enumerate(tuples_t_filter_first_timepoints):
@@ -271,7 +278,6 @@ for experiment_idx, experiment in enumerate(experiments):
     mean_mean_to_plot = np.asarray(mean_mean_to_plot)
     cv_mean_to_plot = np.asarray(cv_mean_to_plot)
 
-
     # ks test for the distribution of CVs over time for all species before/after end of manipulation
     mean_over_all_species_t_before = [mean_mean_dict[t]['measure'] for t in transfers_mean_mean if (t <= 12) and (t > 7)]
     mean_over_all_species_t_after = [mean_mean_dict[t]['measure'] for t in transfers_mean_mean if t > 12]
@@ -280,8 +286,6 @@ for experiment_idx, experiment in enumerate(experiments):
     mean_over_all_species_t_after = np.asarray(list(itertools.chain(*mean_over_all_species_t_after)))
 
     ks_statistic_mean_over_all_species_t, p_value_mean_over_all_species_t = utils.run_permutation_ks_test(mean_over_all_species_t_before, mean_over_all_species_t_after)
-
-
 
     cv_over_all_species_t_before = [mean_cv_dict[t]['measure'] for t in transfers_mean_cv if (t <= 12) and (t > 5)]
     cv_over_all_species_t_after = [mean_cv_dict[t]['measure'] for t in transfers_mean_cv if (t > 12) and (t > 5)]
