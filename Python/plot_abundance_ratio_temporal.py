@@ -130,12 +130,12 @@ for experiment_idx, experiment in enumerate(experiments):
             log_abundance_ratio_all.append(log_abundance_ratio_after_5)
             transfers_all.append(tuples_t_filter_first_timepoints_after_5)
 
-            if (len(log_abundance_ratio_before) >= 5) and (len(log_abundance_ratio_after) >= 5):
-                cv_before =  np.std(log_abundance_ratio_before)/np.absolute(np.mean(log_abundance_ratio_before))
-                cv_after = np.std(log_abundance_ratio_after)/np.absolute(np.mean(log_abundance_ratio_after))
+            #if (len(log_abundance_ratio_before) >= 5) and (len(log_abundance_ratio_after) >= 5):
+            #    cv_before =  np.std(log_abundance_ratio_before)/np.absolute(np.mean(log_abundance_ratio_before))
+            #    cv_after = np.std(log_abundance_ratio_after)/np.absolute(np.mean(log_abundance_ratio_after))
 
-                delta_cv = cv_after - cv_before
-                print(experiment, delta_cv)
+            #    delta_cv = cv_after - cv_before
+            #    print(experiment, delta_cv)
 
 
             #    delta_cv_all.append(delta_cv)
@@ -370,7 +370,7 @@ for experiment_idx, experiment in enumerate(experiments):
         return p_perm
 
     p_perm = ks_test_constrain_species()
-    print(ks_statistic_cv_over_all_species_t, p_perm)
+    #print(experiment, ks_statistic_cv_over_all_species_t, p_perm)
 
     # no migration
     #0.1 0.775

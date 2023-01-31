@@ -25,6 +25,30 @@ simulation_global_rho_path = utils.directory + "/data/simulation_global_rho.pick
 simulation_migration_all_path = utils.directory + "/data/simulation_migration_all.pickle"
 
 
+# soil in parent mixed with 100ml, aliquots taken from this culture
+n_cells_parent = 7.92*(10**6)
+# innoculation of replicate populations done with 4ul, 0.004 / 100
+# large innoculation = 40uL, 0.4/100
+# descendent lines are 500ul in size
+n_cells_descendent = 1*(10**8)
+#n_cells_descendent = 5*(10**8)
+D_global = 504/60000
+D_parent = 504/60000
+D_transfer = 4/500
+
+tau_all = np.linspace(0.5, 6.9, num=10, endpoint=True)
+#tau_all = [6.8]
+#sigma_all = np.linspace(0.1, 1.9, num=10, endpoint=True)
+#sigma_all = np.linspace(0.01, 1.9, num=10, endpoint=True)
+sigma_all = np.logspace(np.log10(0.01), np.log10(1.9), num=10, endpoint=True, base=10.0)
+
+
+# merge ancestral SADs to get probability vector for multinomial sampling
+# Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
+# redo later to draw carrying capacities from no migration distribution
+mu_pln=3.4533926814573506
+sigma_pln=2.6967286975393754
+
 
 #._rvs method is not currently available for pln.
 class pln_gen(rv_discrete):
@@ -255,20 +279,9 @@ def run_simulation_continous_migration(sigma = 0.9, tau = 0.5, dt = 48, T = 864,
     # draw from binomial distribution
     n_non_zero_k = np.random.binomial(richness_parent, delta)
 
-    # soil in parent mixed with 100ml, aliquots taken from this culture
-    n_cells_parent = 10**12
-    # innoculation of replicate populations done with 4ul, 0.004 / 100
-    # large innoculation = 40uL, 0.4/100
-    # descendent lines are 500ul in size
-    n_cells_descendent = 10**10
-
     n_time_steps = int(T / dt)  # Number of time steps.
     t_gen = np.arange(0, T, dt)
-    # merge ancestral SADs to get probability vector for multinomial sampling
-    # Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
-    # redo later to draw carrying capacities from no migration distribution
-    mu_pln=3.4533926814573506
-    sigma_pln=2.6967286975393754
+
     # non zero carrying capacities
     k_to_keep = pln._rvs(mu_pln, sigma_pln, lower_trunc=True, size=n_non_zero_k)
     # randomize order
@@ -420,16 +433,6 @@ def run_simulation_initial_condition_migration(sigma = 0.5, tau = 0.9, dt = 48, 
     # draw from binomial distribution
     n_non_zero_k = np.random.binomial(richness_parent, delta)
 
-    # soil in parent mixed with 100ml, aliquots taken from this culture
-    n_cells_parent = 7*(10**7)
-    # innoculation of replicate populations done with 4ul, 0.004 / 100
-    # large innoculation = 40uL, 0.4/100
-    # descendent lines are 500ul in size
-    n_cells_descendent = 5*(10**8)
-    D_global = 504/60000
-    D_parent = 504/60000
-    D_transfer = 4/500
-
 
     def discrete_slm_initial_condition_migration(q_array, m):
         # q_array = array of replicate and species
@@ -439,12 +442,6 @@ def run_simulation_initial_condition_migration(sigma = 0.5, tau = 0.9, dt = 48, 
 
     n_time_steps = int(T / dt)  # Number of time steps.
     t_gen = np.arange(0, T, dt)
-
-    # merge ancestral SADs to get probability vector for multinomial sampling
-    # Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
-    # redo later to draw carrying capacities from no migration distribution
-    mu_pln=3.4533926814573506
-    sigma_pln=2.6967286975393754
 
     # non zero carrying capacities
     k_to_keep = pln._rvs(mu_pln, sigma_pln, lower_trunc=True, size=n_non_zero_k)
@@ -599,15 +596,6 @@ def run_simulation_initial_condition_all_migration(sigma = 0.5, tau = 0.9, dt = 
     # draw from binomial distribution
     n_non_zero_k = np.random.binomial(richness_parent, delta)
 
-    # soil in parent mixed with 100ml, aliquots taken from this culture
-    n_cells_parent = 7*(10**7)
-    # innoculation of replicate populations done with 4ul, 0.004 / 100
-    # large innoculation = 40uL, 0.4/100
-    # descendent lines are 500ul in size
-    n_cells_descendent = 5*(10**8)
-    D_global = 504/60000
-    D_parent = 504/60000
-    D_transfer = 4/500
 
 
     def discrete_slm_initial_condition_migration(q_array, m):
@@ -619,11 +607,6 @@ def run_simulation_initial_condition_all_migration(sigma = 0.5, tau = 0.9, dt = 
     n_time_steps = int(T / dt)  # Number of time steps.
     t_gen = np.arange(0, T, dt)
 
-    # merge ancestral SADs to get probability vector for multinomial sampling
-    # Non-zero carrying capacities assigned from lognormal distribution obtained by fitting PLN to transfer 18 SADs no migration
-    # redo later to draw carrying capacities from no migration distribution
-    mu_pln=3.4533926814573506
-    sigma_pln=2.6967286975393754
 
     # non zero carrying capacities
     k_to_keep = pln._rvs(mu_pln, sigma_pln, lower_trunc=True, size=n_non_zero_k)
@@ -801,8 +784,6 @@ def run_simulation_parent_rho(iter=100):
     #    rho_dict['migration'][t] = []
     #    rho_dict['migration_vs_parent'][t] = []
 
-    tau_all = np.linspace(0.5, 6, num=10, endpoint=True)
-    sigma_all = np.linspace(0.1, 1.9, num=10, endpoint=True)
 
     for tau_i in tau_all:
 
@@ -933,8 +914,9 @@ def run_simulation_parent_rho(iter=100):
 
                         #init_abund_rel_to_keep = init_abund_rel[idx_migration]
 
-            for t in transfers:
-                print(tau_i, sigma_i, t, np.mean(rho_dict[tau_i][sigma_i][t]['migration']))
+            # for transfer in...
+            meal_delta_rho = np.mean(np.asarray(rho_dict[tau_i][sigma_i][17]['migration']) - np.asarray(rho_dict[tau_i][sigma_i][11]['migration']))
+            print(tau_i, sigma_i, meal_delta_rho)
 
 
 
@@ -954,8 +936,6 @@ def run_simulation_global_rho(iter=100):
 
     rho_dict = {}
 
-    tau_all = np.linspace(0.5, 6, num=10, endpoint=True)
-    sigma_all = np.linspace(0.1, 1.9, num=10, endpoint=True)
 
     for tau_i in tau_all:
 
@@ -1211,8 +1191,6 @@ def run_simulation_all_migration(iter=100):
 
     rho_dict = {}
 
-    tau_all = np.linspace(0.5, 6, num=10, endpoint=True)
-    sigma_all = np.linspace(0.1, 1.9, num=10, endpoint=True)
 
     for tau_i in tau_all:
 

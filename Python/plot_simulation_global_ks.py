@@ -59,6 +59,8 @@ for tau_i in tau_all:
 
         delta_ks_all.append(delta_ks)
 
+        print(delta_ks)
+
     delta_ks_all_nested.append(delta_ks_all)
 
 

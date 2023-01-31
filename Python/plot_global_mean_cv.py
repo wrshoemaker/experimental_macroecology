@@ -1,5 +1,5 @@
 from __future__ import division
-import os, sys, re
+import os, sys, re, random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -29,7 +29,6 @@ for treatment in ['No_migration.4.T%s', 'No_migration.40.T%s', 'Global_migration
         transfers = ['']
     else:
         transfers = utils.transfers
-
 
     for transfer in transfers:
 
@@ -84,6 +83,9 @@ for treatment in ['No_migration.4.T12', 'No_migration.40.T12', 'Global_migration
 fig = plt.figure(figsize = (8, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 
+log_dict = {}
+log_dict['CV'] = {}
+log_dict['mean'] = {}
 for transfer_idx, transfer in enumerate(utils.transfers):
 
     ax_mean = plt.subplot2grid((2, 2), (0, transfer_idx), colspan=1)
@@ -98,6 +100,10 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     no_migration_treatment_cv_all = []
     migration_treatment_cv_all = []
 
+    #log_dict['CV'][transfer] = {}
+    #log_dict['mean'][transfer] = {}
+
+    asv_to_keep = []
 
     for asv, mean_rel_abundance_dict in mean_rel_abund_all_treatments_dict.items():
 
@@ -115,6 +121,26 @@ for transfer_idx, transfer in enumerate(utils.transfers):
             no_migration_treatment_cv_all.append(no_migration_cv)
             migration_treatment_cv_all.append(migration_cv)
 
+            #asv_to_keep.append(asv)
+
+            if asv not in log_dict['CV']:
+                log_dict['CV'][asv] = {}
+                log_dict['CV'][asv]['no_migration'] = {}
+                log_dict['CV'][asv]['global_migration'] = {}
+
+            if asv not in log_dict['mean']:
+                log_dict['mean'][asv] = {}
+                log_dict['mean'][asv]['no_migration'] = {}
+                log_dict['mean'][asv]['global_migration'] = {}
+
+            log_dict['CV'][asv]['global_migration'][transfer] = migration_cv
+            log_dict['CV'][asv]['no_migration'][transfer] = no_migration_cv
+
+            log_dict['mean'][asv]['global_migration'][transfer] = migration_mean
+            log_dict['mean'][asv]['no_migration'][transfer] = no_migration_mean
+
+            
+
     color = utils.color_dict_range[('Global_migration', 4)][transfer-1].reshape(1,-1)
 
     ax_mean.scatter(no_migration_treatment_mean_all, migration_treatment_mean_all, alpha=0.8, c=color, zorder=2)
@@ -131,6 +157,8 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
     rho, p_value_rho = utils.run_permutation_corr(np.log10(no_migration_treatment_mean_all), np.log10(migration_treatment_mean_all))
     p_value_to_plot = utils.get_p_value(p_value_rho)
+
+    print(transfer, 'Mean', rho, p_value_rho)
 
     ax_mean.text(0.2,0.9, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_mean.transAxes)
     ax_mean.text(0.18,0.8, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_mean.transAxes)
@@ -160,7 +188,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     #rho = np.corrcoef(np.log10(no_migration_treatment_cv_all), np.log10(migration_treatment_cv_all))[0,1]
     rho, p_value_rho = utils.run_permutation_corr(np.log10(no_migration_treatment_cv_all), np.log10(migration_treatment_cv_all))
 
-    print(rho, p_value_rho)
+    print(transfer, 'CV', rho, p_value_rho)
     p_value_to_plot = utils.get_p_value(p_value_rho)
 
     ax_cv.text(0.2,0.9, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_cv.transAxes )
@@ -177,3 +205,55 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
 fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_global.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
+
+
+
+
+for measure in ['mean', 'CV']:
+
+    # make list for each ASV 
+
+    asv_ = log_dict[measure].keys()
+
+    no_migration_all = []
+    global_migration_all = []
+
+    for a in asv_:
+
+
+
+        if (len(log_dict[measure][a]['no_migration']) == 2) and (len(log_dict[measure][a]['global_migration']) == 2):
+            
+            no_migration_all.append([log_dict[measure][a]['no_migration'][12], log_dict[measure][a]['no_migration'][18]])
+            global_migration_all.append([log_dict[measure][a]['global_migration'][12], log_dict[measure][a]['global_migration'][18]])
+
+
+    rho_12 = np.corrcoef( [i[0] for i in no_migration_all],  [i[0] for i in global_migration_all] )[0,1]
+    rho_18 = np.corrcoef( [i[1] for i in no_migration_all],  [i[1] for i in global_migration_all] )[0,1]
+
+    delta_rho = rho_18-rho_12
+
+    delta_rho_null_all = []
+    for i in range(1000):
+
+        for sublist in no_migration_all:
+            random.shuffle(sublist) 
+
+        for sublist in global_migration_all:
+            random.shuffle(sublist) 
+
+
+        rho_12_null = np.corrcoef( [i[0] for i in no_migration_all],  [i[0] for i in global_migration_all] )[0,1]
+        rho_18_null = np.corrcoef( [i[1] for i in no_migration_all],  [i[1] for i in global_migration_all] )[0,1]
+
+        delta_rho_null = rho_18_null-rho_12_null
+        delta_rho_null_all.append(delta_rho_null)
+
+    
+    delta_rho_null_all = np.asarray(delta_rho_null_all)
+    p_value = sum(delta_rho_null_all>delta_rho)/len(delta_rho_null_all)
+
+    print(delta_rho, np.median(delta_rho_null_all), p_value)
+
+    
+

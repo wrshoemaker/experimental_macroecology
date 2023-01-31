@@ -11,7 +11,8 @@ import scipy.spatial as spatial
 
 #from macroecotools import obs_pred_rsquare
 import utils
-import slm_simulation_utils
+
+from itertools import combinations
 
 
 import matplotlib.pyplot as plt
@@ -47,6 +48,30 @@ def calculate_dissimilarity(afd_temporal, T):
     mean_diss = np.mean(diss_all)
 
     return mean_diss
+
+
+
+
+def calculate_dissimilarity_between_communities(afd_temporal_1, afd_temporal_2, T):
+
+    diss_all = []
+    # number of dissimilarities decreases with lag
+    for t in range(len(afd_temporal_1) - T):
+
+        n_1_t = afd_temporal_1[t]
+        n_2_t_plus_T = afd_temporal_2[t + T]
+
+        d_plus = n_1_t + n_2_t_plus_T
+        d_minus = n_1_t - n_2_t_plus_T
+
+        diss = ((d_minus**2) - d_plus)/(d_plus * (d_plus-1))
+        diss_all.append(diss)
+
+    #print(diss_all)
+    mean_diss = np.mean(diss_all)
+
+    return mean_diss
+
 
 
 
@@ -114,14 +139,41 @@ for experiment_idx, experiment in enumerate(experiments):
 
             if experiment[0] not in diss_dict[s]:
                 diss_dict[s][experiment[0]] = {}
+                diss_dict[s][experiment[0]]['communities'] = {}
+                diss_dict[s][experiment[0]]['communities_between'] = {}
 
-            diss_dict[s][experiment[0]][c] = T_all
 
+            diss_dict[s][experiment[0]]['communities'][c] = {}
+            diss_dict[s][experiment[0]]['communities'][c]['afd_temporal'] = afd_temporal
+            diss_dict[s][experiment[0]]['communities'][c]['dissimilarity_within'] = T_all
+
+
+    # go through species and get dissimilarity between replicate communities
+    comm_pair_all = list(combinations(comm_merged, 2))
+    for species in diss_dict.keys():
+
+        if experiment[0] not in diss_dict[species]:
+            continue
+
+        communities_species = list(diss_dict[species][experiment[0]]['communities'].keys())
+
+        if len(communities_species) == 1:
+            continue
+
+        communities_species_pair_all = list(combinations(communities_species, 2))
+        for communities_species_pair in communities_species_pair_all:
+
+            afd_temporal_1 = diss_dict[species][experiment[0]]['communities'][communities_species_pair[0]]['afd_temporal']
+            afd_temporal_2 = diss_dict[species][experiment[0]]['communities'][communities_species_pair[1]]['afd_temporal']
+
+            T_between_all = [calculate_dissimilarity_between_communities(afd_temporal_1, afd_temporal_2, t) for t in T_range]
+            T_between_all = np.asarray(T_between_all)
+
+            diss_dict[species][experiment[0]]['communities_between'][communities_species_pair] = T_between_all
 
 
 
 # get species to plot
-
 species_to_plot = []
 for key, value in diss_dict.items():
 
@@ -135,13 +187,14 @@ for key, value in diss_dict.items():
     #    print(key)
 
 
-print(len(species_to_plot))
+print(species_to_plot)
 
 #species_to_plot = species_to_plot[:4]
-
 fig = plt.figure(figsize = (8, 16)) #
 fig.subplots_adjust(bottom= 0.15)
 
+color_global = utils.color_dict_range[('Global_migration', 4)][15]
+color_no = utils.color_dict_range[('No_migration', 4)][15]
 
 species_count = 0
 species_chunk_all = [species_to_plot[x:x+2] for x in range(0, len(species_to_plot), 2)]
@@ -150,27 +203,71 @@ for species_chunk_idx, species_chunk in enumerate(species_chunk_all):
 
         ax = plt.subplot2grid((4, 2), (species_chunk_idx, species_idx))
 
-        color_global = utils.color_dict_range[('Global_migration', 4)][15]
-        color_no = utils.color_dict_range[('No_migration', 4)][15]
+        dissimilarity_within_global_all = []
+        for key, value in diss_dict[species]['Global_migration']['communities'].items():
 
-        for key, value in diss_dict[species]['Global_migration'].items():
-            ax.plot(T_range, value, c=color_global, lw=1, alpha=0.5)
+            dissimilarity_within = value['dissimilarity_within']
+            #ax.plot(T_range, dissimilarity_within, c=color_global, lw=1, alpha=0.4, zorder=1)
+            dissimilarity_within_global_all.append(dissimilarity_within)
 
-        for key, value in diss_dict[species]['No_migration'].items():
-            ax.plot(T_range, value, c=color_no, lw=1, alpha=0.5)
+
+        # plot mean
+        if len(dissimilarity_within_global_all) >= 3:
+            ax.plot(T_range, np.mean(np.asarray(dissimilarity_within_global_all), axis=0), c=color_global, ls='--', lw=3, alpha=1, zorder=2, label='Global, within communities')
+
+
+        dissimilarity_within_no_all = []
+        for key, value in diss_dict[species]['No_migration']['communities'].items():
+
+            dissimilarity_within = value['dissimilarity_within']
+            #ax.plot(T_range, dissimilarity_within, c=color_no, lw=1, alpha=0.5, zorder=1)
+            dissimilarity_within_no_all.append(dissimilarity_within)
+
+        # plot mean
+        if len(dissimilarity_within_no_all) >= 3:
+            ax.plot(T_range, np.mean(np.asarray(dissimilarity_within_no_all), axis=0), c=color_no, ls='--', lw=3, alpha=1, zorder=2, label='No, within communities')
+
+
+        # plot between communities
+        dissimilarity_within_global_all = []
+        for key, value in diss_dict[species]['Global_migration']['communities_between'].items():
+            dissimilarity_within_global_all.append(value)
+
+
+        # plot mean
+        if len(dissimilarity_within_global_all) >= 3:
+            ax.plot(T_range, np.mean(np.asarray(dissimilarity_within_global_all), axis=0), c=color_global, ls=':', lw=3, alpha=1, zorder=2, label='Global, across communities')
+
+
+        dissimilarity_within_no_all = []
+        for key, value in diss_dict[species]['No_migration']['communities_between'].items():
+            dissimilarity_within_no_all.append(value)
+
+        # plot mean
+        if len(dissimilarity_within_no_all) >= 3:
+            ax.plot(T_range, np.mean(np.asarray(dissimilarity_within_no_all), axis=0), c=color_no, ls=':', lw=3, alpha=1, zorder=2, label='No, across communities')
+
+
+    
+        print(species_count+1, species)
 
 
         ax.set_title('ASV %d' % (species_count+1), fontsize=12, fontweight='bold' )
+        print('ASV %d' % (species_count+1), species)
         ax.set_xlabel("Obersvation lag, " + r'$T$', fontsize = 10)
-        ax.set_ylabel("Dissimilarity, " + r'$\Phi_{i}(T)$', fontsize = 10)
+        ax.set_ylabel("Mean dissimilarity, " + r'$\left< \Phi_{i}(T) \right>$', fontsize = 10)
+
+
 
         if species_count == 0:
 
-            from matplotlib.lines import Line2D
-            custom_lines = [Line2D([0], [0], color=color_global, lw=3, label='Global migration'),
-                            Line2D([0], [0], color=color_no, lw=3, label='No migration')]
+            ax.legend(loc="upper left", fontsize=8)
 
-            ax.legend(handles=custom_lines, loc='upper left')
+            #from matplotlib.lines import Line2D
+            #custom_lines = [Line2D([0], [0], color=color_global, lw=3, label='Global migration'),
+            #                Line2D([0], [0], color=color_no, lw=3, label='No migration')]
+
+            #ax.legend(handles=custom_lines, loc='upper left')
 
         species_count+=1
 

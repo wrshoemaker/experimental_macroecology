@@ -11,7 +11,7 @@ import matplotlib.transforms as transforms
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as colors
 import matplotlib.cbook as cbook
-from mpl_toolkits.axes_grid1.inset_locator import
+#from mpl_toolkits.axes_grid1.inset_locator import
 
 
 

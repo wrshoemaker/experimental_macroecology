@@ -149,7 +149,7 @@ for experiment_idx, experiment in enumerate(experiments):
                 gamma_beta = (gamma_mean**2)/gamma_var
 
                 cv_log_ratio_gamma_all = []
-                while len(cv_log_ratio_gamma_all) < 1:
+                while len(cv_log_ratio_gamma_all) < 100:
 
                     # draw gamma
                     #s = np.random.gamma(shape, scale, 1000)
@@ -178,8 +178,10 @@ for experiment_idx, experiment in enumerate(experiments):
                         cv_log_ratio_gamma = np.std(log_ratio_x_gamma_sample)/np.absolute(np.mean(log_ratio_x_gamma_sample))
                         cv_log_ratio_gamma_all.append(cv_log_ratio_gamma)
 
+
                 cv_log_ratio_gamma_all = np.asarray(cv_log_ratio_gamma_all)
                 cv_log_ratio_gamma_all = np.sort(cv_log_ratio_gamma_all)
+
 
                 cv_over_time_dict['cv'][experiment][species_i]['observed'].append(cv)
                 cv_over_time_dict['cv'][experiment][species_i]['gamma'].append(np.mean(cv_log_ratio_gamma_all))
@@ -224,36 +226,88 @@ for s in species_intersection:
 
         p_value_perm = sum(ks>ks_null_all)/iter
 
-        print(ks, p_value_perm)
+        #print(np.mean(cv_global), np.mean(cv_no), ks, p_value_perm)
 
 
+
+
+
+
+#fig = plt.figure(figsize = (8, 4)) #
+#fig.subplots_adjust(bottom= 0.15)
+
+#for experiment_idx, experiment in enumerate(experiments):
+
+#    ax = plt.subplot2grid((1, 2), (0, experiment_idx))
+
+#    for species, cv_dict in cv_over_time_dict['cv'][experiment].items():
+
+#        observed = cv_dict['observed']
+#        gamma = cv_dict['gamma']
+
+#        ax.scatter(observed, gamma, alpha=0.8, s=10)
+
+
+#    #cv_over_time_dict['cv'][experiment][species_i]['observed'].append(cv)
+#    ax.set_xscale('log', basex=10)
+#    ax.set_yscale('log', basey=10)
+
+#    ax.plot([0.01,500],[0.01,500], lw=3,ls='--',c='k',zorder=1)
+
+#    ax.set_xlabel('Observed CV of log-ratio', fontsize=12)
+#    ax.set_ylabel('Predicted CV of log-ratio', fontsize=12)
+#    ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
 
 
 
 fig = plt.figure(figsize = (8, 4)) #
 fig.subplots_adjust(bottom= 0.15)
 
-for experiment_idx, experiment in enumerate(experiments):
 
-    ax = plt.subplot2grid((1, 2), (0, experiment_idx))
 
-    for species, cv_dict in cv_over_time_dict['cv'][experiment].items():
+ax_1 = plt.subplot2grid((1, 2), (0, 0))
+ax_2 = plt.subplot2grid((1, 2), (0, 1))
 
-        observed = cv_dict['observed']
-        gamma = cv_dict['gamma']
+ax_all = [ax_1, ax_2]
 
-        ax.scatter(observed, gamma, alpha=0.8, s=10)
+species_to_plot = set(cv_over_time_dict['cv'][experiments[0]].keys()).intersection(set(cv_over_time_dict['cv'][experiments[1]].keys()))
+
+for e_idx, e in enumerate(experiments):
+
+    ax = ax_all[e_idx]
+
+    cv_no_all = []
+    cv_gamma_all = []
+
+    for s in species_to_plot:
+
+        cv_no = cv_over_time_dict['cv'][e][s]['observed']
+        cv_gamma = cv_over_time_dict['cv'][e][s]['gamma']
+
+        print(cv_no, cv_gamma)
+
+
+        cv_no_all.extend(cv_no)
+        cv_gamma_all.extend(cv_gamma)
+
+
+        ax.scatter(np.mean(cv_no), np.mean(cv_global), alpha=0.8, s=10)
 
 
     #cv_over_time_dict['cv'][experiment][species_i]['observed'].append(cv)
     ax.set_xscale('log', basex=10)
     ax.set_yscale('log', basey=10)
 
-    ax.plot([0.01,500],[0.01,500], lw=3,ls='--',c='k',zorder=1)
+    min_ = min(cv_no_all + cv_gamma_all)
+    max_ = max(cv_no_all + cv_gamma_all)
+
+    ax.plot([0.5*min_,2*max_],[0.5*min_,2*max_], lw=2, ls='--', c='k', zorder=1)
 
     ax.set_xlabel('Observed CV of log-ratio', fontsize=12)
     ax.set_ylabel('Predicted CV of log-ratio', fontsize=12)
-    ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
+    ax.set_title(utils.titles_dict[e], fontsize=12, fontweight='bold' )
+
+
 
 
 
