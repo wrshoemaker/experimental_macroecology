@@ -9,6 +9,7 @@ from scipy.stats import gamma
 import scipy.special as special
 #from macroecotools import obs_pred_rsquare
 import utils
+import plot_utils
 
 from scipy.optimize import fsolve
 from scipy.special import erf
@@ -25,15 +26,25 @@ fig.subplots_adjust(bottom= 0.15)
 
 transfers = [12,18]
 
-#ax_occupancy = plt.subplot2grid((1, 3), (0,0), colspan=1)
 ax_afd = plt.subplot2grid((2, 3), (0,0), colspan=1)
-ax_taylors = plt.subplot2grid((2, 3), (0,1), colspan=1)
-ax_mad = plt.subplot2grid((2, 3), (0,2), colspan=1)
-#ax_mad_vs_occupancy = plt.subplot2grid((2, 2), (1,0), colspan=1)
+ax_occupancy = plt.subplot2grid((2, 3), (0,1), colspan=1)
+ax_survival = plt.subplot2grid((2, 3), (0,2), colspan=1)
+ax_mad_vs_occupancy = plt.subplot2grid((2, 3), (1,0), colspan=1)
+ax_taylors = plt.subplot2grid((2, 3), (1,1), colspan=1)
+ax_mad = plt.subplot2grid((2, 3), (1,2), colspan=1)
 
-ax_occupancy = plt.subplot2grid((2, 3), (1,0), colspan=1)
-ax_survival = plt.subplot2grid((2, 3), (1,1), colspan=1)
-ax_mad_vs_occupancy = plt.subplot2grid((2, 3), (1,2), colspan=1)
+
+
+ax_afd.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_afd.transAxes)
+ax_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_occupancy.transAxes)
+ax_survival.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_survival.transAxes)
+ax_mad_vs_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
+ax_taylors.text(-0.1, 1.04, plot_utils.sub_plot_labels[4], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_taylors.transAxes)
+ax_mad.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
+
+
+
+# subplot labels
 
 
 def gamma_dist(x_range, x_bar, beta=1):
@@ -49,6 +60,7 @@ all_mads_occupancies = []
 all_predicted_occupancies = []
 all_mu = []
 all_sigma = []
+all_observed_occupancies = []
 for transfer in transfers:
 
     for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
@@ -124,6 +136,7 @@ for transfer in transfers:
         # abundance vs occupancy
         ax_mad_vs_occupancy.scatter(mad_occupancies, occupancies, alpha=0.5, c=color_, s=18, zorder=2)#, linewidth=0.8, edgecolors='k')
 
+        all_observed_occupancies.extend(occupancies.tolist())
         all_predicted_occupancies.extend(predicted_occupancies.tolist())
         all_means.extend(means)
         all_vars.extend(variances)
@@ -140,7 +153,7 @@ all_mads = np.asarray(all_mads)
 
 
 ax_afd.set_xlabel('Rescaled log relative abundance', fontsize=12)
-ax_afd.set_ylabel('Probability', fontsize=12)
+ax_afd.set_ylabel('Probability density', fontsize=12)
 
 
 x_range = np.linspace(min(afd_log10_rescaled_all_cutoff) , max(afd_log10_rescaled_all_cutoff) , 10000)
@@ -176,13 +189,20 @@ intercept = np.mean(np.log10(all_vars) - 2*np.log10(all_means))
 x_log10_range =  np.linspace(min(np.log10(all_means)) , max(np.log10(all_means)) , 10000)
 y_log10_null_range = 10 ** (2*x_log10_range + intercept)
 ax_taylors.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='-', zorder=2, label= r'$y \sim x^{2}$')
+
+mean_range = np.linspace(min(all_means), max(all_means), num=1000)
+variance_range = (1-mean_range) * mean_range
+
+#ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
+ax_taylors.plot(mean_range, variance_range, lw=2.5, ls=':', c='k', label='Max. ' + r'$\sigma^{2}_{x}$', zorder=1)
 ax_taylors.legend(loc="upper left", fontsize=8)
+
 
 
 # mad
 
 ax_mad.set_xlabel('Rescaled log mean relative abundance', fontsize=12)
-ax_mad.set_ylabel('Probability', fontsize=12)
+ax_mad.set_ylabel('Probability density', fontsize=12)
 
 
 
@@ -230,14 +250,14 @@ ax_mad.legend(loc="lower left", fontsize=8)
 
 
 
-# occupancy
-ax_occupancy.plot([0.01,1],[0.01,1], lw=2,ls='--',c='k',zorder=2, label='1:1')
-#ax_occupancy.set_xlim([0.008,1.03])
+# occupancyp
+occupancy_min = min(all_observed_occupancies + all_predicted_occupancies)
+occupancy_max = max(all_observed_occupancies + all_predicted_occupancies)
 
-ax_occupancy.set_xlim([0.008, 1.08])
-ax_occupancy.set_ylim([0.008, 1.08])
+ax_occupancy.plot([occupancy_min*0.8, occupancy_max*1],[occupancy_min*0.8, occupancy_max*1], lw=2, ls='--',c='k',zorder=2, label='1:1')
+ax_occupancy.set_xlim([occupancy_min*0.8, occupancy_max*1])
+ax_occupancy.set_ylim([occupancy_min*0.8, occupancy_max*1])
 
-#ax_occupancy.set_ylim([0.008,1.03])
 ax_occupancy.set_xscale('log', basex=10)
 ax_occupancy.set_yscale('log', basey=10)
 ax_occupancy.set_xlabel('Observed occupancy', fontsize=12)
@@ -251,7 +271,7 @@ ax_occupancy.legend(loc="upper left", fontsize=8)
 # survival
 ax_survival.set_xscale('log', basex=10)
 ax_survival.set_yscale('log', basey=10)
-ax_survival.set_xlabel('Relative error, ' + r'$\epsilon$', fontsize=12)
+ax_survival.set_xlabel('Occupancy relative error, ' + r'$\epsilon$', fontsize=12)
 ax_survival.set_ylabel('Fraction of ASVs ' + r'$\geq \epsilon$', fontsize=12)
 ax_survival.tick_params(axis='both', which='minor', labelsize=9)
 ax_survival.tick_params(axis='both', which='major', labelsize=9)

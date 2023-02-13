@@ -45,9 +45,47 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 
+
 species_all = list(error_dict.keys())
 
-transfer = 18
+transfer = 12
+n_iter = 10000
+
+transfer_pairs = [[('Parent_migration', 4), ('No_migration', 4)],  [('Global_migration', 4), ('No_migration', 4)]]
+for transfer_pair_idx, transfer_pair in enumerate(transfer_pairs):
+    treatment_1 = []
+    treatment_2 = []
+    for s in species_all:
+
+        if 12 in error_dict[s]:
+
+            if (transfer_pair[0] in error_dict[s][12]) and (transfer_pair[1] in error_dict[s][12]):
+
+                treatment_1.append(error_dict[s][12][transfer_pair[0]])
+                treatment_2.append(error_dict[s][12][transfer_pair[1]])
+
+    treatment_merged = np.asarray(treatment_1 + treatment_2)
+
+    treatment_1 = np.asarray(treatment_1)
+    treatment_2 = np.asarray(treatment_2)
+
+    delta_treatment_observed = np.mean(treatment_1 - treatment_2)
+    delta_treatment_observed_null = []
+    for i in range(n_iter):
+        np.random.shuffle(treatment_merged)
+
+        delta_treatment_observed_null.append(np.mean(treatment_merged[:len(treatment_1)] - treatment_merged[len(treatment_1):]))
+
+    delta_treatment_observed_null = np.asarray(delta_treatment_observed_null)
+
+    # ask wheether mean is lower than null
+    p = sum(delta_treatment_observed_null < delta_treatment_observed) / n_iter
+    print(delta_treatment_observed, p)
+
+
+
+
+
 
 c_all = [utils.color_dict_range[e][transfer-3] for e in experiments ]
 
@@ -56,7 +94,7 @@ fig, ax = plt.subplots(figsize=(4,4))
 
 errors_to_plot_all = []
 x_idx = np.asarray([0,1,2])
-for s in species:
+for s in species_all:
 
     error_all = []
 
@@ -79,21 +117,16 @@ for s in species:
     x_idx_to_plot = x_idx[(~np.isnan(error_all)) & (error_all>0)]
     error_all_to_plot = error_all[(~np.isnan(error_all)) & (error_all>0)]
 
-
-
     # ignore ASVs that dont have an observation in the no migration treatment
     if (len(error_all_to_plot) < 2) and (1 not in x_idx_to_plot):
         continue
 
 
-    ax.plot(x_idx_to_plot, error_all_to_plot, c='k', ls='-', lw=1, alpha=0.5, zorder=1)
+    ax.plot(x_idx_to_plot, error_all_to_plot, c='k', ls='-', lw=0.8, alpha=0.2, zorder=1)
 
-    print(x_idx_to_plot, error_all_to_plot)
     for error_all_to_plot_i_idx, error_all_to_plot_i in enumerate(error_all_to_plot):
 
-        #print(c_all[x_idx_to_plot[error_all_to_plot_i_idx]])
-
-        ax.scatter(x_idx_to_plot[error_all_to_plot_i_idx], error_all_to_plot[error_all_to_plot_i_idx], alpha=0.8, c=c_all[x_idx_to_plot[error_all_to_plot_i_idx]].reshape(1,-1) , zorder=2)
+        ax.scatter(x_idx_to_plot[error_all_to_plot_i_idx], error_all_to_plot[error_all_to_plot_i_idx], s=10, alpha=0.8, c=c_all[x_idx_to_plot[error_all_to_plot_i_idx]].reshape(1,-1) , zorder=2)
 
         errors_to_plot_all.append(error_all_to_plot[error_all_to_plot_i_idx])
 
@@ -101,6 +134,20 @@ for s in species:
 ax.set_ylim(min(errors_to_plot_all)*0.5, 10)
 
 ax.set_yscale('log', basey=10)
+
+
+
+ax.set_xticks([0,1,2])
+ax.set_xlim([-0.25, 2.25])
+ax.set_xticklabels(['Regional\nmigration', 'No\nmigration', 'Global\nmigration'], fontsize=10)
+
+
+ax.set_ylabel('Relative error of\noccupancy prediction, gamma', fontsize=12)
+
+
+#experiments = [('Parent_migration', 4), ('No_migration', 4), ('Global_migration', 4)]
+
+
 
 
 fig_name = utils.directory + '/figs/paried_gamma_error.png'

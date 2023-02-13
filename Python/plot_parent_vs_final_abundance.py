@@ -102,7 +102,7 @@ for treatment_idx, treatment in enumerate(['No_migration.4.T12', 'No_migration.4
     ax.set_xscale('log', basex=10)
     ax.set_yscale('log', basey=10)
 
-    ax.set_xlabel('Mean relative abundance\n' + utils.label_dict['Parent_migration.NA.T0'], fontsize=11)
+    ax.set_xlabel('Relative abundance\n' + utils.label_dict['Parent_migration.NA.T0'], fontsize=11)
     ax.set_ylabel('Mean relative abundance\n' + utils.label_dict[treatment] + ', transfer ' + treatment.split('.')[-1][1:], fontsize=10)
 
 
@@ -114,27 +114,27 @@ plt.close()
 
 
 # plot correlation between timepoints
-fig, ax = plt.subplots(figsize=(4,4))
-for treatment_idx, treatment in enumerate(['No_migration.4', 'No_migration.40', 'Global_migration.4', 'Parent_migration.4']):
+#fig, ax = plt.subplots(figsize=(4,4))
+#for treatment_idx, treatment in enumerate(['No_migration.4', 'No_migration.40', 'Global_migration.4', 'Parent_migration.4']):
 
-    rho_transfer_12 = rho_dict[treatment + '.T12']
-    rho_transfer_18 = rho_dict[treatment + '.T18']
+#    rho_transfer_12 = rho_dict[treatment + '.T12']
+#    rho_transfer_18 = rho_dict[treatment + '.T18']
 
-    print(rho_transfer_12, rho_transfer_18)
+#    print(rho_transfer_12, rho_transfer_18)
 
-    ax.plot([12, 18], [rho_transfer_12, rho_transfer_18], alpha=1, c='k', zorder=2)
-    ax.scatter([12, 18], [rho_transfer_12, rho_transfer_18], alpha=1, s=50, c=color_dict[treatment+'.T18'].reshape(1,-1), label=utils.label_dict[treatment+'.T18'], linewidth=0.8, edgecolors='k', zorder=3)
+#    ax.plot([12, 18], [rho_transfer_12, rho_transfer_18], alpha=1, c='k', zorder=2)
+#    ax.scatter([12, 18], [rho_transfer_12, rho_transfer_18], alpha=1, s=50, c=color_dict[treatment+'.T18'].reshape(1,-1), label=utils.label_dict[treatment+'.T18'], linewidth=0.8, edgecolors='k', zorder=3)
 
 
-ax.axhline(0, lw=1.5, ls=':',color='k', zorder=1)
-ax.legend(loc="lower center", fontsize=8)
+#ax.axhline(0, lw=1.5, ls=':',color='k', zorder=1)
+#ax.legend(loc="lower center", fontsize=8)
 
-ax.set_xlabel('Transfer', fontsize=12)
-ax.set_ylabel('Correlation in relative abundances\nbetween parent and descendent communities',  fontsize=12)
+#ax.set_xlabel('Transfer', fontsize=12)
+#ax.set_ylabel('Correlation in relative abundances\nbetween parent and descendent communities',  fontsize=12)
 
     #ax.scatter(occupancies, predicted_occupancies, alpha=0.8, s=15, zorder=2, c=[color], label='Merged', linewidth=0.8, edgecolors='k')
 #ax.set_yscale('log', basey=10)
 
-fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/autocorrelation.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-plt.close()
+#fig.subplots_adjust(wspace=0.35, hspace=0.3)
+#fig.savefig(utils.directory + "/figs/autocorrelation.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#plt.close()

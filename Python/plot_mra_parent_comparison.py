@@ -23,6 +23,7 @@ species_in_descendants = []
 
 # exclude parent migration
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4)]
+#migration_innocula = [('No_migration',4)]
 
 for migration_innoculum in migration_innocula: #utils.migration_innocula:
 
@@ -84,7 +85,8 @@ ax_hist.set_xlabel('Relative abundance\nin parent community, ' +  r'$\mathrm{log
 ax_hist.set_ylabel('Probability density', fontsize=12)
 ax_hist.legend(loc="upper right", fontsize=8)
 
-#ks_statistic, p_value = utils.run_permutational_ks_test(mean_rel_abundances_parent_present_log10, mean_rel_abundances_parent_absent_log10)
+#ks_statistic, p_value = utils.run_permutation_ks_test(mean_rel_abundances_parent_present_log10, mean_rel_abundances_parent_absent_log10)
+#print(ks_statistic, p_value)
 ks_statistic = 0.3899878193141073
 p_value = 0
 

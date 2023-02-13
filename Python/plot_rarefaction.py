@@ -16,7 +16,7 @@ import collections
 #median coverage = 24874
 n_range = np.linspace(1, 24874, num=50, endpoint=True)
 
-iter = 100
+iter_ = 100
 intermediate_filename = utils.directory + "/data/subsample_richness.dat"
 treatments = ['Parent_migration.4.T18', 'No_migration.4.T18', 'No_migration.40.T18', 'Global_migration.4.T18', 'Parent_migration.NA.T0']
 
@@ -52,7 +52,7 @@ def make_subsample_richness_dict():
             n = int(n)
             if n > abundance:
                 continue
-            richness_subsample_n = [len(utils.subsample_sad(sad, replace=False, n_subsample = n)) for i in range(iter)]
+            richness_subsample_n = [len(utils.subsample_sad(sad, replace=False, n_subsample = n)) for i in range(iter_)]
             richness_subsample.append(np.mean(richness_subsample_n))
 
         rarefaction_dict[sample] = richness_subsample

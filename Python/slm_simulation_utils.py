@@ -38,7 +38,6 @@ D_transfer = 4/500
 
 tau_all = np.linspace(0.5, 6.9, num=10, endpoint=True)
 #tau_all = [6.8]
-#sigma_all = np.linspace(0.1, 1.9, num=10, endpoint=True)
 #sigma_all = np.linspace(0.01, 1.9, num=10, endpoint=True)
 sigma_all = np.logspace(np.log10(0.01), np.log10(1.9), num=10, endpoint=True, base=10.0)
 

@@ -106,6 +106,8 @@ for experiment_idx, experiment in enumerate(experiments):
 
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
+        print(experiment, transfer, s_by_s.shape[1])
+
         #for afd_idx, afd in enumerate(rel_s_by_s):
 
         #species_i = species[afd_idx]

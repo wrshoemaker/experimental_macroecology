@@ -14,10 +14,14 @@ import matplotlib.cbook as cbook
 #from mpl_toolkits.axes_grid1.inset_locator import
 
 
+sub_plot_labels = ['a','b','c', 'd','e','f', 'g','h','i', 'j','k','l']
+
+
 
 # heatmaps
 
-def heatmap(data, row_labels, col_labels, ax=None, cbar_kw={}, cbarlabel="", **kwargs):'''
+def heatmap(data, row_labels, col_labels, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
+    '''
     Create a heatmap from a numpy array and two lists of labels.
     Parameters
     ----------

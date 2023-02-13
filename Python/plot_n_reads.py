@@ -42,7 +42,7 @@ fig, ax = plt.subplots(figsize=(4,4))
 print('Mean log10 = ' + str(round(n_reads_all_log10_mean, 3)))
 
 
-ax.hist(n_reads_all_log10, lw=3, alpha=0.8, bins= 15, color='dodgerblue', histtype='step', density=True)
+ax.hist(n_reads_all_log10, lw=3, alpha=0.8, bins= 15, color='k', histtype='step', density=True)
 ax.axvline(n_reads_all_log10_mean, lw=2, ls='--',color='k', zorder=1, label='Mean of ' + r'$\mathrm{log}_{10} $')
 
 

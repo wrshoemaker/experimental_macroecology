@@ -65,15 +65,15 @@ color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_red[12
 attractor_latex_dict = {'Alcaligenaceae': r'$Alcaligenaceae$', 'Pseudomonadaceae': r'$Pseudomonadaceae$'}
 
 
-label_dict = {'Parent_migration.4.T12': 'Parent migration, low inoculum',
+label_dict = {'Parent_migration.4.T12': 'Regional migration, low inoculum',
                 'No_migration.4.T12': 'No migration, low inoculum',
                 'No_migration.40.T12': 'No migration, high inoculum',
                 'Global_migration.4.T12': 'Global migration, low inoculum',
-                'Parent_migration.4.T18': 'Parent migration, low inoculum',
+                'Parent_migration.4.T18': 'Regional migration, low inoculum',
                 'No_migration.4.T18': 'No migration, low inoculum',
                 'No_migration.40.T18': 'No migration, high inoculum',
                 'Global_migration.4.T18': 'Global migration, low inoculum',
-                'Parent_migration.NA.T0': 'Parent community'}
+                'Parent_migration.NA.T0': 'Regional community'}
 
 
 
@@ -92,26 +92,26 @@ carbons_colors = ['royalblue', 'forestgreen', 'darkred']
 carbons_shapes = ['o', 'D', 'X']
 attractors = [ 'Alcaligenaceae', 'Pseudomonadaceae']
 
-titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Parent migration, low inoculum' ]
+titles = ['No migration, low inoculum', 'No migration, high inoculum', 'Global migration, low inoculum', 'Regional migration, low inoculum' ]
 
 
-titles_new_line = ['No migration\nlow inoculum', 'No migration\nhigh inoculum', 'Global migration\nlow inoculum', 'Parent migration\nlow inoculum' ]
+titles_new_line = ['No migration\nlow inoculum', 'No migration\nhigh inoculum', 'Global migration\nlow inoculum', 'Regional migration\nlow inoculum' ]
 
 
-titles_new_line_dict = {('No_migration',4):'No migration\nlow inoculum', ('No_migration',40):'No migration\nhigh inoculum', ('Global_migration',4):'Global migration\nlow inoculum', ('Parent_migration',4):'Parent migration\nlow inoculum'}
+titles_new_line_dict = {('No_migration',4):'No migration\nlow inoculum', ('No_migration',40):'No migration\nhigh inoculum', ('Global_migration',4):'Global migration\nlow inoculum', ('Parent_migration',4):'Regional migration\nlow inoculum'}
 migration_innocula = [('No_migration',4), ('No_migration',40), ('Global_migration',4), ('Parent_migration',4)]
 
 
 titles_dict = {('No_migration',4): 'No migration, low inoc.',
                 ('No_migration',40): 'No migration, high inoc.',
                 ('Global_migration',4): 'Global migration, low inoc.',
-                ('Parent_migration',4): 'Parent migration, low inoc.',
+                ('Parent_migration',4): 'Regional migration, low inoc.',
                 ('Glucose', np.nan): 'Glucose' }
 
 
 titles_no_inocula_dict = {('No_migration',4): 'No migration',
                 ('Global_migration',4): 'Global migration',
-                ('Parent_migration',4): 'Parent migration',
+                ('Parent_migration',4): 'Regional migration',
                 ('Glucose', np.nan): 'Glucose' }
 
 

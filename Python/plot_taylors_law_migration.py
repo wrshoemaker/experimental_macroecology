@@ -27,6 +27,8 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
         s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=migration_innoculum[0], inocula=migration_innoculum[1])
 
+        print(migration_innoculum, transfer, s_by_s.shape[1])
+
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
 
         means, variances, species_to_keep = utils.get_species_means_and_variances(rel_s_by_s, ESVs, zeros=zeros)
