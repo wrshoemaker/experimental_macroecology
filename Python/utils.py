@@ -108,6 +108,13 @@ titles_dict = {('No_migration',4): 'No migration, low inoc.',
                 ('Parent_migration',4): 'Regional migration, low inoc.',
                 ('Glucose', np.nan): 'Glucose' }
 
+titles_dict_no_caps = {('No_migration',4): 'no migration, low inoc.',
+                ('No_migration',40): 'no migration, high inoc.',
+                ('Global_migration',4): 'global migration, low inoc.',
+                ('Parent_migration',4): 'regional migration, low inoc.',
+                ('Glucose', np.nan): 'Glucose' }
+
+
 
 titles_no_inocula_dict = {('No_migration',4): 'No migration',
                 ('Global_migration',4): 'Global migration',
@@ -206,6 +213,55 @@ def bootstrap_estimate_ks(array_1, array_2, size=50, n=10000):
     return ks_statistic, ks_ci_025, ks_ci_975
 
 
+
+def t_statistic_two_slopes(x_1, y_1, x_2, y_2):
+
+    slope_1, intercept_1, r_value_1, p_value_1, std_err_1 = stats.linregress(x_1, y_1)
+    slope_2, intercept_2, r_value_2, p_value_2, std_err_2 = stats.linregress(x_2, y_2)
+
+    pred_y_1 = intercept_1 + slope_1*x_1
+    pred_y_2 = intercept_2 + slope_2*x_2
+
+    resid_1 = y_1 - pred_y_1
+    resid_2 = y_2 - pred_y_2
+
+    n_1 = len(x_1)
+    n_2 = len(x_2)
+
+    x_mean_1 = np.mean(x_1)
+    x_mean_2 = np.mean(x_2)
+
+    # slope test
+    se_squared_slope_1 =  ((n_1-2)**-1) * sum(resid_1**2) /  sum((x_1 - x_mean_1)**2)
+    se_squared_slope_2 =  ((n_2-2)**-1) * sum(resid_2**2) /  sum((x_2 - x_mean_2)**2) 
+    
+    t_slope = (slope_1 - slope_2) / np.sqrt(se_squared_slope_1 + se_squared_slope_2)
+
+
+    # intercept test
+    se_squared_intercept_1 = (sum(resid_1**2)/(n_1-2)) * ( (1/n_1) + ((x_mean_1**2)/ (sum((x_1 - x_mean_1)**2))) )
+    se_squared_intercept_2 = (sum(resid_2**2)/(n_2-2)) * ( (1/n_2) + ((x_mean_2**2)/ (sum((x_2 - x_mean_2)**2))) )
+
+    t_intercept = (intercept_1 - intercept_2) / np.sqrt(se_squared_intercept_1 + se_squared_intercept_2)
+
+    return slope_1, slope_2, t_slope, intercept_1, intercept_2, t_intercept, r_value_1, r_value_2
+
+
+
+
+def compare_rho_fisher_z(x_1, y_1, x_2, y_2):
+
+    rho_1 = np.corrcoef(x_1, y_1)[0,1]
+    rho_2 = np.corrcoef(x_2, y_2)[0,1]
+
+    z_1 = np.log((1+rho_1)/(1-rho_1)) * 0.5
+    z_2 = np.log((1+rho_2)/(1-rho_2)) * 0.5
+
+    se = np.sqrt( (1/(len(x_1) - 3)) + (1/(len(x_2) - 3))  )
+
+    z = (z_1 - z_2) / se
+    
+    return rho_1, rho_2, z
 
 
 
@@ -560,6 +616,7 @@ def get_s_by_s_temporal(transfers, carbon='Glucose'):
 
 
 def get_species_means_and_variances(rel_s_by_s, species_list, min_observations=3, zeros=False):
+    # zeros = keep zeros T/F
     mean_rel_abundances = []
     var_rel_abundances = []
     species_to_keep = []

@@ -74,7 +74,7 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
         ax.set_title('Lognormal parameters', fontsize=14)
 
         ax.set_xlabel('Location parameter, ' + r'$\mu$', fontsize=12)
-        ax.set_ylabel('Shape parameter, ' + r'$\sigma$', fontsize=12)
+        ax.set_ylabel('Shape parameter, ' + r'$s$', fontsize=12)
 
 
         #label_ = utils.titles_dict[migration_innoculum] + ', transfer ' + str(transfer)

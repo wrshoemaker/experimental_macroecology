@@ -28,19 +28,19 @@ transfers = [12,18]
 
 ax_afd = plt.subplot2grid((2, 3), (0,0), colspan=1)
 ax_occupancy = plt.subplot2grid((2, 3), (0,1), colspan=1)
-ax_survival = plt.subplot2grid((2, 3), (0,2), colspan=1)
-ax_mad_vs_occupancy = plt.subplot2grid((2, 3), (1,0), colspan=1)
-ax_taylors = plt.subplot2grid((2, 3), (1,1), colspan=1)
-ax_mad = plt.subplot2grid((2, 3), (1,2), colspan=1)
+ax_mad_vs_occupancy = plt.subplot2grid((2, 3), (0,2), colspan=1)
+ax_taylors = plt.subplot2grid((2, 3), (1,0), colspan=1)
+ax_mad = plt.subplot2grid((2, 3), (1,1), colspan=1)
+ax_mad_params = plt.subplot2grid((2, 3), (1,2), colspan=1)
 
 
 
 ax_afd.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_afd.transAxes)
 ax_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_occupancy.transAxes)
-ax_survival.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_survival.transAxes)
-ax_mad_vs_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
-ax_taylors.text(-0.1, 1.04, plot_utils.sub_plot_labels[4], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_taylors.transAxes)
-ax_mad.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
+ax_mad_vs_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
+ax_taylors.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_taylors.transAxes)
+ax_mad.text(-0.1, 1.04, plot_utils.sub_plot_labels[4], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
+ax_mad_params.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_params.transAxes)
 
 
 
@@ -131,7 +131,7 @@ for transfer in transfers:
         survival_array = [sum(errors[np.isfinite(errors)]>=i)/len(errors[np.isfinite(errors)]) for i in prevalence_range]
         survival_array = np.asarray(survival_array)
         #survival_array_no_nan = survival_array[np.isfinite(survival_array)]
-        ax_survival.plot(prevalence_range, survival_array, ls='-', lw=2, c=utils.color_dict_range[migration_innoculum][transfer-3], alpha=0.6, zorder=1)
+        #ax_survival.plot(prevalence_range, survival_array, ls='-', lw=2, c=utils.color_dict_range[migration_innoculum][transfer-3], alpha=0.6, zorder=1)
 
         # abundance vs occupancy
         ax_mad_vs_occupancy.scatter(mad_occupancies, occupancies, alpha=0.5, c=color_, s=18, zorder=2)#, linewidth=0.8, edgecolors='k')
@@ -269,12 +269,12 @@ ax_occupancy.legend(loc="upper left", fontsize=8)
 
 
 # survival
-ax_survival.set_xscale('log', basex=10)
-ax_survival.set_yscale('log', basey=10)
-ax_survival.set_xlabel('Occupancy relative error, ' + r'$\epsilon$', fontsize=12)
-ax_survival.set_ylabel('Fraction of ASVs ' + r'$\geq \epsilon$', fontsize=12)
-ax_survival.tick_params(axis='both', which='minor', labelsize=9)
-ax_survival.tick_params(axis='both', which='major', labelsize=9)
+#ax_survival.set_xscale('log', basex=10)
+#ax_survival.set_yscale('log', basey=10)
+#ax_survival.set_xlabel('Occupancy relative error, ' + r'$\epsilon$', fontsize=12)
+#ax_survival.set_ylabel('Fraction of ASVs ' + r'$\geq \epsilon$', fontsize=12)
+#ax_survival.tick_params(axis='both', which='minor', labelsize=9)
+#ax_survival.tick_params(axis='both', which='major', labelsize=9)
 
 
 
@@ -305,6 +305,54 @@ ax_mad_vs_occupancy.set_ylabel('Occupancy', fontsize=12)
 ax_mad_vs_occupancy.tick_params(axis='both', which='minor', labelsize=9)
 ax_mad_vs_occupancy.tick_params(axis='both', which='major', labelsize=9)
 ax_mad_vs_occupancy.legend(loc="lower right", fontsize=8)
+
+
+# MAD parameters
+
+
+migration_innocula_nested_list = [utils.migration_innocula[:2], utils.migration_innocula[2:]]
+
+for row_idx, row_list in enumerate(migration_innocula_nested_list):
+
+    for column_idx, migration_innoculum in enumerate(row_list):
+
+        mu_all = []
+        sigma_all = []
+        color_all = []
+
+        for transfer in transfers:
+
+            s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration=migration_innoculum[0], inocula=migration_innoculum[1], transfer=transfer)
+            rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+            mad = np.mean(rel_s_by_s, axis=1)
+            
+            mu, sigma = utils.Klogn(mad, 0.00001)
+            color_ = utils.color_dict_range[migration_innoculum][transfer-3]
+            #color_ = color_.reshape(1,-1)
+
+            mu_all.append(mu)
+            sigma_all.append(sigma)
+            color_all.append(color_)
+
+
+        mu_all = np.asarray(mu_all)
+        sigma_all = np.asarray(sigma_all)
+        ax_mad_params.scatter(mu_all, sigma_all, alpha=1, c=color_all, zorder=2, label=utils.titles_dict[migration_innoculum])
+
+
+        #ax.arrow(mu_all[0], sigma_all[0], (mu_all[1] - mu_all[0]), (sigma_all[1]-sigma_all[0]), fc="k", ec="k", zorder=3, head_width=0.1, head_length=0.1)
+        #ax.quiver(mu_all[0], sigma_all[0], (mu_all[1] - mu_all[0]), (sigma_all[1]))
+        ax_mad_params.annotate("", xy=(mu_all[1], sigma_all[1]), xycoords='data', xytext=(mu_all[0], sigma_all[0]), textcoords='data', arrowprops=dict(arrowstyle="->", connectionstyle="arc3"), zorder=1)
+
+        #ax_mad_params.set_title('Lognormal parameters', fontsize=14)
+
+        ax_mad_params.set_xlabel('Lognormal location parameter, ' + r'$\mu$', fontsize=12)
+        ax_mad_params.set_ylabel('Lognormal shape parameter, ' + r'$s$', fontsize=12)
+
+
+ax_mad_params.legend(loc="upper right", fontsize=7)
+
 
 
 
