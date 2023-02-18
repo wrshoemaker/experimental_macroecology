@@ -224,6 +224,8 @@ for experiment_idx, experiment in enumerate(experiments):
 
         mean_log_abundance_ratio = np.asarray(mean_log_abundance_ratio)
 
+        print(cv_log_abundance_ratio)
+
         ax_mean.plot(trasnfers_ratio, 10**mean_log_abundance_ratio, alpha=0.6, c=utils.color_dict_range[experiment][7], zorder=2)
         ax_cv.plot(trasnfers_ratio, cv_log_abundance_ratio, alpha=0.6, c=utils.color_dict_range[experiment][7], zorder=2)
 
@@ -285,6 +287,8 @@ for experiment_idx, experiment in enumerate(experiments):
     mean_over_all_species_t_before = np.asarray(list(itertools.chain(*mean_over_all_species_t_before)))
     mean_over_all_species_t_after = np.asarray(list(itertools.chain(*mean_over_all_species_t_after)))
 
+    #print(len(mean_over_all_species_t_before), len(mean_over_all_species_t_after))
+
     ks_statistic_mean_over_all_species_t, p_value_mean_over_all_species_t = utils.run_permutation_ks_test(mean_over_all_species_t_before, mean_over_all_species_t_after)
 
     cv_over_all_species_t_before = [mean_cv_dict[t]['measure'] for t in transfers_mean_cv if (t <= 12) and (t > 5)]
@@ -300,8 +304,8 @@ for experiment_idx, experiment in enumerate(experiments):
     ks_statistic_cv_over_all_species_t, p_value_cv_over_all_species_t = utils.run_permutation_ks_test(cv_over_all_species_t_before, cv_over_all_species_t_after)
 
 
-    print('Mean ', experiment, ks_statistic_mean_over_all_species_t, p_value_mean_over_all_species_t)
-    print('CV ', experiment, ks_statistic_cv_over_all_species_t, p_value_cv_over_all_species_t)
+    print('Mean ', experiment[0], ks_statistic_mean_over_all_species_t, p_value_mean_over_all_species_t)
+    print('CV ', experiment[0], ks_statistic_cv_over_all_species_t, p_value_cv_over_all_species_t)
 
     def ks_test_constrain_species(iter=10000):
 

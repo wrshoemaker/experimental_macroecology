@@ -13,6 +13,7 @@ import random
 from collections import Counter
 from scipy import stats, signal, optimize, special
 
+np.random.seed(123456789)
 
 
 np.seterr(divide='ignore', invalid='ignore')

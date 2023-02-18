@@ -14,6 +14,7 @@ import utils
 import collections
 
 
+n_iter = 1000
 
 
 count_dict = utils.get_otu_dict()
@@ -212,7 +213,6 @@ plt.close()
 for measure in ['mean', 'CV']:
 
     # make list for each ASV 
-
     asv_ = log_dict[measure].keys()
 
     no_migration_all = []
@@ -220,40 +220,37 @@ for measure in ['mean', 'CV']:
 
     for a in asv_:
 
-
-
         if (len(log_dict[measure][a]['no_migration']) == 2) and (len(log_dict[measure][a]['global_migration']) == 2):
             
             no_migration_all.append([log_dict[measure][a]['no_migration'][12], log_dict[measure][a]['no_migration'][18]])
             global_migration_all.append([log_dict[measure][a]['global_migration'][12], log_dict[measure][a]['global_migration'][18]])
-
-
-    rho_12 = np.corrcoef( [i[0] for i in no_migration_all],  [i[0] for i in global_migration_all] )[0,1]
-    rho_18 = np.corrcoef( [i[1] for i in no_migration_all],  [i[1] for i in global_migration_all] )[0,1]
-
-    delta_rho = rho_18-rho_12
-
-    delta_rho_null_all = []
-    for i in range(1000):
-
-        for sublist in no_migration_all:
-            random.shuffle(sublist) 
-
-        for sublist in global_migration_all:
-            random.shuffle(sublist) 
-
-
-        rho_12_null = np.corrcoef( [i[0] for i in no_migration_all],  [i[0] for i in global_migration_all] )[0,1]
-        rho_18_null = np.corrcoef( [i[1] for i in no_migration_all],  [i[1] for i in global_migration_all] )[0,1]
-
-        delta_rho_null = rho_18_null-rho_12_null
-        delta_rho_null_all.append(delta_rho_null)
-
     
-    delta_rho_null_all = np.asarray(delta_rho_null_all)
-    p_value = sum(delta_rho_null_all>delta_rho)/len(delta_rho_null_all)
+    measure_no_migration_12 = np.log10([i[0] for i in no_migration_all])
+    measure_migration_12 = np.log10([i[0] for i in global_migration_all])
+    measure_no_migration_18 = np.log10([i[1] for i in no_migration_all])
+    measure_migration_18 = np.log10([i[1] for i in global_migration_all])
 
-    print(delta_rho, np.median(delta_rho_null_all), p_value)
+    rho_18, rho_12, z_rho = utils.compare_rho_fisher_z(measure_no_migration_18, measure_migration_18, measure_no_migration_12, measure_migration_12)
 
-    
+    n_measure_no_migration_12 = len(measure_no_migration_12)
+    n_measure_no_migration_18 = len(measure_no_migration_18)
+
+    measure_12_merged = np.concatenate((measure_no_migration_12, measure_migration_12))
+    measure_18_merged = np.concatenate((measure_no_migration_18, measure_migration_18))
+
+    null_z_rho_all = []
+    for i in range(n_iter):
+
+        np.random.shuffle(measure_12_merged)
+        np.random.shuffle(measure_18_merged)
+
+        rho_18_null, rho_12_null, z_rho_null = utils.compare_rho_fisher_z(measure_18_merged[:n_measure_no_migration_18], measure_18_merged[n_measure_no_migration_18:], measure_12_merged[:n_measure_no_migration_12], measure_12_merged[n_measure_no_migration_12:])
+        null_z_rho_all.append(z_rho_null)
+
+    null_z_rho_all = np.asarray(null_z_rho_all)
+
+    p_z_rho = sum(null_z_rho_all < z_rho)/n_iter
+    print(z_rho, p_z_rho)
+
+
 

@@ -530,8 +530,6 @@ def run_simulation_initial_condition_migration(sigma = 0.5, tau = 0.9, dt = 48, 
                     n_cells_migration_transfer = np.random.binomial(n_cells_global_diluted, 504/60000, size=reps)
                     m = np.asarray([np.random.multinomial(l, n_global_diluted/sum(n_global_diluted)) for l in n_cells_migration_transfer])
 
-                    print(m)
-
                 elif migration_treatment_ == 'parent':
                     n_cells_migration = np.random.binomial(n_cells_parent, D_parent, size=reps)
                     m = np.asarray([np.random.multinomial(l, prob_mean_rel_abundances_parent) for l in n_cells_migration])
@@ -920,8 +918,6 @@ def run_simulation_parent_rho(iter=100):
                         mad_dict[t]['log10_mean_rel_no_migration_t'] = log10_mean_rel_no_migration_t
 
 
-                        #mean_corr_migration_t = np.corrcoef(np.log10(mean_rel_migration_t), np.log10(mean_rel_no_migration_t))[0,1]
-
                         # use MAD ratio
                         mad_ratio = np.mean(rel_s_by_s_migration_t[idx_ratio_vs_parent,:], axis=1) / np.mean(rel_s_by_s_no_migration_t[idx_ratio_vs_parent,:], axis=1)
                         init_abund_mad_ratio_vs_parent_t = init_abund_rel[idx_ratio_vs_parent]
@@ -1037,7 +1033,6 @@ def run_simulation_parent_rho(iter=100):
     
             # for transfer in...
             #meal_delta_rho = np.mean(np.asarray(rho_dict[tau_i][sigma_i][17]['rho_migration']) - np.asarray(rho_dict[tau_i][sigma_i][11]['rho_migration']))
-            #print(tau_i, sigma_i, meal_delta_rho)
 
 
 
@@ -1053,10 +1048,8 @@ def run_simulation_global_rho(iter=100):
 
     # run the whole range of transfers since we have this data for global migration
     transfers = range(18)
-    #transfers = [11, 17]
 
     rho_dict = {}
-
 
     for tau_i in tau_all:
 
@@ -1069,6 +1062,19 @@ def run_simulation_global_rho(iter=100):
             rho_dict[tau_i][sigma_i] = {}
             rho_dict[tau_i][sigma_i]['ratio_stats'] = {}
             rho_dict[tau_i][sigma_i]['per_transfer_stats'] = {}
+
+
+            rho_dict[tau_i][sigma_i]['z_rho'] = {}
+            
+            rho_dict[tau_i][sigma_i]['z_rho']['mean_log10'] = {}
+            rho_dict[tau_i][sigma_i]['z_rho']['mean_log10']['rho_mean_12'] = []
+            rho_dict[tau_i][sigma_i]['z_rho']['mean_log10']['rho_mean_18'] = []
+            rho_dict[tau_i][sigma_i]['z_rho']['mean_log10']['z_mean'] = []
+
+            rho_dict[tau_i][sigma_i]['z_rho']['cv_log10'] = {}
+            rho_dict[tau_i][sigma_i]['z_rho']['cv_log10']['rho_cv_12'] = []
+            rho_dict[tau_i][sigma_i]['z_rho']['cv_log10']['rho_cv_18'] = []
+            rho_dict[tau_i][sigma_i]['z_rho']['cv_log10']['z_cv'] = []
 
             for migration_status in ['global_migration', 'no_migration']:
 
@@ -1087,22 +1093,17 @@ def run_simulation_global_rho(iter=100):
 
                 rho_dict[tau_i][sigma_i]['ratio_stats'][migration_status]['mean_cv_log_ratio_before'] = []
                 rho_dict[tau_i][sigma_i]['ratio_stats'][migration_status]['mean_cv_log_ratio_after'] = []
-                rho_dict[tau_i][sigma_i]['ratio_stats'][migration_status]['mean_delta_cv_log_ratio'] = []
+                #rho_dict[tau_i][sigma_i]['ratio_stats'][migration_status]['mean_delta_cv_log_ratio'] = []
 
 
             for t in transfers:
-                #rho_dict[tau_i][sigma_i][t] = {}
 
                 rho_dict[tau_i][sigma_i]['per_transfer_stats'][t] = {}
-
-                #rho_dict[tau_i][sigma_i][t]['mean_rho'] = []
-                #rho_dict[tau_i][sigma_i][t]['cv_rho'] = []
-
                 rho_dict[tau_i][sigma_i]['per_transfer_stats'][t]['mean_rho'] = []
                 rho_dict[tau_i][sigma_i]['per_transfer_stats'][t]['cv_rho'] = []
 
 
-            #for i in range(iter):
+
             while (len(rho_dict[tau_i][sigma_i]['per_transfer_stats'][transfers[0]]['mean_rho']) < iter):
                 # rho_dict[tau_i][sigma_i]['ratio_stats'][migration_status]['mean_cv_log_ratio']
 
@@ -1136,6 +1137,10 @@ def run_simulation_global_rho(iter=100):
 
                 else:
 
+                    measure_dict = {}
+                    measure_dict['mean_log10'] = {}
+                    measure_dict['cv_log10'] = {}
+
                     for t in transfers:
 
                         rel_s_by_s_migration_t = s_by_s_dict[t]['rel_s_by_s_migration_t']
@@ -1151,11 +1156,39 @@ def run_simulation_global_rho(iter=100):
                         cv_rel_migration_t = std_rel_migration_t/mean_rel_migration_t
                         cv_rel_no_migration_t = std_rel_no_migration_t/mean_rel_no_migration_t
 
-                        mean_corr_t = np.corrcoef(np.log10(mean_rel_migration_t), np.log10(mean_rel_no_migration_t))[0,1]
-                        cv_corr_t = np.corrcoef(np.log10(cv_rel_migration_t), np.log10(cv_rel_no_migration_t))[0,1]
+                        mean_rel_migration_t_log10 = np.log10(mean_rel_migration_t)
+                        mean_rel_no_migration_t_log10 = np.log10(mean_rel_no_migration_t)
+
+                        cv_rel_migration_t_log10 = np.log10(cv_rel_migration_t)
+                        cv_rel_no_migration_t_log10 = np.log10(cv_rel_no_migration_t)
+
+                        mean_corr_t = np.corrcoef(mean_rel_migration_t_log10, mean_rel_no_migration_t_log10)[0,1]
+                        cv_corr_t = np.corrcoef(cv_rel_migration_t_log10, cv_rel_no_migration_t_log10)[0,1]
 
                         rho_dict[tau_i][sigma_i]['per_transfer_stats'][t]['mean_rho'].append(mean_corr_t)
                         rho_dict[tau_i][sigma_i]['per_transfer_stats'][t]['cv_rho'].append(cv_corr_t)
+
+                        measure_dict['mean_log10'][t] = {}
+                        measure_dict['mean_log10'][t]['global_migration'] = mean_rel_migration_t_log10
+                        measure_dict['mean_log10'][t]['no_migration'] = mean_rel_no_migration_t_log10
+
+                        measure_dict['cv_log10'][t] = {}
+                        measure_dict['cv_log10'][t]['global_migration'] = cv_rel_migration_t_log10
+                        measure_dict['cv_log10'][t]['no_migration'] = cv_rel_no_migration_t_log10
+
+                   
+                    # z-test
+
+                    rho_mean_18, rho_mean_12, z_mean = utils.compare_rho_fisher_z(measure_dict['mean_log10'][17]['global_migration'], measure_dict['mean_log10'][17]['no_migration'], measure_dict['mean_log10'][11]['global_migration'], measure_dict['mean_log10'][11]['no_migration'])
+                    rho_cv_18, rho_cv_12, z_cv = utils.compare_rho_fisher_z(measure_dict['cv_log10'][17]['global_migration'], measure_dict['cv_log10'][17]['no_migration'], measure_dict['cv_log10'][11]['global_migration'], measure_dict['cv_log10'][11]['no_migration'])
+
+                    rho_dict[tau_i][sigma_i]['z_rho']['mean_log10']['rho_mean_12'].append(rho_mean_12)
+                    rho_dict[tau_i][sigma_i]['z_rho']['mean_log10']['rho_mean_18'].append(rho_mean_18)
+                    rho_dict[tau_i][sigma_i]['z_rho']['mean_log10']['z_mean'].append(z_mean)
+
+                    rho_dict[tau_i][sigma_i]['z_rho']['cv_log10']['rho_cv_12'].append(rho_cv_12)
+                    rho_dict[tau_i][sigma_i]['z_rho']['cv_log10']['rho_cv_18'].append(rho_cv_18)
+                    rho_dict[tau_i][sigma_i]['z_rho']['cv_log10']['z_cv'].append(z_cv)
 
 
                     # we are calculating the following log-ratio statistics
@@ -1285,7 +1318,6 @@ def run_simulation_global_rho(iter=100):
                         #    rho_dict[tau_i][sigma_i]['ratio_stats'][migration_status]['mean_delta_cv_log_ratio'].append(np.mean(delta_cv_all))
 
 
-            #print(migration_treatment, ks_cv_log_ratio_all_transfers)
 
             ks_cv_no = rho_dict[tau_i][sigma_i]['ratio_stats']['no_migration']['ks_cv']
             ks_cv_global = rho_dict[tau_i][sigma_i]['ratio_stats']['global_migration']['ks_cv']
@@ -1324,16 +1356,30 @@ def run_simulation_all_migration(iter=100):
 
             print(tau_i, sigma_i)
 
+
             rho_dict[tau_i][sigma_i] = {}
             rho_dict[tau_i][sigma_i]['ks_12_vs_18'] = {}
-            rho_dict[tau_i][sigma_i]['ks_12_vs_18']['global_migration'] = []
-            rho_dict[tau_i][sigma_i]['ks_12_vs_18']['parent_migration'] = []
-            rho_dict[tau_i][sigma_i]['ks_12_vs_18']['no_migration'] = []
-
             rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18'] = {}
-            rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18']['global_migration'] = []
-            rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18']['parent_migration'] = []
-            rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18']['no_migration'] = []
+            rho_dict[tau_i][sigma_i]['slope_12_vs_18'] = {}
+
+
+            for treatment in ['global_migration', 'parent_migration', 'no_migration']:
+
+                rho_dict[tau_i][sigma_i]['ks_12_vs_18'][treatment] = []
+                rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18'][treatment] = []
+                
+                
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment] = {}
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_12'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_18'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_t_test'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_12'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_18'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_t_test'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_12'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_18'] = []
+
+
 
             for t in transfers:
                 rho_dict[tau_i][sigma_i][t] = {}
@@ -1375,147 +1421,185 @@ def run_simulation_all_migration(iter=100):
                 afd_dict['global_migration'] = {}
                 afd_dict['parent_migration'] = {}
                 afd_dict['no_migration'] = {}
+
+
+                mean_var_dict = {}
+                mean_var_dict['global_migration'] = {}
+                mean_var_dict['parent_migration'] = {}
+                mean_var_dict['no_migration'] = {}
                 
 
                 for t in transfers:
 
-                    if (t == 11) or (t == 17):
+                    #if (t == 11) or (t == 17):
 
-                        s_by_s_global_migration_t = s_by_s_global_migration[t,:,:]
-                        s_by_s_parent_migration_t = s_by_s_parent_migration[t,:,:]
-                        s_by_s_no_migration_t = s_by_s_no_migration[t,:,:]
+                    s_by_s_global_migration_t = s_by_s_global_migration[t,:,:]
+                    s_by_s_parent_migration_t = s_by_s_parent_migration[t,:,:]
+                    s_by_s_no_migration_t = s_by_s_no_migration[t,:,:]
 
-                        # remove zeros
-                        s_by_s_global_migration_t = s_by_s_global_migration_t[(~np.all(s_by_s_global_migration_t == 0, axis=1)),:]
-                        s_by_s_parent_migration_t = s_by_s_parent_migration_t[(~np.all(s_by_s_parent_migration_t == 0, axis=1)),:]
-                        s_by_s_no_migration_t = s_by_s_no_migration_t[(~np.all(s_by_s_no_migration_t == 0, axis=1)),:]
+                    # remove zeros
+                    s_by_s_global_migration_t = s_by_s_global_migration_t[(~np.all(s_by_s_global_migration_t == 0, axis=1)),:]
+                    s_by_s_parent_migration_t = s_by_s_parent_migration_t[(~np.all(s_by_s_parent_migration_t == 0, axis=1)),:]
+                    s_by_s_no_migration_t = s_by_s_no_migration_t[(~np.all(s_by_s_no_migration_t == 0, axis=1)),:]
 
-                        occupancies_global_migration, predicted_occupancies_global_migration, mad_global_migration, beta_global_migration, species_occupancies_global_migration  = utils.predict_occupancy(s_by_s_global_migration_t.T, range(s_by_s_global_migration_t.shape[1]))
-                        occupancies_parent_migration, predicted_occupancies_parent_migration, mad_parent_migration, beta_parent_migration, species_occupancies_parent_migration  = utils.predict_occupancy(s_by_s_parent_migration_t.T, range(s_by_s_parent_migration_t.shape[1]))
-                        occupancies_no_migration, predicted_occupancies_no_migration, mad_no_migration, beta_no_migration, species_occupancies_no_migration  = utils.predict_occupancy(s_by_s_no_migration_t.T, range(s_by_s_no_migration_t.shape[1]))
-
-
-                        # KS test
-                        rel_s_by_s_global_migration_t = s_by_s_global_migration_t.T/s_by_s_global_migration_t.sum(axis=1)
-                        rel_s_by_s_parent_migration_t = s_by_s_parent_migration_t.T/s_by_s_parent_migration_t.sum(axis=1)
-                        rel_s_by_s_no_migration_t = s_by_s_no_migration_t.T/s_by_s_no_migration_t.sum(axis=1)
-
-                        afd_global_migration_t = np.ndarray.flatten(rel_s_by_s_global_migration_t)
-                        afd_parent_migration_t = np.ndarray.flatten(rel_s_by_s_parent_migration_t)
-                        afd_no_migration_t = np.ndarray.flatten(rel_s_by_s_no_migration_t)
-
-                        log_afd_global_migration_t = np.log10(afd_global_migration_t[afd_global_migration_t>0])
-                        log_afd_parent_migration_t = np.log10(afd_parent_migration_t[afd_parent_migration_t>0])
-                        log_afd_no_migration_t = np.log10(afd_no_migration_t[afd_no_migration_t>0])
-
-                        rescaled_log_afd_global_migration_t = (log_afd_global_migration_t - np.mean(log_afd_global_migration_t)) / np.std(log_afd_global_migration_t)
-                        rescaled_log_afd_parent_migration_t = (log_afd_parent_migration_t - np.mean(log_afd_parent_migration_t)) / np.std(log_afd_parent_migration_t)
-                        rescaled_log_afd_no_migration_t = (log_afd_no_migration_t - np.mean(log_afd_no_migration_t)) / np.std(log_afd_no_migration_t)
-
-                        ks_global_vs_no = stats.ks_2samp(log_afd_global_migration_t, log_afd_no_migration_t)
-                        ks_parent_vs_no = stats.ks_2samp(log_afd_parent_migration_t, log_afd_no_migration_t)
-
-                        ks_rescaled_global_vs_no = stats.ks_2samp(rescaled_log_afd_global_migration_t, rescaled_log_afd_no_migration_t)
-                        ks_rescaled_parent_vs_no = stats.ks_2samp(rescaled_log_afd_parent_migration_t, rescaled_log_afd_no_migration_t)
-
-                        afd_dict['global_migration'][t] = {}
-                        afd_dict['parent_migration'][t] = {}
-                        afd_dict['no_migration'][t] = {}
-
-                        afd_dict['global_migration'][t]['afd'] = log_afd_global_migration_t
-                        afd_dict['parent_migration'][t]['afd'] = log_afd_parent_migration_t
-                        afd_dict['no_migration'][t]['afd'] = log_afd_no_migration_t
-
-                        afd_dict['global_migration'][t]['rescaled_afd'] = rescaled_log_afd_global_migration_t
-                        afd_dict['parent_migration'][t]['rescaled_afd'] = rescaled_log_afd_parent_migration_t
-                        afd_dict['no_migration'][t]['rescaled_afd'] = rescaled_log_afd_no_migration_t
+                    occupancies_global_migration, predicted_occupancies_global_migration, mad_global_migration, beta_global_migration, species_occupancies_global_migration  = utils.predict_occupancy(s_by_s_global_migration_t.T, range(s_by_s_global_migration_t.shape[1]))
+                    occupancies_parent_migration, predicted_occupancies_parent_migration, mad_parent_migration, beta_parent_migration, species_occupancies_parent_migration  = utils.predict_occupancy(s_by_s_parent_migration_t.T, range(s_by_s_parent_migration_t.shape[1]))
+                    occupancies_no_migration, predicted_occupancies_no_migration, mad_no_migration, beta_no_migration, species_occupancies_no_migration  = utils.predict_occupancy(s_by_s_no_migration_t.T, range(s_by_s_no_migration_t.shape[1]))
 
 
+                    # KS test
+                    rel_s_by_s_global_migration_t = s_by_s_global_migration_t.T/s_by_s_global_migration_t.sum(axis=1)
+                    rel_s_by_s_parent_migration_t = s_by_s_parent_migration_t.T/s_by_s_parent_migration_t.sum(axis=1)
+                    rel_s_by_s_no_migration_t = s_by_s_no_migration_t.T/s_by_s_no_migration_t.sum(axis=1)
 
-                        error_global_migration = np.absolute(occupancies_global_migration - predicted_occupancies_global_migration)/occupancies_global_migration
-                        error_parent_migration = np.absolute(occupancies_parent_migration - predicted_occupancies_parent_migration)/occupancies_parent_migration
-                        error_no_migration = np.absolute(occupancies_no_migration - predicted_occupancies_no_migration)/occupancies_no_migration
+                    afd_global_migration_t = np.ndarray.flatten(rel_s_by_s_global_migration_t)
+                    afd_parent_migration_t = np.ndarray.flatten(rel_s_by_s_parent_migration_t)
+                    afd_no_migration_t = np.ndarray.flatten(rel_s_by_s_no_migration_t)
 
-                        mean_log_error_global_migration = np.mean(np.log10(error_global_migration[error_global_migration>0]))
-                        mean_log_error_parent_migration = np.mean(np.log10(error_parent_migration[error_parent_migration>0]))
-                        mean_log_error_no_migration = np.mean(np.log10(error_no_migration[error_no_migration>0]))
+                    log_afd_global_migration_t = np.log10(afd_global_migration_t[afd_global_migration_t>0])
+                    log_afd_parent_migration_t = np.log10(afd_parent_migration_t[afd_parent_migration_t>0])
+                    log_afd_no_migration_t = np.log10(afd_no_migration_t[afd_no_migration_t>0])
 
-                        #print(t, mean_log_error_global_migration, mean_log_error_parent_migration, mean_log_error_no_migration)
-                        # taylors law
-                        means_global_migration, variances_global_migration, species_to_keep_global_migration = utils.get_species_means_and_variances(rel_s_by_s_global_migration_t, range(rel_s_by_s_global_migration_t.shape[0]), zeros=True)
-                        means_parent_migration, variances_parent_migration, species_to_keep_parent_migration = utils.get_species_means_and_variances(rel_s_by_s_parent_migration_t, range(rel_s_by_s_parent_migration_t.shape[0]), zeros=True)
-                        means_no_migration, variances_no_migration, species_to_keep_no_migration = utils.get_species_means_and_variances(rel_s_by_s_no_migration_t, range(rel_s_by_s_no_migration_t.shape[0]), zeros=True)
+                    rescaled_log_afd_global_migration_t = (log_afd_global_migration_t - np.mean(log_afd_global_migration_t)) / np.std(log_afd_global_migration_t)
+                    rescaled_log_afd_parent_migration_t = (log_afd_parent_migration_t - np.mean(log_afd_parent_migration_t)) / np.std(log_afd_parent_migration_t)
+                    rescaled_log_afd_no_migration_t = (log_afd_no_migration_t - np.mean(log_afd_no_migration_t)) / np.std(log_afd_no_migration_t)
 
-                        # filter observations with mean greter than 0.95
-                        idx_to_keep_global = (means_global_migration<0.95)
-                        idx_to_keep_parent = (means_parent_migration<0.95)
-                        idx_to_keep_no = (means_no_migration<0.95)
+                    ks_global_vs_no, p_value_ks_global_vs_no = stats.ks_2samp(log_afd_global_migration_t, log_afd_no_migration_t)
+                    ks_parent_vs_no, p_value_ks_parent_vs_no = stats.ks_2samp(log_afd_parent_migration_t, log_afd_no_migration_t)
 
-                        means_global_migration = means_global_migration[idx_to_keep_global]
-                        variances_global_migration = variances_global_migration[idx_to_keep_global]
+                    ks_rescaled_global_vs_no, p_value_ks_rescaled_global_vs_no = stats.ks_2samp(rescaled_log_afd_global_migration_t, rescaled_log_afd_no_migration_t)
+                    ks_rescaled_parent_vs_no, p_value_ks_rescaled_parent_vs_no = stats.ks_2samp(rescaled_log_afd_parent_migration_t, rescaled_log_afd_no_migration_t)
 
-                        means_parent_migration = means_parent_migration[idx_to_keep_parent]
-                        variances_parent_migration = variances_parent_migration[idx_to_keep_parent]
+                    afd_dict['global_migration'][t] = {}
+                    afd_dict['parent_migration'][t] = {}
+                    afd_dict['no_migration'][t] = {}
 
-                        means_no_migration = means_no_migration[idx_to_keep_no]
-                        variances_no_migration = variances_no_migration[idx_to_keep_no]
+                    afd_dict['global_migration'][t]['afd'] = log_afd_global_migration_t
+                    afd_dict['parent_migration'][t]['afd'] = log_afd_parent_migration_t
+                    afd_dict['no_migration'][t]['afd'] = log_afd_no_migration_t
 
-                        # log transform
-                        means_global_migration_log10 = np.log10(means_global_migration)
-                        variances_global_migration_log10 = np.log10(variances_global_migration)
-
-                        means_parent_migration_log10 = np.log10(means_parent_migration)
-                        variances_parent_migration_log10 = np.log10(variances_parent_migration)
-
-                        means_no_migration_log10 = np.log10(means_no_migration)
-                        variances_no_migration_log10 = np.log10(variances_no_migration)
+                    afd_dict['global_migration'][t]['rescaled_afd'] = rescaled_log_afd_global_migration_t
+                    afd_dict['parent_migration'][t]['rescaled_afd'] = rescaled_log_afd_parent_migration_t
+                    afd_dict['no_migration'][t]['rescaled_afd'] = rescaled_log_afd_no_migration_t
 
 
-                        #slope_global, intercept_global, r_value_global, p_value_global, std_err_global = stats.linregress(np.log10(means_global_migration), np.log10(variances_global_migration))
-                        #slope_parent, intercept_parent, r_value_parent, p_value_parent, std_err_parent = stats.linregress(np.log10(means_parent_migration), np.log10(variances_parent_migration))
-                        #slope_no, intercept_no, r_value_no, p_value_no, std_err_no = stats.linregress(np.log10(means_no_migration), np.log10(variances_no_migration))
 
-                        # t-test b/w migration and no migration 
-                        slope_global, slope_no, t_slope_global, intercept_global, intercept_no, t_intercept_global, r_value_global, r_value_no = utils.t_statistic_two_slopes(means_global_migration_log10, variances_global_migration_log10, means_no_migration_log10, variances_no_migration_log10)
-                        slope_parent, slope_no, t_slope_parent, intercept_parent, intercept_no, t_intercept_parent, r_value_parent, r_value_no = utils.t_statistic_two_slopes(means_parent_migration_log10, variances_parent_migration_log10, means_no_migration_log10, variances_no_migration_log10)
+                    error_global_migration = np.absolute(occupancies_global_migration - predicted_occupancies_global_migration)/occupancies_global_migration
+                    error_parent_migration = np.absolute(occupancies_parent_migration - predicted_occupancies_parent_migration)/occupancies_parent_migration
+                    error_no_migration = np.absolute(occupancies_no_migration - predicted_occupancies_no_migration)/occupancies_no_migration
 
-                        
+                    mean_log_error_global_migration = np.mean(np.log10(error_global_migration[error_global_migration>0]))
+                    mean_log_error_parent_migration = np.mean(np.log10(error_parent_migration[error_parent_migration>0]))
+                    mean_log_error_no_migration = np.mean(np.log10(error_no_migration[error_no_migration>0]))
 
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['taylors_slope'].append(slope_global)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['taylors_slope'].append(slope_parent)
-                        rho_dict[tau_i][sigma_i][t]['no_migration']['taylors_slope'].append(slope_no)
+                    # taylors law
+                    means_global_migration, variances_global_migration, species_to_keep_global_migration = utils.get_species_means_and_variances(rel_s_by_s_global_migration_t, range(rel_s_by_s_global_migration_t.shape[0]), zeros=True)
+                    means_parent_migration, variances_parent_migration, species_to_keep_parent_migration = utils.get_species_means_and_variances(rel_s_by_s_parent_migration_t, range(rel_s_by_s_parent_migration_t.shape[0]), zeros=True)
+                    means_no_migration, variances_no_migration, species_to_keep_no_migration = utils.get_species_means_and_variances(rel_s_by_s_no_migration_t, range(rel_s_by_s_no_migration_t.shape[0]), zeros=True)
 
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['taylors_intercept'].append(intercept_global)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['taylors_intercept'].append(intercept_parent)
-                        rho_dict[tau_i][sigma_i][t]['no_migration']['taylors_intercept'].append(intercept_no)
+                    # filter observations with mean greter than 0.95
+                    idx_to_keep_global = (means_global_migration<0.95)
+                    idx_to_keep_parent = (means_parent_migration<0.95)
+                    idx_to_keep_no = (means_no_migration<0.95)
 
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['t_slope'].append(t_slope_global)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['t_slope'].append(t_slope_parent)
+                    means_global_migration = means_global_migration[idx_to_keep_global]
+                    variances_global_migration = variances_global_migration[idx_to_keep_global]
 
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['t_intercept'].append(t_intercept_global)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['t_intercept'].append(t_intercept_parent)
+                    means_parent_migration = means_parent_migration[idx_to_keep_parent]
+                    variances_parent_migration = variances_parent_migration[idx_to_keep_parent]
+
+                    means_no_migration = means_no_migration[idx_to_keep_no]
+                    variances_no_migration = variances_no_migration[idx_to_keep_no]
+
+                    # log transform
+                    means_global_migration_log10 = np.log10(means_global_migration)
+                    variances_global_migration_log10 = np.log10(variances_global_migration)
+
+                    means_parent_migration_log10 = np.log10(means_parent_migration)
+                    variances_parent_migration_log10 = np.log10(variances_parent_migration)
+
+                    means_no_migration_log10 = np.log10(means_no_migration)
+                    variances_no_migration_log10 = np.log10(variances_no_migration)
 
 
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['mean_log_error'].append(mean_log_error_global_migration)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['mean_log_error'].append(mean_log_error_parent_migration)
-                        rho_dict[tau_i][sigma_i][t]['no_migration']['mean_log_error'].append(mean_log_error_no_migration)
+                    # save means and variances for 12 vs. 18 tests
+                    mean_var_dict['global_migration'][t] = {}
+                    mean_var_dict['parent_migration'][t] = {}
+                    mean_var_dict['no_migration'][t] = {}
 
-                        # KS test
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['ks_global_vs_no'].append(ks_global_vs_no)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['ks_parent_vs_no'].append(ks_parent_vs_no)
-                        rho_dict[tau_i][sigma_i][t]['global_migration']['ks_rescaled_global_vs_no'].append(ks_rescaled_global_vs_no)
-                        rho_dict[tau_i][sigma_i][t]['parent_migration']['ks_rescaled_parent_vs_no'].append(ks_rescaled_parent_vs_no)
+                    mean_var_dict['global_migration'][t]['means_log10'] = means_global_migration_log10
+                    mean_var_dict['global_migration'][t]['variances_log10'] = variances_global_migration_log10
+
+                    mean_var_dict['parent_migration'][t]['means_log10'] = means_parent_migration_log10
+                    mean_var_dict['parent_migration'][t]['variances_log10'] = variances_parent_migration_log10
+
+                    mean_var_dict['no_migration'][t]['means_log10'] = means_no_migration_log10
+                    mean_var_dict['no_migration'][t]['variances_log10'] = variances_no_migration_log10
+
+
+                    #slope_global, intercept_global, r_value_global, p_value_global, std_err_global = stats.linregress(np.log10(means_global_migration), np.log10(variances_global_migration))
+                    #slope_parent, intercept_parent, r_value_parent, p_value_parent, std_err_parent = stats.linregress(np.log10(means_parent_migration), np.log10(variances_parent_migration))
+                    #slope_no, intercept_no, r_value_no, p_value_no, std_err_no = stats.linregress(np.log10(means_no_migration), np.log10(variances_no_migration))
+
+                    # t-test b/w migration and no migration 
+                    slope_global, slope_no, t_slope_global, intercept_global, intercept_no, t_intercept_global, r_value_global, r_value_no = utils.t_statistic_two_slopes(means_global_migration_log10, variances_global_migration_log10, means_no_migration_log10, variances_no_migration_log10)
+                    slope_parent, slope_no, t_slope_parent, intercept_parent, intercept_no, t_intercept_parent, r_value_parent, r_value_no = utils.t_statistic_two_slopes(means_parent_migration_log10, variances_parent_migration_log10, means_no_migration_log10, variances_no_migration_log10)
+
+                    
+
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['taylors_slope'].append(slope_global)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['taylors_slope'].append(slope_parent)
+                    rho_dict[tau_i][sigma_i][t]['no_migration']['taylors_slope'].append(slope_no)
+
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['taylors_intercept'].append(intercept_global)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['taylors_intercept'].append(intercept_parent)
+                    rho_dict[tau_i][sigma_i][t]['no_migration']['taylors_intercept'].append(intercept_no)
+
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['t_slope'].append(t_slope_global)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['t_slope'].append(t_slope_parent)
+
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['t_intercept'].append(t_intercept_global)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['t_intercept'].append(t_intercept_parent)
+
+
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['mean_log_error'].append(mean_log_error_global_migration)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['mean_log_error'].append(mean_log_error_parent_migration)
+                    rho_dict[tau_i][sigma_i][t]['no_migration']['mean_log_error'].append(mean_log_error_no_migration)
+
+                    # KS test
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['ks_global_vs_no'].append(ks_global_vs_no)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['ks_parent_vs_no'].append(ks_parent_vs_no)
+                    rho_dict[tau_i][sigma_i][t]['global_migration']['ks_rescaled_global_vs_no'].append(ks_rescaled_global_vs_no)
+                    rho_dict[tau_i][sigma_i][t]['parent_migration']['ks_rescaled_parent_vs_no'].append(ks_rescaled_parent_vs_no)
 
 
                 
                 # 12 vs 18 trasnfers
                 for treatment in ['global_migration', 'parent_migration', 'no_migration']:
 
-                    ks_12_18 = stats.ks_2samp(afd_dict[treatment][17]['afd'], afd_dict[treatment][11]['afd'])
-                    ks_rescaled_12_18 = stats.ks_2samp(afd_dict[treatment][17]['rescaled_afd'], afd_dict[treatment][11]['rescaled_afd'])
+                    ks_12_18, p_value_ks_12_18 = stats.ks_2samp(afd_dict[treatment][17]['afd'], afd_dict[treatment][11]['afd'])
+                    ks_rescaled_12_18, p_value_ks_rescaled_12_18 = stats.ks_2samp(afd_dict[treatment][17]['rescaled_afd'], afd_dict[treatment][11]['rescaled_afd'])
 
                     rho_dict[tau_i][sigma_i]['ks_12_vs_18'][treatment].append(ks_12_18)
                     rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18'][treatment].append(ks_rescaled_12_18)
+
+
+                    # 12 vs. 18 Taylors law slope
+                    means_12 = mean_var_dict[treatment][11]['means_log10']
+                    variances_12 = mean_var_dict[treatment][11]['variances_log10']
+                    means_18 = mean_var_dict[treatment][17]['means_log10']
+                    variances_18 = mean_var_dict[treatment][17]['variances_log10']
+                    slope_18, slope_12, t_slope_18_vs_12, intercept_18, intercept_12, t_intercept_18_vs_12, r_value_18, r_value_12 = utils.t_statistic_two_slopes(means_18, variances_18, means_12, variances_12)
+
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_12'].append(slope_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_18'].append(slope_18)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_t_test'].append(t_slope_18_vs_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_12'].append(intercept_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_18'].append(intercept_18)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_t_test'].append(t_intercept_18_vs_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_12'].append(r_value_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_18'].append(r_value_18)
+
 
 
 
@@ -1527,9 +1611,34 @@ def run_simulation_all_migration(iter=100):
 
 
 
+def load_simulation_parent_rho_dict():
+
+    with open(simulation_parent_rho_path, 'rb') as handle:
+        dict_ = pickle.load(handle)
+    return dict_
+
+
+
+def load_simulation_all_migration_dict():
+
+    with open(simulation_migration_all_path, 'rb') as handle:
+        dict_ = pickle.load(handle)
+    return dict_
+
+
+
+def load_simulation_global_rho_dict():
+
+    with open(simulation_global_rho_path, 'rb') as handle:
+        dict_ = pickle.load(handle)
+    return dict_
+
+
+
+
 
 #run_simulation_global_rho()
 
 #run_simulation_all_migration()
 
-run_simulation_parent_rho()
+#run_simulation_parent_rho()
