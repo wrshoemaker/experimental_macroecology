@@ -1585,11 +1585,11 @@ def run_simulation_all_migration(iter=100):
 
 
                     # 12 vs. 18 Taylors law slope
-                    means_12 = mean_var_dict[treatment][11]['means_log10']
-                    variances_12 = mean_var_dict[treatment][11]['variances_log10']
-                    means_18 = mean_var_dict[treatment][17]['means_log10']
-                    variances_18 = mean_var_dict[treatment][17]['variances_log10']
-                    slope_18, slope_12, t_slope_18_vs_12, intercept_18, intercept_12, t_intercept_18_vs_12, r_value_18, r_value_12 = utils.t_statistic_two_slopes(means_18, variances_18, means_12, variances_12)
+                    means_log10_12 = mean_var_dict[treatment][11]['means_log10']
+                    variances_log10_12 = mean_var_dict[treatment][11]['variances_log10']
+                    means_log10_18 = mean_var_dict[treatment][17]['means_log10']
+                    variances_log10_18 = mean_var_dict[treatment][17]['variances_log10']
+                    slope_18, slope_12, t_slope_18_vs_12, intercept_18, intercept_12, t_intercept_18_vs_12, r_value_18, r_value_12 = utils.t_statistic_two_slopes(means_log10_18, variances_log10_18, means_log10_12, variances_log10_12)
 
                     rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_12'].append(slope_12)
                     rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_18'].append(slope_18)

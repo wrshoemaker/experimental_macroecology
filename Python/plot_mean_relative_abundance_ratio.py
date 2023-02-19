@@ -151,7 +151,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
 
     ax_compare.set_xlabel('Mean rel. abundance, no migration, ' + r'$\left< x \right>_{\mathrm{no\, mig}}$', fontsize=10)
-    ax_compare.set_ylabel('Mean rel. abundance, parent, ' + r'$\left< x \right>_{\mathrm{parent}}$', fontsize=10)
+    ax_compare.set_ylabel('Mean rel. abundance, regional, ' + r'$\left< x \right>_{\mathrm{regional}}$', fontsize=10)
 
     ax_compare.set_xscale('log', basex=10)
     ax_compare.set_yscale('log', basey=10)
@@ -194,8 +194,8 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     ax_parent.set_xscale('log', basex=10)
     ax_parent.set_yscale('log', basey=10)
 
-    ax_parent.set_xlabel('Rel. abundance in parent community', fontsize=10)
-    ax_parent.set_ylabel('Mean rel. abundance ratio, ' + r'$\left< x \right>_{\mathrm{parent}}/\left< x \right>_{\mathrm{no\, mig}}$',  fontsize=10)
+    ax_parent.set_xlabel('Rel. abundance in progenitor community', fontsize=10)
+    ax_parent.set_ylabel('Mean rel. abundance ratio, ' + r'$\left< x \right>_{\mathrm{regional}}/\left< x \right>_{\mathrm{no\, mig}}$',  fontsize=10)
 
     no_migration_norm_all = np.asarray(no_migration_norm_all)
     no_migration_norm_all_log10 = np.log10(no_migration_norm_all)
