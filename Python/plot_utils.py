@@ -14,7 +14,7 @@ import matplotlib.cbook as cbook
 #from mpl_toolkits.axes_grid1.inset_locator import
 
 
-sub_plot_labels = ['a','b','c', 'd','e','f', 'g','h','i', 'j','k','l']
+sub_plot_labels = ['a','b','c', 'd','e','f', 'g','h','i', 'j','k','l', 'm','n','o', 'p','q','r']
 
 
 

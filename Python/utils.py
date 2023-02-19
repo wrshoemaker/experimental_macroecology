@@ -1144,6 +1144,25 @@ def calculate_theta(s_by_s, totreads=np.asarray([])):
 
 
 
+
+def make_taxonomy_dict():
+
+    taxonomy_ranks = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus']    
+    taxonomy_map = {}
+    taxonomy = open(directory+'/data/taxonomy.csv')
+    taxonomy_fitst_line = taxonomy.readline()
+    for line in taxonomy:
+        line = line.strip().split(',')
+        taxonomy_map[line[0]] = {}
+        for t_idx, t in enumerate(line[1:]):
+
+            taxonomy_map[line[0]][taxonomy_ranks[t_idx]] = t
+    taxonomy.close()
+
+    return taxonomy_map
+
+
+
 def group_ESVs(s_by_s, species, comm_rep_list, taxonomic_level='genus'):
     taxonomic_level_dict = {'genus':-1, 'family':-2, 'order':-3, 'class':-4}
     taxonomy_map = {}

@@ -165,6 +165,10 @@ for asv in asv_all:
             cv_dict[asv][treatment][replicate]['F_cv'] = F
 
 
+
+taxonomy_dict = utils.make_taxonomy_dict()
+
+
 for asv in cv_dict.keys():
 
     if len(cv_dict[asv]) < 2:
@@ -179,7 +183,9 @@ for asv in cv_dict.keys():
     t_observed, p_value = run_permutation_unpaired_t_test(f_cv_global_migration, f_cv_no_migration)
     
 
-    print(t_observed, p_value)
+    print(asv, t_observed, p_value)
+
+    #print(taxonomy_dict[asv])
 
 
 
@@ -212,7 +218,7 @@ for asv in cv_dict.keys():
     t_observed, p_value = run_permutation_unpaired_t_test(f_cv_global_migration, f_cv_no_migration)
     
 
-    print(t_observed, p_value)
+    print(asv, t_observed, p_value)
 
 
 
