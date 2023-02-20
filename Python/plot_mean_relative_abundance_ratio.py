@@ -16,6 +16,8 @@ import collections
 import slm_simulation_utils
 import plot_utils
 
+np.random.seed(123456789)
+
 
 count_dict = utils.get_otu_dict()
 
@@ -222,16 +224,33 @@ n_no_migration_18 = len(mad_dict[18]['log10_no_migration_treatment_all'])
 rho_18, rho_12, z = utils.compare_rho_fisher_z(mad_dict[18]['log10_no_migration_treatment_all'], mad_dict[18]['log10_migration_treatment_all'], mad_dict[12]['log10_no_migration_treatment_all'], mad_dict[12]['log10_migration_treatment_all'])
 
 
-merged_mad_12 = np.concatenate((mad_dict[12]['log10_no_migration_treatment_all'], mad_dict[12]['log10_migration_treatment_all']))
-merged_mad_18 = np.concatenate((mad_dict[18]['log10_no_migration_treatment_all'], mad_dict[18]['log10_migration_treatment_all']))
+#merged_mad_12 = np.concatenate((mad_dict[12]['log10_no_migration_treatment_all'], mad_dict[12]['log10_migration_treatment_all']))
+#merged_mad_18 = np.concatenate((mad_dict[18]['log10_no_migration_treatment_all'], mad_dict[18]['log10_migration_treatment_all']))
+
+merged_mad_no_migration = np.concatenate((mad_dict[12]['log10_no_migration_treatment_all'], mad_dict[18]['log10_no_migration_treatment_all']))
+merged_mad_parent_migration = np.concatenate((mad_dict[12]['log10_migration_treatment_all'],  mad_dict[18]['log10_migration_treatment_all']))
+
+# permute time labels for paired data!
+idx_mad = np.arange(n_no_migration_12 + n_no_migration_18)
+
 
 z_null_all = []
 for i in range(iter_):
 
-    np.random.shuffle(merged_mad_12)
-    np.random.shuffle(merged_mad_18)
+    #np.random.shuffle(merged_mad_12)
+    #np.random.shuffle(merged_mad_18)
 
-    rho_12_null, rho_18_null, z_null = utils.compare_rho_fisher_z(merged_mad_18[:n_no_migration_18], merged_mad_18[n_no_migration_18:], merged_mad_12[:n_no_migration_12], merged_mad_12[n_no_migration_12:])
+    np.random.shuffle(idx_mad)
+
+    merged_mad_no_migration_12 = merged_mad_no_migration[idx_mad[:n_no_migration_12]]
+    merged_mad_no_migration_18 = merged_mad_no_migration[idx_mad[n_no_migration_12:]]
+
+    merged_mad_parent_migration_12 = merged_mad_parent_migration[idx_mad[:n_no_migration_12]]
+    merged_mad_parent_migration_18 = merged_mad_parent_migration[idx_mad[n_no_migration_12:]]
+
+    rho_12_null, rho_18_null, z_null = utils.compare_rho_fisher_z(merged_mad_no_migration_18, merged_mad_parent_migration_18, merged_mad_no_migration_12, merged_mad_parent_migration_12)
+
+    #rho_12_null, rho_18_null, z_null = utils.compare_rho_fisher_z(merged_mad_18[:n_no_migration_18], merged_mad_18[n_no_migration_18:], merged_mad_12[:n_no_migration_12], merged_mad_12[n_no_migration_12:])
     z_null_all.append(z_null)
 
 
@@ -245,24 +264,35 @@ print('Change in rho', z, p_z)
 
 
 # test for change of slope
-
 n_parent_12 = len(mad_dict[12]['log10_parent_all'])
 n_parent_18 = len(mad_dict[18]['log10_parent_all'])
 
-merged_ratio_12 = np.concatenate((mad_dict[12]['log10_parent_all'], mad_dict[12]['log10_ratios_all']))
-merged_ratio_18 = np.concatenate((mad_dict[18]['log10_parent_all'], mad_dict[18]['log10_ratios_all']))
+merged_parent = np.concatenate((mad_dict[12]['log10_parent_all'], mad_dict[18]['log10_parent_all']))
+merged_ratio = np.concatenate((mad_dict[12]['log10_ratios_all'], mad_dict[18]['log10_ratios_all']))
+
+idx_slope = np.arange(n_parent_12 + n_parent_18)
+#merged_mad_12 = np.concatenate((mad_dict[12]['log10_no_migration_treatment_all'], mad_dict[12]['log10_migration_treatment_all']))
+#merged_mad_18 = np.concatenate((mad_dict[18]['log10_no_migration_treatment_all'], mad_dict[18]['log10_migration_treatment_all']))
 
 
 slope_18, slope_12, t_slope, intercept_18, intercept_12, t_intercept, r_value_18, r_value_12 = utils.t_statistic_two_slopes(mad_dict[18]['log10_parent_all'], mad_dict[18]['log10_ratios_all'], mad_dict[12]['log10_parent_all'], mad_dict[12]['log10_ratios_all'])
 
-
 t_slope_null_all = []
 for i in range(iter_):
 
-    np.random.shuffle(merged_ratio_12)
-    np.random.shuffle(merged_ratio_18)
+    #np.random.shuffle(merged_ratio_12)
+    #np.random.shuffle(merged_ratio_18)
 
-    slope_18_null, slope_12_null, t_slope_null, intercept_18_null, intercept_12_null, t_intercept_null, r_value_18_null, r_value_12_null = utils.t_statistic_two_slopes(merged_ratio_18[:n_parent_18], merged_ratio_18[n_parent_18:], merged_ratio_12[:n_parent_12], merged_ratio_12[n_parent_12:])
+    np.random.shuffle(idx_slope)
+
+    merged_parent_12 = merged_parent[idx_slope[:n_parent_12]]
+    merged_parent_18 = merged_parent[idx_slope[n_parent_12:]]
+
+    merged_ratio_12 = merged_ratio[idx_slope[:n_parent_12]]
+    merged_ratio_18 = merged_ratio[idx_slope[n_parent_12:]]
+
+
+    slope_18_null, slope_12_null, t_slope_null, intercept_18_null, intercept_12_null, t_intercept_null, r_value_18_null, r_value_12_null = utils.t_statistic_two_slopes(merged_parent_18, merged_ratio_18, merged_parent_12, merged_ratio_12)
     t_slope_null_all.append(t_slope_null)
 
 

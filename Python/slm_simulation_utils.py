@@ -1370,14 +1370,14 @@ def run_simulation_all_migration(iter=100):
                 
                 
                 rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment] = {}
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_12'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_18'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_t_test'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_12'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_18'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_t_test'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_12'] = []
-                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_18'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['slope_12'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['slope_18'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['slope_t_test'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['intercept_12'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['intercept_18'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['intercept_t_test'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['rho_12'] = []
+                rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['rho_18'] = []
 
 
 
@@ -1591,14 +1591,14 @@ def run_simulation_all_migration(iter=100):
                     variances_log10_18 = mean_var_dict[treatment][17]['variances_log10']
                     slope_18, slope_12, t_slope_18_vs_12, intercept_18, intercept_12, t_intercept_18_vs_12, r_value_18, r_value_12 = utils.t_statistic_two_slopes(means_log10_18, variances_log10_18, means_log10_12, variances_log10_12)
 
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_12'].append(slope_12)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_18'].append(slope_18)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_t_test'].append(t_slope_18_vs_12)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_12'].append(intercept_12)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_18'].append(intercept_18)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_t_test'].append(t_intercept_18_vs_12)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_12'].append(r_value_12)
-                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['migration_vs_parent_rho_18'].append(r_value_18)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['slope_12'].append(slope_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['slope_18'].append(slope_18)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['slope_t_test'].append(t_slope_18_vs_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['intercept_12'].append(intercept_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['intercept_18'].append(intercept_18)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['intercept_t_test'].append(t_intercept_18_vs_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['rho_12'].append(r_value_12)
+                    rho_dict[tau_i][sigma_i]['slope_12_vs_18'][treatment]['rho_18'].append(r_value_18)
 
 
 
