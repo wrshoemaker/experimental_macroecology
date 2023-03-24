@@ -21,26 +21,22 @@ remove_zeros = True
 
 prevalence_range = np.logspace(-4, 1, num=1000)
 
-fig = plt.figure(figsize = (12.5, 8)) #
+fig = plt.figure(figsize = (8.5, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 
 transfers = [12,18]
 
-ax_afd = plt.subplot2grid((2, 3), (0,0), colspan=1)
-ax_occupancy = plt.subplot2grid((2, 3), (0,1), colspan=1)
-ax_mad_vs_occupancy = plt.subplot2grid((2, 3), (0,2), colspan=1)
-ax_taylors = plt.subplot2grid((2, 3), (1,0), colspan=1)
-ax_mad = plt.subplot2grid((2, 3), (1,1), colspan=1)
-ax_mad_params = plt.subplot2grid((2, 3), (1,2), colspan=1)
+ax_afd = plt.subplot2grid((2, 2), (0,0), colspan=1)
+ax_mad_vs_occupancy = plt.subplot2grid((2, 2), (0,1), colspan=1)
+ax_mad = plt.subplot2grid((2, 2), (1,0), colspan=1)
+ax_mad_params = plt.subplot2grid((2, 2), (1,1), colspan=1)
 
 
 
 ax_afd.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_afd.transAxes)
-ax_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_occupancy.transAxes)
-ax_mad_vs_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
-ax_taylors.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_taylors.transAxes)
-ax_mad.text(-0.1, 1.04, plot_utils.sub_plot_labels[4], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
-ax_mad_params.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_params.transAxes)
+ax_mad_vs_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
+ax_mad.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
+ax_mad_params.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_params.transAxes)
 
 
 
@@ -61,9 +57,11 @@ all_predicted_occupancies = []
 all_mu = []
 all_sigma = []
 all_observed_occupancies = []
-for transfer in transfers:
 
-    for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
+
+for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
+
+    for transfer in transfers:
 
         s_by_s, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration=migration_innoculum[0], inocula=migration_innoculum[1], transfer=transfer)
         rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
@@ -83,11 +81,15 @@ for transfer in transfers:
         #bins_mean = [0.5 * (bin_edges[i] + bin_edges[i+1]) for i in range(0, len(bin_edges)-1 )]
         bins_mean = [bin_edges[i+1] for i in range(0, len(bin_edges)-1 )]
 
-        if transfer == 18:
-            label_ = utils.titles_dict[migration_innoculum]
-            ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_, label=label_)
-        else:
-            ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_)
+        #if transfer == 18:
+        #    #label_ = utils.titles_dict[migration_innoculum]
+        #    label = utils.titles_abbreviated_dict[migration_innoculum] + ', transfer ' + str(transfer)
+        #    ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_, label=label)
+        #else:
+        #    ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_)
+
+        label = utils.titles_abbreviated_dict[migration_innoculum] + ', transfer ' + str(transfer)
+        ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_, label=label)
 
 
         # taylors law
@@ -101,7 +103,8 @@ for transfer in transfers:
             means.append(np.mean(afd_i))
             variances.append(np.var(afd_i))
 
-        ax_taylors.scatter(means, variances, alpha=0.3, c=color_, zorder=2)
+
+
 
         # mad
         mad = np.mean(rel_s_by_s, axis=1)
@@ -123,7 +126,6 @@ for transfer in transfers:
 
         # occupancy
         occupancies, predicted_occupancies, mad_occupancies, beta_occupancies, species_occupances = utils.predict_occupancy(s_by_s, ESVs)
-        ax_occupancy.scatter(occupancies, predicted_occupancies, alpha=0.5, c=color_, s=18, zorder=2)#, linewidth=0.8, edgecolors='k')
 
         # errors
         errors = np.absolute(occupancies - predicted_occupancies)/occupancies
@@ -138,8 +140,6 @@ for transfer in transfers:
 
         all_observed_occupancies.extend(occupancies.tolist())
         all_predicted_occupancies.extend(predicted_occupancies.tolist())
-        all_means.extend(means)
-        all_vars.extend(variances)
         afd_log10_rescaled_all.extend(afd_log10_rescaled)
         all_mads.extend(mad.tolist())
         all_mads_occupancies.extend(mad_occupancies.tolist())
@@ -168,34 +168,10 @@ k_trigamma = special.polygamma(1,k)
 gammalog = k*k_trigamma*x_range - np.exp(np.sqrt(k_trigamma)*x_range + k_digamma) - np.log(special.gamma(k)) + k*k_digamma + np.log10(np.exp(1))
 
 ax_afd.plot(x_range, 10**gammalog, 'k', label='Gamma', lw=2)
-ax_afd.legend(loc="upper right", fontsize=6.2)
+ax_afd.legend(loc="upper right", fontsize=5)
 #ax_afd.set_yscale('log', basey=10)
 # trigamma = second derivatives of the logarithm of the gamma function
 # digamma = first derivatives of the logarithm of the gamma function
-
-
-
-ax_taylors.set_xscale('log', basex=10)
-ax_taylors.set_yscale('log', basey=10)
-ax_taylors.set_xlabel('Mean relative abundance', fontsize=12)
-ax_taylors.set_ylabel('Variance of relative abundance', fontsize=12)
-ax_taylors.xaxis.set_tick_params(labelsize=9)
-ax_taylors.yaxis.set_tick_params(labelsize=9)
-
-all_means = np.asarray(all_means)
-all_vars = np.asarray(all_vars)
-
-intercept = np.mean(np.log10(all_vars) - 2*np.log10(all_means))
-x_log10_range =  np.linspace(min(np.log10(all_means)) , max(np.log10(all_means)) , 10000)
-y_log10_null_range = 10 ** (2*x_log10_range + intercept)
-ax_taylors.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='-', zorder=2, label= r'$y \sim x^{2}$')
-
-mean_range = np.linspace(min(all_means), max(all_means), num=1000)
-variance_range = (1-mean_range) * mean_range
-
-#ax_scatter.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
-ax_taylors.plot(mean_range, variance_range, lw=2.5, ls=':', c='k', label='Max. ' + r'$\sigma^{2}_{x}$', zorder=1)
-ax_taylors.legend(loc="upper left", fontsize=8)
 
 
 
@@ -233,7 +209,6 @@ ax_mad.plot(x_mean_range_log_rescaled, lognorm_pdf___, c='k', lw=2.5, linestyle=
 ax_mad.set_xlim([-2.5, 4])
 ax_mad.set_ylim([10**-3, 1])
 ax_mad.set_yscale('log', basey=10)
-ax_mad.legend(loc="lower left", fontsize=8)
 
 
 
@@ -246,26 +221,6 @@ ax_mad.legend(loc="lower left", fontsize=8)
 #-9.819371170830971 3.804688988828493
 #-12.060351097534031 4.350729257684099
 
-
-
-
-
-# occupancyp
-occupancy_min = min(all_observed_occupancies + all_predicted_occupancies)
-occupancy_max = max(all_observed_occupancies + all_predicted_occupancies)
-
-ax_occupancy.plot([occupancy_min*0.8, occupancy_max*1],[occupancy_min*0.8, occupancy_max*1], lw=2, ls='--',c='k',zorder=2, label='1:1')
-ax_occupancy.set_xlim([occupancy_min*0.8, occupancy_max*1])
-ax_occupancy.set_ylim([occupancy_min*0.8, occupancy_max*1])
-
-ax_occupancy.set_xscale('log', basex=10)
-ax_occupancy.set_yscale('log', basey=10)
-ax_occupancy.set_xlabel('Observed occupancy', fontsize=12)
-ax_occupancy.set_ylabel('Predicted occupancy', fontsize=12)
-ax_occupancy.tick_params(axis='both', which='minor', labelsize=9)
-ax_occupancy.tick_params(axis='both', which='major', labelsize=9)
-#ax_occupancy.set_title('%s\nTransfer %d' % (utils.titles_dict[migration_innoculum], transfer), fontsize=9)
-ax_occupancy.legend(loc="upper left", fontsize=8)
 
 
 # survival
@@ -338,7 +293,8 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
 
         mu_all = np.asarray(mu_all)
         sigma_all = np.asarray(sigma_all)
-        ax_mad_params.scatter(mu_all, sigma_all, alpha=1, c=color_all, zorder=2, label=utils.titles_dict[migration_innoculum])
+        label = utils.titles_abbreviated_dict[migration_innoculum] + ', transfer ' + str(transfer)
+        ax_mad_params.scatter(mu_all, sigma_all, alpha=1, c=color_all, zorder=2)
 
 
         #ax.arrow(mu_all[0], sigma_all[0], (mu_all[1] - mu_all[0]), (sigma_all[1]-sigma_all[0]), fc="k", ec="k", zorder=3, head_width=0.1, head_length=0.1)
@@ -351,7 +307,7 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
         ax_mad_params.set_ylabel('Lognormal shape parameter, ' + r'$s$', fontsize=12)
 
 
-ax_mad_params.legend(loc="upper right", fontsize=7)
+#ax_mad_params.legend(loc="upper right", fontsize=7)
 
 
 

@@ -39,7 +39,6 @@ for treatment in ['No_migration.4.T%s', 'No_migration.40.T%s', 'Global_migration
 
         treatment_transfer = treatment % str(transfer)
         count_dict_to_keep = {key: value for key, value in count_dict.items() if treatment_transfer in key}
-        #print(count_dict_to_keep.keys())
         abundance_dict = {}
         n_samples = len(count_dict_to_keep.keys())
         for sample, asv_dict in count_dict_to_keep.items():

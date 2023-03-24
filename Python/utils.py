@@ -109,6 +109,14 @@ titles_dict = {('No_migration',4): 'No migration, low inoc.',
                 ('Parent_migration',4): 'Regional migration, low inoc.',
                 ('Glucose', np.nan): 'Glucose' }
 
+
+titles_abbreviated_dict = {('No_migration',4): 'No mig., low inoc.',
+                ('No_migration',40): 'No mig., high inoc.',
+                ('Global_migration',4): 'Global mig., low inoc.',
+                ('Parent_migration',4): 'Regional mig., low inoc.',
+                ('Glucose', np.nan): 'Glucose' }
+
+
 titles_dict_no_caps = {('No_migration',4): 'no migration, low inoc.',
                 ('No_migration',40): 'no migration, high inoc.',
                 ('Global_migration',4): 'global migration, low inoc.',
@@ -300,13 +308,6 @@ def run_permutation_paired_t_test(array_1, array_2, n=10000, sided='less'):
 
     return t, p_value
 
-
-
-
-
-    print(t_null_all)
-
-    # permutation
 
 
 
@@ -1077,11 +1078,6 @@ def predict_occupancy(s_by_s, species, totreads=np.asarray([])):
 
 
 
-def calculate_shape_and_rate_params(s_by_s):
-
-
-
-    return mean_all, beta_all
 
 
 
@@ -2114,3 +2110,10 @@ def Klogn(emp_mad, c, mu0=-19,s0=5):
 def get_lognorma_mad_prediction(x, mu, sigma, c):
 
     return np.sqrt(2/math.pi)/sigma*np.exp(-(x-mu)**2 /2/(sigma**2))/special.erfc((np.log(c)-mu)/np.sqrt(2)/sigma)
+
+
+
+# fasta code
+
+
+

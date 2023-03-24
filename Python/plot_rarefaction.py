@@ -81,7 +81,7 @@ def plot_rarefaction():
 
     for treatment in treatments:
 
-        ax.plot([-100000, -1000], [-100000,-1000], lw=1.5, c=color_dict[treatment], label=label_dict[treatment])
+        ax.plot([-100000, -1000], [-100000,-1000], lw=1.5, c=color_dict[treatment], label=utils.label_dict[treatment])
 
 
     for sample, rarefied_richness in rarefaction_dict.items():
@@ -118,5 +118,6 @@ def plot_rarefaction():
 
 
 
+plot_rarefaction()
 
 #estimate_mean_abundances_parent()

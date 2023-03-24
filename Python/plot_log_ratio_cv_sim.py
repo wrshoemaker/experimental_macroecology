@@ -15,7 +15,7 @@ import utils
 
 import slm_simulation_utils
 
-iter = 200
+n_iter = 200
 dt = 7
 
 simulation_dict_path = "%s/data/simulation_global_rho.pickle" %  utils.directory
