@@ -54,6 +54,68 @@ for experiment in experiments:
 
 
 
+#
+afd_paired_dict = {}
+for experiment in experiments:
+
+    afd_paired_dict[experiment] = {}
+
+    s_by_s_dict = {}
+
+    for transfer in transfers:
+
+        s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer, migration=experiment[0], inocula=experiment[1])
+        rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+
+        s_by_s_dict[transfer] = {}
+        s_by_s_dict[transfer]['rel_s_by_s'] = rel_s_by_s
+        s_by_s_dict[transfer]['species'] = np.asarray(species)
+        s_by_s_dict[transfer]['comm_rep_list'] = np.asarray(comm_rep_list)
+
+    #communities_to_keep = list( set(s_by_s_dict[12]['comm_rep_list'].tolist() ) &  set(s_by_s_dict[18]['comm_rep_list'].tolist() ))
+    communities_to_keep = np.intersect1d( s_by_s_dict[12]['comm_rep_list'], s_by_s_dict[18]['comm_rep_list'] )
+    
+    paired_rel_abundances_all = []
+    for community in communities_to_keep:
+
+        community_12_idx = np.where( s_by_s_dict[12]['comm_rep_list'] == community)[0][0]
+        community_18_idx = np.where( s_by_s_dict[18]['comm_rep_list'] == community)[0][0]
+
+        community_asv_union = np.union1d(s_by_s_dict[12]['species'], s_by_s_dict[18]['species'])
+
+        for community_asv_j in community_asv_union:
+
+            if community_asv_j in s_by_s_dict[12]['species']:
+                
+                community_asv_j_12_idx = np.where(s_by_s_dict[12]['species'] == community_asv_j)[0][0]
+                rel_abundance_12 = s_by_s_dict[12]['rel_s_by_s'][community_asv_j_12_idx, community_12_idx]
+
+            else:
+                rel_abundance_12 = float(0)  
+
+            
+            if community_asv_j in s_by_s_dict[18]['species']:
+                
+                community_asv_j_18_idx = np.where(s_by_s_dict[18]['species'] == community_asv_j)[0][0]
+                rel_abundance_18 = s_by_s_dict[18]['rel_s_by_s'][community_asv_j_18_idx, community_18_idx]
+
+            else:
+                rel_abundance_18 = float(0)
+
+
+            if (rel_abundance_12 == float(0)) and (rel_abundance_18 == float(0)):
+                continue
+
+            paired_rel_abundances_all.append([rel_abundance_12, rel_abundance_18])
+
+    afd_paired_dict[experiment] = paired_rel_abundances_all
+
+
+
+
+
+
+
 
 def make_ks_dict():
 
@@ -89,13 +151,21 @@ def make_ks_dict():
 
         for rescaled_status in rescaled_status_all:
 
-            print(experiment, rescaled_status)
+            #print(experiment, rescaled_status)
 
             ks_statistic, p_value = utils.run_permutation_ks_test(afd_dict[experiment][transfers[0]][rescaled_status], afd_dict[experiment][transfers[1]][rescaled_status], n=1000)
 
             distances_dict[experiment][rescaled_status] = {}
             distances_dict[experiment][rescaled_status]['D'] = ks_statistic
             distances_dict[experiment][rescaled_status]['pvalue'] = p_value
+
+
+
+        ks_statistic, p_value = utils.run_permutation_ks_test_control(afd_paired_dict[experiment])
+
+        distances_dict[experiment]['afd_rescaled_and_paired'] = {}
+        distances_dict[experiment]['afd_rescaled_and_paired']['D'] = ks_statistic
+        distances_dict[experiment]['afd_rescaled_and_paired']['pvalue'] = p_value
 
 
     with open(ks_dict_path, 'wb') as outfile:
@@ -106,6 +176,8 @@ def load_ks_dict():
 
     dict_ = pickle.load(open(ks_dict_path, "rb"))
     return dict_
+
+
 
 
 #make_ks_dict()
@@ -214,7 +286,7 @@ for treatment_idx, treatment in enumerate(['no_migration', 'global_migration', '
     clb_slope.set_ticks(original_ticks + [observed])
     clb_slope.set_ticklabels(original_ticks + ['Obs.'])
 
-    print(observed+delta_range)
+    #print(observed+delta_range)
     
 
 

@@ -1,5 +1,5 @@
 from __future__ import division
-import os, sys, re, math, pickle
+import os, sys, re, math, pickle, random
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -328,6 +328,59 @@ def run_permutation_ks_test(array_1, array_2, n=10000):
         array_2_null = array_merged[len(array_1):]
 
         ks_statistic_null, p_value_null = stats.ks_2samp(array_1_null, array_2_null)
+
+        ks_null.append(ks_statistic_null)
+
+    ks_null = np.asarray(ks_null)
+
+    p_value = sum(ks_null>ks_statistic) / n
+
+    return ks_statistic, p_value
+
+
+
+
+def run_permutation_ks_test_control(paired_rel_abundances, n=10000):
+
+    array_1 = np.asarray([paired_rel_abundances[k][0] for k in range(len(paired_rel_abundances))])
+    array_2 = np.asarray([paired_rel_abundances[k][1] for k in range(len(paired_rel_abundances))])
+
+    array_1 = array_1[array_1>0]
+    array_2 = array_2[array_2>0]
+
+    array_1_log10 = np.log10(array_1)
+    array_2_log10 = np.log10(array_2)
+
+    array_1_log10_rescaled = (array_1_log10 - np.mean(array_1_log10)) / np.std(array_1_log10)
+    array_2_log10_rescaled = (array_2_log10 - np.mean(array_2_log10)) / np.std(array_2_log10)
+
+    ks_statistic, p_value = stats.ks_2samp(array_1_log10_rescaled, array_2_log10_rescaled)
+
+    ks_null = []
+    for n_i in range(n):
+
+        array_1_null = []
+        array_2_null = []
+        for j in range(len(paired_rel_abundances)):
+
+            paired_rel_abundances_j = paired_rel_abundances[j]
+            random.shuffle(paired_rel_abundances_j)
+            array_1_null.append(paired_rel_abundances_j[0])
+            array_2_null.append(paired_rel_abundances_j[1])
+
+        array_1_null = np.asarray(array_1_null)
+        array_2_null = np.asarray(array_2_null)
+
+        array_1_null = array_1_null[array_1_null>0]
+        array_2_null = array_2_null[array_2_null>0]
+
+        array_1_null_log10 = np.log10(array_1_null)
+        array_2_null_log10 = np.log10(array_2_null)
+
+        array_1_null_log10_rescaled = (array_1_null_log10 - np.mean(array_1_null_log10)) / np.std(array_1_null_log10)
+        array_2_null_log10_rescaled = (array_2_null_log10 - np.mean(array_2_null_log10)) / np.std(array_2_null_log10)
+
+        ks_statistic_null, p_value_null = stats.ks_2samp(array_1_null_log10_rescaled, array_2_null_log10_rescaled)
 
         ks_null.append(ks_statistic_null)
 

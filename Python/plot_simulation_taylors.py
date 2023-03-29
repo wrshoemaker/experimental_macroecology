@@ -67,9 +67,11 @@ for treatment_idx, treatment in enumerate(['no_migration', 'global_migration', '
         tau_t_test_intercept_error = []
 
         for sigma in sigma_all:
-
-            t_test_slope = np.asarray(simulation_dict[tau][sigma]['slope_12_vs_18'][treatment]['migration_vs_parent_slope_t_test'])
-            t_test_intercept = np.asarray(simulation_dict[tau][sigma]['slope_12_vs_18'][treatment]['migration_vs_parent_intercept_t_test'])
+            print('whatt')
+            print(simulation_dict[tau][sigma]['slope_12_vs_18'][treatment].keys())
+            
+            t_test_slope = np.asarray(simulation_dict[tau][sigma]['slope_12_vs_18'][treatment]['slope_t_test'])
+            t_test_intercept = np.asarray(simulation_dict[tau][sigma]['slope_12_vs_18'][treatment]['intercept_t_test'])
 
             mean_t_test_slope = np.mean(t_test_slope)
             mean_t_test_intercept = np.mean(t_test_intercept)

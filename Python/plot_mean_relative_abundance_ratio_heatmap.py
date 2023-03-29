@@ -309,64 +309,10 @@ print('Change in t-statistic', t_slope, p_t_slope)
 ########################
 
 
-def weighted_euclidean_distance(tau_all, sigma_all, obs, pred):
-
-    # metric from Prangle 2017
-    print(pred.shape, len(tau_all))
-    idx_to_keep = ~np.isnan(pred).any(axis=0)
-    print(len(idx_to_keep))
-
-    tau_all = tau_all[idx_to_keep]
-    sigma_all = sigma_all[idx_to_keep]
-    pred = pred[:,idx_to_keep]
-
-     # assumes arguments are numpy arrays
-    distance_all = np.zeros(len(pred[0]))
-
-    for i in range(len(pred)):
-
-        obs_i = obs[i]
-        pred_i = pred[i]
-        pred_i = pred_i[~np.isnan(pred_i)] 
-
-        std_i = np.std(pred_i)
-       
-        distance_all += ((obs_i-pred_i)/std_i)**2
-
-    distance_all = np.sqrt(distance_all)
-    min_distance_idx = np.argmin(distance_all)
-
-    best_tau = tau_all[min_distance_idx]
-    best_sigma = sigma_all[min_distance_idx]
-
-    return best_tau, best_sigma
-
-
-# identify parameter regime with lowest error
-simulation_parent_rho_dict = slm_simulation_utils.load_simulation_parent_rho_abc_dict()
-
-print(simulation_parent_rho_dict.keys())
-
-tau_all = np.asarray(simulation_parent_rho_dict['tau_all'])
-sigma_all = np.asarray(simulation_parent_rho_dict['sigma_all'])
 
 
 
-# change in correlation
-z_all = np.asarray(simulation_parent_rho_dict['rho_12_vs_18']['Z'])
-t_slope_all = np.asarray(simulation_parent_rho_dict['slope_12_vs_18']['mad_slope_t_test'])
-
-
-obs = np.asarray([z, t_slope])
-pred = np.asarray([z_all, t_slope_all])
-
-best_tau, best_sigma = weighted_euclidean_distance(tau_all, sigma_all, obs, pred)
-
-
-
-
-
-
+simulation_parent_rho_dict = slm_simulation_utils.load_simulation_parent_rho_dict()
 
 tau_all = np.asarray(list(simulation_parent_rho_dict.keys()))
 sigma_all = np.asarray(list(simulation_parent_rho_dict[tau_all[0]].keys()))
