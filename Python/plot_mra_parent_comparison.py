@@ -86,7 +86,7 @@ ax_regression.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontw
 ax_hist.hist(mean_rel_abundances_parent_present_log10, lw=2.5, alpha=0.8, bins= 12, color='k', ls='-', histtype='step', density=True, label='Present in descendents')
 ax_hist.hist(mean_rel_abundances_parent_absent_log10, lw=2.5, alpha=0.8, bins= 12, color='k', ls=':', histtype='step', density=True, label='Absent in descendents')
 
-ax_hist.set_xlabel('Relative abundance\nin parent community, ' +  r'$\mathrm{log}_{10}$', fontsize=12)
+ax_hist.set_xlabel('Relative abundance\nin progenitor community, ' +  r'$\mathrm{log}_{10}$', fontsize=12)
 ax_hist.set_ylabel('Probability density', fontsize=12)
 ax_hist.legend(loc="upper right", fontsize=8)
 
@@ -120,6 +120,8 @@ range_ = np.linspace(min(mean_rel_abundances_parent_log10), max(mean_rel_abundan
 prediction = [model.predict_proba([[value]])[0][1] for value in range_]
 ax_regression.plot(range_, prediction, c='k', ls='-', lw=2.5, label='Logistic regression')
 ax_regression.legend(loc="center left", fontsize=8)
+
+
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.5)

@@ -131,6 +131,11 @@ titles_no_inocula_dict = {('No_migration',4): 'No migration',
                 ('Glucose', np.nan): 'Glucose' }
 
 
+titles_str_no_inocula_dict = {'no_migration': 'No migration',
+                'global_migration': 'Global migration',
+                'parent_migration': 'Regional migration' }
+
+
 
 def get_dist_read_counts(make_dist=False):
 
@@ -2164,6 +2169,38 @@ def get_lognorma_mad_prediction(x, mu, sigma, c):
 
     return np.sqrt(2/math.pi)/sigma*np.exp(-(x-mu)**2 /2/(sigma**2))/special.erfc((np.log(c)-mu)/np.sqrt(2)/sigma)
 
+
+
+
+def weighted_euclidean_distance(tau_all, sigma_all, obs, pred):
+
+    # metric from Prangle 2017
+    idx_to_keep = ~np.isnan(pred).any(axis=0)
+
+    tau_all = tau_all[idx_to_keep]
+    sigma_all = sigma_all[idx_to_keep]
+    pred = pred[:,idx_to_keep]
+
+     # assumes arguments are numpy arrays
+    distance_all = np.zeros(len(pred[0]))
+
+    for i in range(len(pred)):
+
+        obs_i = obs[i]
+        pred_i = pred[i]
+        pred_i = pred_i[~np.isnan(pred_i)] 
+
+        std_i = np.std(pred_i)
+       
+        distance_all += ((obs_i-pred_i)/std_i)**2
+
+    distance_all = np.sqrt(distance_all)
+    min_distance_idx = np.argmin(distance_all)
+
+    best_tau = tau_all[min_distance_idx]
+    best_sigma = sigma_all[min_distance_idx]
+
+    return best_tau, best_sigma
 
 
 # fasta code

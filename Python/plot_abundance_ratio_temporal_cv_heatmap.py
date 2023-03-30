@@ -27,7 +27,7 @@ experiments = [('No_migration', 4), ('Global_migration', 4)]
 
 n_iter = 1000
 
-fig = plt.figure(figsize = (8.5, 8)) #
+fig = plt.figure(figsize = (8, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 
 
@@ -51,9 +51,6 @@ for experiment_idx, experiment in enumerate(experiments):
 
     communities = utils.get_migration_time_series_community_names(migration=experiment[0], inocula=experiment[1])
     communities_keep = [str(key) for key, value in communities.items() if len(value) == 18]
-
-    ax_cv = plt.subplot2grid((2, 2), (0, experiment_idx), colspan=1)
-    ax_cv.text(-0.1, 1.04, plot_utils.sub_plot_labels[experiment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_cv.transAxes)
 
     species_relative_abundances_dict = {}
     for transfer in range(1, 18+1):
@@ -213,8 +210,6 @@ for experiment_idx, experiment in enumerate(experiments):
 
         mean_log_abundance_ratio = np.asarray(mean_log_abundance_ratio)
 
-        ax_cv.plot(trasnfers_ratio, cv_log_abundance_ratio, alpha=0.6, c=utils.color_dict_range[experiment][7], zorder=2)
-
 
     # ks test for the distribution of CVs over *species* before/after manipulation.
     # Each CV is over all replicates and all transfers before/after manipulation for a given species
@@ -352,12 +347,6 @@ for experiment_idx, experiment in enumerate(experiments):
 
     ks_statistic_cv_over_all_species_t, p_perm = ks_test_constrain_species()
 
-    print('KS test constrained on ASV identity')
-    print(experiment[0], ks_statistic_cv_over_all_species_t, p_perm)
-
-    ax_cv.text(0.2  , 0.9, r'$D = $' + str(round(ks_statistic_cv_over_all_species_t, 3)), fontsize=10, ha='center', va='center', transform=ax_cv.transAxes)
-    ax_cv.text(0.2, 0.8, r'$P = $' + str(round(p_perm, 3)), fontsize=10, ha='center', va='center', transform=ax_cv.transAxes)
-
 
     # no migration
     #0.1 0.775
@@ -365,91 +354,109 @@ for experiment_idx, experiment in enumerate(experiments):
     #0.2845138055222089 0.009
 
 
-    ax_cv.plot(transfers_mean_cv, 10**cv_mean_to_plot, alpha=1, c=utils.color_dict_range[experiment][13], zorder=3)
 
-    ax_cv.set_xlabel('Transfer, ' + r'$t$', fontsize=12)
-    ax_cv.set_ylabel('CV of relative abundance ratio, ' + r'$\mathrm{CV}_{\Delta l}$', fontsize=11)
-    ax_cv.set_title(utils.titles_no_inocula_dict[experiment], fontsize=13)
-    #ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+# plot simulation results
+simulation_global_rho_dict = slm_simulation_utils.load_simulation_global_rho_dict()
 
-    #ax.set_ylim([-2.5, 2.5])
-    ax_cv.set_xlim([1, 17])
-    ax_cv.set_ylim([0.04, 700])
-    ax_cv.set_yscale('log', basey=10)
+tau_all = np.asarray(list(simulation_global_rho_dict.keys()))
+sigma_all = np.asarray(list(simulation_global_rho_dict[tau_all[0]].keys()))
+
+np.sort(tau_all)
+np.sort(sigma_all)
 
 
-    legend_elements = [Line2D([0], [0], color=utils.color_dict_range[experiment][7], lw=1.5, label='One ASV'),
-                        Line2D([0], [0], color=utils.color_dict_range[experiment][13], lw=1.5, label='Mean of ASVs'),
-                        Line2D([0], [0], color='k', ls=':', lw=1.5, label='End of migration')]
+for treatment_idx, treatment in enumerate(['no_migration', 'global_migration']):
 
-    if experiment_idx == 0:
-        ax_cv.legend(handles=legend_elements, fontsize=9, loc='lower right')
+    tau_delta_mean_all = []
+    tau_delta_cv_all = []
+    tau_delta_mean_error_all = []
+    tau_delta_cv_error_all = []
 
-    ax_cv.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
+    observed_ks_mean = ks_test_dict[treatment]['mean']
+    observed_ks_cv = ks_test_dict[treatment]['cv']
 
+    for tau in tau_all:
 
+        tau_delta_mean = []
+        tau_delta_cv = []
 
+        tau_delta_mean_error = []
+        tau_delta_cv_error = []
 
-########################
-# plot the simulations #
-########################
+        for sigma in sigma_all:
 
-# identify parameter regime with lowest error
-simulation_global_rho_abc_dict = slm_simulation_utils.load_simulation_global_rho_abc_dict()
+                ks_mean = np.asarray(simulation_global_rho_dict[tau][sigma]['ratio_stats'][treatment]['ks_mean'])
+                ks_cv = np.asarray(simulation_global_rho_dict[tau][sigma]['ratio_stats'][treatment]['ks_cv'])
 
-tau_all = np.asarray(simulation_global_rho_abc_dict['tau_all'])
-sigma_all = np.asarray(simulation_global_rho_abc_dict['sigma_all'])
+                tau_delta_mean.append(np.mean(ks_mean))
+                tau_delta_cv.append(np.mean(ks_cv))
 
+                mean_error_ks_mean = np.mean(np.absolute((ks_mean - observed_ks_mean)/observed_ks_mean))
+                mean_error_ks_cv = np.mean(np.absolute((ks_cv - observed_ks_cv)/observed_ks_cv ))
 
+                tau_delta_mean_error.append(mean_error_ks_mean)
+                tau_delta_cv_error.append(mean_error_ks_cv)
 
-ks_cv_no_migration = np.asarray(simulation_global_rho_abc_dict['ratio_stats']['no_migration']['ks_cv'])
-ks_cv_global_migration = np.asarray(simulation_global_rho_abc_dict['ratio_stats']['global_migration']['ks_cv'])
+        
+        tau_delta_mean_all.append(tau_delta_mean)
+        tau_delta_cv_all.append(tau_delta_cv)
 
-
-obs = np.asarray([0.1, 0.2845138055222089])
-pred = np.asarray([ks_cv_no_migration, ks_cv_global_migration])
-
-best_tau, best_sigma = utils.weighted_euclidean_distance(tau_all, sigma_all, obs, pred)
-
-# run simulations
-sys.stderr.write("Running simulation with optimal parameters...\n")
-#slm_simulation_utils.run_simulation_global_rho_fixed_parameters(best_tau, best_sigma, n_iter=1000)
-sys.stderr.write("Done!\n")
-
-
-simulation_global_rho_fixed_parameters_dict = slm_simulation_utils.load_simulation_global_rho_fixed_parameters_dict()
-
-ks_cv_simulation_no_migration = simulation_global_rho_fixed_parameters_dict['ratio_stats']['no_migration']['ks_cv']
-ks_cv_simulation_global_migration = simulation_global_rho_fixed_parameters_dict['ratio_stats']['global_migration']['ks_cv']
+        tau_delta_mean_error_all.append(tau_delta_mean_error)
+        tau_delta_cv_error_all.append(tau_delta_cv_error)
 
 
+    tau_delta_mean_all = np.asarray(tau_delta_mean_all)
+    tau_delta_cv_all = np.asarray(tau_delta_cv_all)
 
-ax_ks_cv_simulation_no_migration = plt.subplot2grid((2, 2), (1, 0), colspan=1)
-ax_ks_cv_simulation_global_migration = plt.subplot2grid((2, 2), (1, 1), colspan=1)
+    tau_delta_mean_error_all = np.asarray(tau_delta_mean_error_all)
+    tau_delta_cv_error_all = np.asarray(tau_delta_cv_error_all)
 
+    
 
-ax_ks_cv_simulation_no_migration.hist(ks_cv_simulation_no_migration, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('No_migration',4)], histtype='stepfilled', density=True, zorder=2)
-ax_ks_cv_simulation_no_migration.axvline(x=0.1, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
-ax_ks_cv_simulation_no_migration.legend(loc="upper right", fontsize=8)
-ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
-ax_ks_cv_simulation_no_migration.set_ylabel('Probability density',  fontsize=11)
+    ax_simulation_cv = plt.subplot2grid((2, 2), (0, treatment_idx), colspan=1)
+    ax_simulation_cv_error = plt.subplot2grid((2, 2), (1, treatment_idx), colspan=1)
 
-ax_ks_cv_simulation_global_migration.hist(ks_cv_simulation_global_migration, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Global_migration',4)], histtype='stepfilled', density=True, zorder=2)
-ax_ks_cv_simulation_global_migration.axvline(x=0.2845138055222089, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
-ax_ks_cv_simulation_global_migration.legend(loc="upper right", fontsize=8)
-ax_ks_cv_simulation_global_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
-ax_ks_cv_simulation_global_migration.set_ylabel('Probability density',  fontsize=11)
+    x_axis = sigma_all
+    y_axis = tau_all
 
+    x_axis_log10 = np.log10(x_axis)
 
 
-ax_ks_cv_simulation_no_migration.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_ks_cv_simulation_no_migration.transAxes)
-ax_ks_cv_simulation_global_migration.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_ks_cv_simulation_global_migration.transAxes)
+    # ax_simulation_cv
+    delta_range = max([observed_ks_cv - np.amin(tau_delta_cv_all),  np.amax(tau_delta_cv_all) - observed_ks_cv])
+    pcm_slope_rho = ax_simulation_cv.pcolor(x_axis_log10, y_axis, tau_delta_cv_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=observed_ks_cv - delta_range, vcenter=observed_ks_cv, vmax=observed_ks_cv + delta_range))
+    clb_slope_rho = plt.colorbar(pcm_slope_rho, ax=ax_simulation_cv)
+    clb_slope_rho.set_label(label='Simulated KS distance, ' + r'$D$', fontsize=9)
+    ax_simulation_cv.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
+    ax_simulation_cv.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
+    ax_simulation_cv.xaxis.set_major_formatter(plot_utils.fake_log)
+    # Set observed marking and label
+    clb_slope_rho.ax.axhline(y=observed_ks_cv, c='k')
+    clb_slope_rho.set_ticks([-0.2, 2.0, 0.4, 0.8])
+    clb_slope_rho.set_ticklabels(['-0.2', '2.0', '0.4', '0.8'])
+    original_ticks = list(clb_slope_rho.get_ticks())
+    clb_slope_rho.set_ticks(original_ticks + [observed_ks_cv])
+    clb_slope_rho.set_ticklabels(original_ticks + ['Obs.'])
+    ax_simulation_cv.set_title(utils.titles_str_no_inocula_dict[treatment], fontsize=14)
 
 
-fig.text(0.19, 0.94, "Global migration simulation statistics", va='center', fontsize=20)
+
+    pcm_slope_rho_error = ax_simulation_cv_error.pcolor(x_axis_log10, y_axis, tau_delta_cv_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(tau_delta_cv_error_all), vcenter=np.median(np.ndarray.flatten(tau_delta_cv_error_all)), vmax=np.amax(tau_delta_cv_error_all)))
+    clb_slope_rho_error = plt.colorbar(pcm_slope_rho_error, ax=ax_simulation_cv_error)
+    clb_slope_rho_error.set_label(label='Relative error of ' + r'$D$' + ' from simulated data', fontsize=9)
+    ax_simulation_cv_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
+    ax_simulation_cv_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
+    ax_simulation_cv_error.xaxis.set_major_formatter(plot_utils.fake_log)
+
+    
+    ax_simulation_cv.text(-0.1, 1.04, plot_utils.sub_plot_labels[treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_simulation_cv.transAxes)
+    ax_simulation_cv_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[treatment_idx + 2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_simulation_cv_error.transAxes)
+
+
+fig.text(0.16, 0.94, "Global migration simulation statistics", va='center', fontsize=20)
 
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_cv.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_cv_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

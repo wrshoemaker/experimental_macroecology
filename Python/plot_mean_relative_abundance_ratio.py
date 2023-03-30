@@ -87,18 +87,15 @@ for treatment in ['No_migration.4.T12', 'No_migration.40.T12', 'Global_migration
 # make plot #
 #############
 
-fig = plt.figure(figsize = (8, 16)) #
+fig = plt.figure(figsize = (8, 12)) #
 fig.subplots_adjust(bottom= 0.15)
 
 mad_dict = {}
 
 for transfer_idx, transfer in enumerate(utils.transfers):
 
-    #ax_compare = plt.subplot2grid((4, 2), (0, transfer_idx), colspan=1)
-    #ax_parent = plt.subplot2grid((4, 2), (1, transfer_idx), colspan=1)
-
-    ax_compare = plt.subplot2grid((4, 2), (transfer_idx, 0), colspan=1)
-    ax_parent = plt.subplot2grid((4, 2), (transfer_idx, 1), colspan=1)
+    ax_compare = plt.subplot2grid((3, 2), (transfer_idx, 0), colspan=1)
+    ax_parent = plt.subplot2grid((3, 2), (transfer_idx, 1), colspan=1)
 
     migration_treatment = 'Parent_migration.4.T%d' % transfer
     no_migration_treatment = 'No_migration.4.T%d' % transfer
@@ -148,8 +145,8 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
     #ax_compare.text(0.2,0.92, r'$\rho^{2}=$' + str(round(rho**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes )
     #ax_compare.text(0.18,0.8, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes)
-    ax_compare.text(0.8,0.27, r'$\rho^{2}=$' + str(round(rho**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes )
-    ax_compare.text(0.8,0.18, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes)
+    ax_compare.text(0.8,0.29, r'$\rho^{2}=$' + str(round(rho**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes )
+    ax_compare.text(0.8,0.2, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_compare.transAxes)
 
 
     ax_compare.set_xlabel('Mean rel. abundance, no migration, ' + r'$\left< x \right>_{\mathrm{no\, mig}}$', fontsize=10)
@@ -157,10 +154,10 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
     ax_compare.set_xscale('log', basex=10)
     ax_compare.set_yscale('log', basey=10)
-    ax_compare.legend(loc="lower right", fontsize=8)
+    #ax_compare.legend(loc="lower right", fontsize=8)
 
     ax_parent.scatter(parent_all, ratios_all, alpha=0.8, c=color, zorder=2)
-    ax_parent.axhline(1, lw=1.5, ls=':',color='k', zorder=1)
+    ax_parent.axhline(1, lw=1.5, ls=':',color='k', zorder=1, label='Null')
     #ax_parent.set_xlim(0.6*min(obs), 2*max(obs))
     #ax_parent.set_ylim(0.6*min(obs), 2*max(obs))
 
@@ -182,8 +179,8 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     #ax_parent.text(0.2,0.92, r'$\rho^{2}=$' + str(round(r_value**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
     #ax_parent.text(0.2,0.8, p_value_text, fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
 
-    ax_parent.text(0.8,0.27, r'$\rho^{2}=$' + str(round(r_value**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
-    ax_parent.text(0.8,0.18, p_value_text, fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
+    ax_parent.text(0.8,0.29, r'$\rho^{2}=$' + str(round(r_value**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
+    ax_parent.text(0.8,0.2, p_value_text, fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
 
     mad_dict[transfer] = {}
     mad_dict[transfer]['log10_no_migration_treatment_all'] = np.log10(no_migration_treatment_all)
@@ -203,12 +200,15 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     no_migration_norm_all_log10 = np.log10(no_migration_norm_all)
     parent_all = np.asarray(parent_all)
     parent_all_log10 = np.log10(parent_all)
-    ax_parent.legend(loc="lower right", fontsize=8)
+    
+    if transfer_idx == 0:
+        ax_compare.legend(loc="lower right", fontsize=8) 
+        ax_parent.legend(loc="lower right", fontsize=8)
 
 
 
     ax_compare.text(-0.1, 1.04, plot_utils.sub_plot_labels[transfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_compare.transAxes)
-    ax_parent.text(-0.1, 1.04, plot_utils.sub_plot_labels[4 + transfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_parent.transAxes)
+    ax_parent.text(-0.1, 1.04, plot_utils.sub_plot_labels[3 + transfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_parent.transAxes)
 
 
 
@@ -308,195 +308,61 @@ print('Change in t-statistic', t_slope, p_t_slope)
 # plot the simulations #
 ########################
 
-
-def weighted_euclidean_distance(tau_all, sigma_all, obs, pred):
-
-    # metric from Prangle 2017
-    print(pred.shape, len(tau_all))
-    idx_to_keep = ~np.isnan(pred).any(axis=0)
-    print(len(idx_to_keep))
-
-    tau_all = tau_all[idx_to_keep]
-    sigma_all = sigma_all[idx_to_keep]
-    pred = pred[:,idx_to_keep]
-
-     # assumes arguments are numpy arrays
-    distance_all = np.zeros(len(pred[0]))
-
-    for i in range(len(pred)):
-
-        obs_i = obs[i]
-        pred_i = pred[i]
-        pred_i = pred_i[~np.isnan(pred_i)] 
-
-        std_i = np.std(pred_i)
-       
-        distance_all += ((obs_i-pred_i)/std_i)**2
-
-    distance_all = np.sqrt(distance_all)
-    min_distance_idx = np.argmin(distance_all)
-
-    best_tau = tau_all[min_distance_idx]
-    best_sigma = sigma_all[min_distance_idx]
-
-    return best_tau, best_sigma
-
-
 # identify parameter regime with lowest error
-simulation_parent_rho_dict = slm_simulation_utils.load_simulation_parent_rho_abc_dict()
+simulation_parent_rho_abc_dict = slm_simulation_utils.load_simulation_parent_rho_abc_dict()
 
-print(simulation_parent_rho_dict.keys())
-
-tau_all = np.asarray(simulation_parent_rho_dict['tau_all'])
-sigma_all = np.asarray(simulation_parent_rho_dict['sigma_all'])
-
+tau_all = np.asarray(simulation_parent_rho_abc_dict['tau_all'])
+sigma_all = np.asarray(simulation_parent_rho_abc_dict['sigma_all'])
 
 
 # change in correlation
-z_all = np.asarray(simulation_parent_rho_dict['rho_12_vs_18']['Z'])
-t_slope_all = np.asarray(simulation_parent_rho_dict['slope_12_vs_18']['mad_slope_t_test'])
-
+z_all = np.asarray(simulation_parent_rho_abc_dict['rho_12_vs_18']['Z'])
+t_slope_all = np.asarray(simulation_parent_rho_abc_dict['slope_12_vs_18']['mad_slope_t_test'])
 
 obs = np.asarray([z, t_slope])
 pred = np.asarray([z_all, t_slope_all])
 
-best_tau, best_sigma = weighted_euclidean_distance(tau_all, sigma_all, obs, pred)
+best_tau, best_sigma = utils.weighted_euclidean_distance(tau_all, sigma_all, obs, pred)
+
+# run simulations
+sys.stderr.write("Running simulation with optimal parameters...\n")
+#slm_simulation_utils.run_simulation_parent_rho_fixed_parameters(best_tau, best_sigma, n_iter=1000)
+sys.stderr.write("Done!\n")
+
+sys.stderr.write("Loading simulation dictionary...\n")
+simulation_parent_rho_fixed_parameters_dict = slm_simulation_utils.load_simulation_parent_rho_fixed_parameters_dict()
+
+#print(simulation_parent_rho_fixed_parameters_dict.keys())
+z_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict['rho_12_vs_18']['Z']
+t_slope_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict['slope_12_vs_18']['mad_slope_t_test']
 
 
 
+ax_z_simulation = plt.subplot2grid((3, 2), (2, 0), colspan=1)
+ax_t_slope_simulation = plt.subplot2grid((3, 2), (2, 1), colspan=1)
 
 
 
-
-tau_all = np.asarray(list(simulation_parent_rho_dict.keys()))
-sigma_all = np.asarray(list(simulation_parent_rho_dict[tau_all[0]].keys()))
-
-np.sort(tau_all)
-np.sort(sigma_all)
-
-delta_rho_all = []
-delta_slope_rho_all = []
-delta_rho_error_all = []
-delta_slope_rho_error_all = []
-for tau in tau_all:
-
-    tau_delta_rho = []
-    tau_delta_slope_rho = []
-
-    tau_delta_rho_error = []
-    tau_delta_rho_slope_error = []
-
-    for sigma in sigma_all:
-
-        z_rho = simulation_parent_rho_dict[tau][sigma]['rho_12_vs_18']['Z']
-        mad_slope_t_test = simulation_parent_rho_dict[tau][sigma]['slope_12_vs_18']['mad_slope_t_test']
-
-        z_rho = np.asarray(z_rho)
-        mad_slope_t_test = np.asarray(mad_slope_t_test)
-
-        error_z_rho = np.absolute((z_rho - z) / z)
-        error_mad_slope_t_test = np.absolute((mad_slope_t_test - t_slope) / t_slope)
-
-        tau_delta_rho.append(np.mean(z_rho))
-        tau_delta_slope_rho.append(np.mean(mad_slope_t_test))
-
-        tau_delta_rho_error.append(np.mean(error_z_rho))
-        tau_delta_rho_slope_error.append(np.mean(error_mad_slope_t_test))
+ax_z_simulation.hist(z_simulation_best_parameters, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Parent_migration',4)], histtype='stepfilled', density=True, zorder=2)
+ax_z_simulation.axvline(x=z, ls='--', lw=3, c='k', label='Observed ' +  r'$Z_{\rho}$')
+ax_z_simulation.legend(loc="upper right", fontsize=8)
+#ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + '\nfrom optimal ' + r'$\tau$' + ' and ' + r'$\sigma$', fontsize=11)
+ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_z_simulation.set_ylabel('Probability density',  fontsize=11)
 
 
-    delta_rho_all.append(tau_delta_rho)
-    delta_slope_rho_all.append(tau_delta_slope_rho)
-
-    delta_rho_error_all.append(tau_delta_rho_error)
-    delta_slope_rho_error_all.append(tau_delta_rho_slope_error)
-
-
-# rows = tau
-# columns = sigma
-delta_rho_all = np.asarray(delta_rho_all)
-delta_slope_rho_all = np.asarray(delta_slope_rho_all)
-
-delta_rho_error_all = np.asarray(delta_rho_error_all)
-delta_slope_rho_error_all = np.asarray(delta_slope_rho_error_all)
+ax_t_slope_simulation.hist(t_slope_simulation_best_parameters, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Parent_migration',4)], histtype='stepfilled', density=True, zorder=2)
+ax_t_slope_simulation.axvline(x=t_slope, ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
+ax_t_slope_simulation.legend(loc="upper right", fontsize=8)
+#ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + 'from optimal ' + r'$\tau$' + ' and ' + r'$\sigma$', fontsize=11)
+ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_t_slope_simulation.set_ylabel('Probability density',  fontsize=11)
+ax_z_simulation.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_z_simulation.transAxes)
+ax_t_slope_simulation.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_t_slope_simulation.transAxes)
 
 
 
-ax_rho = plt.subplot2grid((4, 2), (2, 0), colspan=1)
-ax_slope_rho = plt.subplot2grid((4, 2), (2, 1), colspan=1)
-
-ax_rho_error = plt.subplot2grid((4, 2), (3, 0), colspan=1)
-ax_slope_rho_error = plt.subplot2grid((4, 2), (3, 1), colspan=1)
-
-
-x_axis = sigma_all
-y_axis = tau_all
-
-x_axis_log10 = np.log10(x_axis)
-
-
-delta_range = max([z - np.amin(delta_rho_all),  np.amax(delta_rho_all) - z])
-pcm_rho = ax_rho.pcolor(x_axis_log10, y_axis, delta_rho_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=z-delta_range, vcenter=z, vmax=z+delta_range))
-clb_rho = plt.colorbar(pcm_rho, ax=ax_rho)
-clb_rho.set_label(label='Change in ' + r'$\rho$'  + ' after cessation of migration, ' +  r'$Z_{\rho}$', fontsize=9)
-ax_rho.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_rho.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_rho.xaxis.set_major_formatter(plot_utils.fake_log)
-
-
-# Set observed marking and label
-clb_rho.ax.axhline(y=z, c='k')
-original_ticks = list(clb_rho.get_ticks())
-clb_rho.set_ticks(original_ticks + [z])
-clb_rho.set_ticklabels(original_ticks + ['Obs.'])
-
-
-
-
-delta_range = max([t_slope - np.amin(delta_slope_rho_all),  np.amax(delta_slope_rho_all) - t_slope])
-
-pcm_slope_rho = ax_slope_rho.pcolor(x_axis_log10, y_axis, delta_slope_rho_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=t_slope-delta_range, vcenter=t_slope, vmax=t_slope+delta_range))
-clb_slope_rho = plt.colorbar(pcm_slope_rho, ax=ax_slope_rho)
-clb_slope_rho.set_label(label='Change in slope after cessation of migration, ' +  r'$t_{b}$', fontsize=9)
-ax_slope_rho.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_slope_rho.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_slope_rho.xaxis.set_major_formatter(plot_utils.fake_log)
-# Set observed marking and label
-clb_slope_rho.ax.axhline(y=t_slope, c='k')
-original_ticks = list(clb_slope_rho.get_ticks())
-clb_slope_rho.set_ticks(original_ticks + [t_slope])
-clb_slope_rho.set_ticklabels(original_ticks + ['Obs.'])
-
-
-
-
-pcm_rho_error = ax_rho_error.pcolor(x_axis_log10, y_axis, delta_rho_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(delta_rho_error_all), vcenter=np.median(np.ndarray.flatten(delta_slope_rho_error_all)), vmax=np.amax(delta_rho_error_all)))
-clb_rho_error = plt.colorbar(pcm_rho_error, ax=ax_rho_error)
-clb_rho_error.set_label(label='Relative error of ' + r'$Z_{\rho}$'  + ' from simulated data', fontsize=9)
-ax_rho_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_rho_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_rho_error.xaxis.set_major_formatter(plot_utils.fake_log)
-
-
-
-
-pcm_slope_rho_error = ax_slope_rho_error.pcolor(x_axis_log10, y_axis, delta_slope_rho_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(delta_slope_rho_error_all), vcenter=np.median(np.ndarray.flatten(delta_slope_rho_error_all)), vmax=np.amax(delta_slope_rho_error_all)))
-clb_slope_rho_error = plt.colorbar(pcm_slope_rho_error, ax=ax_slope_rho_error)
-clb_slope_rho_error.set_label(label='Relative error of ' + r'$t_{b}$' + ' from simulated data', fontsize=9)
-ax_slope_rho_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_slope_rho_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_slope_rho_error.xaxis.set_major_formatter(plot_utils.fake_log)
-
-
-
-
-ax_rho.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_rho.transAxes)
-ax_rho_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_rho_error.transAxes)
-
-
-ax_slope_rho.text(-0.1, 1.04, plot_utils.sub_plot_labels[6], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_slope_rho.transAxes)
-ax_slope_rho_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[7], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_slope_rho_error.transAxes)
-
-
+fig.text(0.15, 0.925, "Regional migration simulation statistics", va='center', fontsize=20)
 
 
 fig.subplots_adjust(wspace=0.4, hspace=0.3)

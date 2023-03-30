@@ -28,3 +28,5 @@ data/simulation_global_rho_abc.pickle
 data/simulation_global_rho_old.pickle
 data/simulation_migration_all_abc.pickle
 data/simulation_parent_rho_abc.pickle
+data/simulation_global_rho_fixed_parameters.pickle
+data/simulation_parent_rho_fixed_parameters.pickle

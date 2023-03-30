@@ -87,7 +87,7 @@ for treatment in ['No_migration.4.T12', 'No_migration.40.T12', 'Global_migration
 #fig = plt.figure(figsize = (8, 8)) #
 #fig.subplots_adjust(bottom= 0.15)
 
-fig = plt.figure(figsize = (8, 16)) #
+fig = plt.figure(figsize = (8, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 
 
@@ -98,8 +98,8 @@ log_dict['CV'] = {}
 log_dict['mean'] = {}
 for transfer_idx, transfer in enumerate(utils.transfers):
 
-    ax_mean = plt.subplot2grid((4, 2), (transfer_idx, 0), colspan=1)
-    ax_cv = plt.subplot2grid((4, 2), (transfer_idx, 1), colspan=1)
+    ax_mean = plt.subplot2grid((2, 2), (transfer_idx, 0), colspan=1)
+    ax_cv = plt.subplot2grid((2, 2), (transfer_idx, 1), colspan=1)
 
     migration_treatment = 'Global_migration.4.T%d' % transfer
     no_migration_treatment = 'No_migration.4.T%d' % transfer
@@ -212,9 +212,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
 
     ax_mean.text(-0.1, 1.04, plot_utils.sub_plot_labels[transfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mean.transAxes)
-    ax_cv.text(-0.1, 1.04, plot_utils.sub_plot_labels[4 + transfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_cv.transAxes)
-
-
+    ax_cv.text(-0.1, 1.04, plot_utils.sub_plot_labels[2 + transfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_cv.transAxes)
 
 
 
@@ -268,136 +266,8 @@ for measure in ['mean', 'CV']:
     measure_dict[measure]['p_z_rho'] = p_z_rho
 
 
-# plot error rates
-
-simulation_global_rho_dict = slm_simulation_utils.load_simulation_global_rho_dict()
-
-tau_all = np.asarray(list(simulation_global_rho_dict.keys()))
-sigma_all = np.asarray(list(simulation_global_rho_dict[tau_all[0]].keys()))
-
-np.sort(tau_all)
-np.sort(sigma_all)
 
 
-tau_delta_mean_all = []
-tau_delta_cv_all = []
-tau_delta_mean_error_all = []
-tau_delta_cv_error_all = []
-for tau in tau_all:
-
-    tau_delta_mean = []
-    tau_delta_cv = []
-
-    tau_delta_mean_error = []
-    tau_delta_cv_error = []
-
-    for sigma in sigma_all:
-
-        z_mean = np.asarray(simulation_global_rho_dict[tau][sigma]['z_rho']['mean_log10']['z_mean'])
-        z_cv = np.asarray(simulation_global_rho_dict[tau][sigma]['z_rho']['cv_log10']['z_cv'])
-
-        mean_z_mean = np.mean(z_mean)
-        mean_z_cv = np.mean(z_cv)
-
-        mean_error_z_mean = np.mean(np.absolute((z_mean - measure_dict['mean']['z_rho'])/measure_dict['mean']['z_rho']))
-        mean_error_z_cv = np.mean(np.absolute((z_cv - measure_dict['CV']['z_rho'])/measure_dict['CV']['z_rho']))
-
-        tau_delta_mean.append(mean_z_mean)
-        tau_delta_cv.append(mean_z_cv)
-
-        tau_delta_mean_error.append(mean_error_z_mean)
-        tau_delta_cv_error.append(mean_error_z_cv)
-
-
-    tau_delta_mean_all.append(tau_delta_mean)
-    tau_delta_cv_all.append(tau_delta_cv)
-
-    tau_delta_mean_error_all.append(tau_delta_mean_error)
-    tau_delta_cv_error_all.append(tau_delta_cv_error)
-
-
-
-tau_delta_mean_all = np.asarray(tau_delta_mean_all)
-tau_delta_cv_all = np.asarray(tau_delta_cv_all)
-
-tau_delta_mean_error_all = np.asarray(tau_delta_mean_error_all)
-tau_delta_cv_error_all = np.asarray(tau_delta_cv_error_all)
-
-
-ax_simulation_mean = plt.subplot2grid((4, 2), (2, 0), colspan=1)
-ax_simulation_cv = plt.subplot2grid((4, 2), (2, 1), colspan=1)
-
-ax_simulation_mean_error = plt.subplot2grid((4, 2), (3, 0), colspan=1)
-ax_simulation_cv_error = plt.subplot2grid((4, 2), (3, 1), colspan=1)
-
-x_axis = sigma_all
-y_axis = tau_all
-
-x_axis_log10 = np.log10(x_axis)
-
-
-
-
-# ax_simulation_mean
-z_rho_mean = measure_dict['mean']['z_rho']
-delta_range = max([z_rho_mean - np.amin(tau_delta_mean_all),  np.amax(tau_delta_mean_all) - z_rho_mean])
-pcm_rho = ax_simulation_mean.pcolor(x_axis_log10, y_axis, tau_delta_mean_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=z_rho_mean - delta_range, vcenter=z_rho_mean, vmax=z_rho_mean + delta_range))
-clb_rho = plt.colorbar(pcm_rho, ax=ax_simulation_mean)
-clb_rho.set_label(label='Change in ' + r'$\rho$'  + ' after cessation of migration, ' +  r'$Z_{\rho}$', fontsize=9)
-ax_simulation_mean.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_simulation_mean.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_simulation_mean.xaxis.set_major_formatter(plot_utils.fake_log)
-# Set observed marking and label
-clb_rho.ax.axhline(y=z_rho_mean, c='k')
-clb_rho.set_ticks([-0.6, -0.4, 0, 0.2])
-clb_rho.set_ticklabels(['-0.6', '-0.4', '0.0', '0.2'])
-original_ticks = list(clb_rho.get_ticks())
-clb_rho.set_ticks(original_ticks + [z_rho_mean])
-clb_rho.set_ticklabels(original_ticks + ['Obs.'])
-
-
-
-
-
-# ax_simulation_cv
-z_rho_cv = measure_dict['CV']['z_rho']
-delta_range = max([z_rho_cv - np.amin(tau_delta_cv_all),  np.amax(tau_delta_cv_all) - z_rho_cv])
-pcm_slope_rho = ax_simulation_cv.pcolor(x_axis_log10, y_axis, tau_delta_cv_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=z_rho_cv - delta_range, vcenter=z_rho_cv, vmax=z_rho_cv + delta_range))
-clb_slope_rho = plt.colorbar(pcm_slope_rho, ax=ax_simulation_cv)
-clb_slope_rho.set_label(label='Change in ' + r'$\rho$'  + ' after cessation of migration, ' +  r'$Z_{\rho}$', fontsize=9)
-ax_simulation_cv.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_simulation_cv.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_simulation_cv.xaxis.set_major_formatter(plot_utils.fake_log)
-# Set observed marking and label
-clb_slope_rho.ax.axhline(y=z_rho_cv, c='k')
-clb_slope_rho.set_ticks([-0.2, 2.0, 0.4, 0.8])
-clb_slope_rho.set_ticklabels(['-0.2', '2.0', '0.4', '0.8'])
-original_ticks = list(clb_slope_rho.get_ticks())
-clb_slope_rho.set_ticks(original_ticks + [z_rho_cv])
-clb_slope_rho.set_ticklabels(original_ticks + ['Obs.'])
-
-
-
-# error heatmapts
-pcm_rho_error = ax_simulation_mean_error.pcolor(x_axis_log10, y_axis, tau_delta_mean_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(tau_delta_mean_error_all), vcenter=np.median(np.ndarray.flatten(tau_delta_mean_error_all)), vmax=np.amax(tau_delta_mean_error_all)))
-clb_rho_error = plt.colorbar(pcm_rho_error, ax=ax_simulation_mean_error)
-clb_rho_error.set_label(label='Relative error of ' + r'$Z_{\rho}$'  + ' from simulated data', fontsize=9)
-ax_simulation_mean_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_simulation_mean_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_simulation_mean_error.xaxis.set_major_formatter(plot_utils.fake_log)
-
-pcm_slope_rho_error = ax_simulation_cv_error.pcolor(x_axis_log10, y_axis, tau_delta_cv_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(tau_delta_cv_error_all), vcenter=np.median(np.ndarray.flatten(tau_delta_cv_error_all)), vmax=np.amax(tau_delta_cv_error_all)))
-clb_slope_rho_error = plt.colorbar(pcm_slope_rho_error, ax=ax_simulation_cv_error)
-clb_slope_rho_error.set_label(label='Relative error of ' + r'$Z_{\rho}$' + ' from simulated data', fontsize=9)
-ax_simulation_cv_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-ax_simulation_cv_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-ax_simulation_cv_error.xaxis.set_major_formatter(plot_utils.fake_log)
-
-ax_simulation_mean.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_simulation_mean.transAxes)
-ax_simulation_mean_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_simulation_mean_error.transAxes)
-
-ax_simulation_cv.text(-0.1, 1.04, plot_utils.sub_plot_labels[6], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_simulation_cv.transAxes)
-ax_simulation_cv_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[7], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_simulation_cv_error.transAxes)
 
 
 
