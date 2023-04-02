@@ -29,7 +29,6 @@ fig, ax_occupancy = plt.subplots(figsize=(4,4))
 all_predicted_occupancies = []
 all_observed_occupancies = []
 
-
 for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
     for transfer in transfers:
 

@@ -286,12 +286,14 @@ for experiment_idx, experiment in enumerate(experiments):
 
     legend_elements = [Line2D([0], [0], color=utils.color_dict_range[experiment][7], lw=1.5, label='One ASV'),
                         Line2D([0], [0], color=utils.color_dict_range[experiment][13], lw=1.5, label='Mean of ASVs'),
-                        Line2D([0], [0], color='k', ls=':', lw=1.5, label='End of migration')]
+                        Line2D([0], [0], color='k', ls=':', lw=1.5, label='End of migration'),
+                        Line2D([0], [0], color='k', ls='--', lw=1.5, label='Stationarity')]
 
     if experiment_idx == 0:
         ax_mean.legend(handles=legend_elements, fontsize=9, loc='upper left')
 
     #if experiment_idx == 1:
+    ax_mean.axhline(y=0, color='k', linestyle='--', lw = 3, zorder=1)
     ax_mean.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
 
 
@@ -300,5 +302,5 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfe_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

@@ -16,8 +16,8 @@ from matplotlib.ticker import FuncFormatter
 
 from itertools import combinations
 #import statsmodels.stats.multitest as multitest
-import slm_simulation_utils
 import plot_utils
+import slm_simulation_utils
 
 
 #afd_migration_transfer_12
@@ -27,7 +27,7 @@ ks_dict_path = "%s/data/afd_ks_dict.pickle" %  utils.directory
 afd_dict = {}
 transfers = np.asarray([12, 18])
 
-experiments = [('No_migration',4), ('Global_migration',4), ('Parent_migration', 4)  ]
+experiments = [('No_migration',4), ('Parent_migration', 4) , ('Global_migration',4) ]
 treatment_combinations = list(combinations(experiments,2))
 
 rescaled_status_all = ['afd', 'afd_rescaled']
@@ -184,11 +184,8 @@ def load_ks_dict():
 
 ks_dict = load_ks_dict()
 
-fig = plt.figure(figsize = (12, 10))
+fig = plt.figure(figsize = (12, 8))
 fig.subplots_adjust(bottom= 0.15)
-
-
-
 
 
 rescaled_status = 'afd_rescaled'
@@ -197,7 +194,7 @@ x_label = 'Rescaled ' + r'$\mathrm{log}_{10}$' + ' relative abundance'
 
 for experiment_idx, experiment in enumerate(experiments):
 
-    ax = plt.subplot2grid((3, 3), (0, experiment_idx), colspan=1)
+    ax = plt.subplot2grid((2, 3), (0, experiment_idx), colspan=1)
 
     for transfer in transfers:
 
@@ -214,97 +211,79 @@ for experiment_idx, experiment in enumerate(experiments):
     ax.text(0.70,0.7, '$D=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
     ax.text(0.68,0.62, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
-    ax.set_title(utils.titles_dict[experiment], fontsize=12, fontweight='bold' )
+    ax.set_title(utils.titles_no_inocula_dict[experiment], fontsize=12, fontweight='bold' )
     ax.legend(loc="upper right", fontsize=8)
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel('Probability density', fontsize=12)
 
+    ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[experiment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
 
 
 
-# plot simulation
-simulation_dict = slm_simulation_utils.load_simulation_all_migration_dict()
-tau_all = np.asarray(list(simulation_dict.keys()))
-sigma_all = np.asarray(list(simulation_dict[tau_all[0]].keys()))
+treatments_no_innoculum = ['no_migration', 'parent_migration', 'global_migration']
 
-x_axis = sigma_all
-y_axis = tau_all
-x_axis_log10 = np.log10(x_axis)
+def run_best_parameter_simulations():
 
-for treatment_idx, treatment in enumerate(['no_migration', 'global_migration', 'parent_migration']):
+    # plot simulation
+    simulation_dict = slm_simulation_utils.load_simulation_all_migration_abc_dict()
 
-    observed = ks_dict[experiment][rescaled_status]['D']
+    tau_all = np.asarray(simulation_dict['tau_all'])
+    sigma_all = np.asarray(simulation_dict['sigma_all'])
 
-    ks_rescaled_12_vs_18_all = []
-    ks_rescaled_12_vs_18_error_all = []
+    for treatment_idx, treatment in enumerate(treatments_no_innoculum):
 
-    for tau in tau_all:
+        ks_rescaled_12_vs_18_simulation = np.asarray(simulation_dict['ks_rescaled_12_vs_18'][treatment])
 
-        ks_rescaled_12_vs_18 = []
-        ks_rescaled_12_vs_18_error = []
+        ks_rescaled_12_vs_18 =  ks_dict[experiments[treatment_idx]][rescaled_status]['D']  
 
-        for sigma in sigma_all:
+        euc_dist = np.sqrt((ks_rescaled_12_vs_18 - ks_rescaled_12_vs_18_simulation)**2)
+        min_parameter_idx = np.argmin(euc_dist)
 
-            ks_rescaled_12_vs_18_i = np.asarray(simulation_dict[tau][sigma]['ks_rescaled_12_vs_18'][treatment])
+        tau_best = tau_all[min_parameter_idx]
+        sigma_best = sigma_all[min_parameter_idx]
 
-            mean_ks_rescaled_12_vs_18 = np.mean(ks_rescaled_12_vs_18_i)
-
-            mean_error_ks_rescaled_12_vs_18 = np.mean(np.absolute((ks_rescaled_12_vs_18_i - observed ) / observed ))
-
-            ks_rescaled_12_vs_18.append(mean_ks_rescaled_12_vs_18)
-            ks_rescaled_12_vs_18_error.append(mean_error_ks_rescaled_12_vs_18)
-
-        ks_rescaled_12_vs_18_all.append(ks_rescaled_12_vs_18)
-        ks_rescaled_12_vs_18_error_all.append(ks_rescaled_12_vs_18_error)
-
-    ks_rescaled_12_vs_18_all = np.asarray(ks_rescaled_12_vs_18_all)
-    ks_rescaled_12_vs_18_error_all = np.asarray(ks_rescaled_12_vs_18_error_all)
-
-
-    ax_ks = plt.subplot2grid((3, 3), (1, treatment_idx), colspan=1)
-    ax_ks_error = plt.subplot2grid((3, 3), (2, treatment_idx), colspan=1)
-
-    delta_range = max([observed  - np.amin(ks_rescaled_12_vs_18_all),  np.amax(ks_rescaled_12_vs_18_all) - observed])
-    pcm_slope = ax_ks.pcolor(x_axis_log10, y_axis, ks_rescaled_12_vs_18_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=observed-delta_range, vcenter=observed, vmax=observed+delta_range))
-    #fmt = lambda x, pos: '{:.1%}'.format(x)
-    clb_slope = plt.colorbar(pcm_slope, ax=ax_ks)
-    clb_slope.set_label(label='Disance between AFDs, ' + r'$D$' , fontsize=9)
-    ax_ks.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
-    ax_ks.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
-    ax_ks.xaxis.set_major_formatter(plot_utils.fake_log)
-    # Set observed marking and label
-    clb_slope.ax.axhline(y=observed, c='k')
-    original_ticks = list(clb_slope.get_ticks())
-    clb_slope.set_ticks(original_ticks + [observed])
-    clb_slope.set_ticklabels(original_ticks + ['Obs.'])
-
-    # Set observed marking and label
-    clb_slope .ax.axhline(y=observed, c='k')
-    clb_slope.set_ticks([0.025, 0.075, 0.15, 0.2])
-    clb_slope.set_ticklabels(['0.025', '0.075', '0.15', '0.20'])
-    original_ticks = list(clb_slope.get_ticks())
-    clb_slope.set_ticks(original_ticks + [observed])
-    clb_slope.set_ticklabels(original_ticks + ['Obs.'])
-
-    #print(observed+delta_range)
-    
-
-
-    # slope error
-    pcm_slope_error = ax_ks_error.pcolor(x_axis_log10, y_axis, ks_rescaled_12_vs_18_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(ks_rescaled_12_vs_18_error_all), vcenter=np.median(np.ndarray.flatten(ks_rescaled_12_vs_18_error_all)), vmax=np.amax(ks_rescaled_12_vs_18_error_all)))
-    clb_slope_error = plt.colorbar(pcm_slope_error, ax=ax_ks_error)
-    clb_slope_error.set_label(label='Relative error of ' + r'$D$'  + ' from simulated data', fontsize=9)
-    ax_ks_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 11)
-    ax_ks_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 11)
-    ax_ks_error.xaxis.set_major_formatter(plot_utils.fake_log)
+        label = '%s_afd' % treatment
+        slm_simulation_utils.run_simulation_all_migration_fixed_parameters(tau_best, sigma_best, label, n_iter=1000)
 
 
 
+
+
+for treatment_idx, treatment in enumerate(treatments_no_innoculum):
+
+    label = '%s_afd' % treatment
+    simulation_all_migration_fixed_parameters_dict = slm_simulation_utils.load_simulation_all_migration_fixed_parameters_dict(label)
+
+    ks_simulated = np.asarray(simulation_all_migration_fixed_parameters_dict['ks_12_vs_18'][treatment])
+    ks_observed = ks_dict[experiments[treatment_idx]]['afd_rescaled']['D']
+
+    tau_best = simulation_all_migration_fixed_parameters_dict['tau_all']
+    sigma_best = simulation_all_migration_fixed_parameters_dict['sigma_all']
+
+    ax = plt.subplot2grid((2, 3), (1, treatment_idx), colspan=1)
+
+    p_value = sum(ks_simulated > ks_observed)/len(ks_simulated)
+
+    print(np.median(ks_simulated), p_value)
+
+
+    ax.hist(ks_simulated, lw=3, alpha=0.8, bins=10, color=utils.color_dict[experiments[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
+    #ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')
+    ax.axvline(x=ks_observed, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
+    ax.axvline(x=np.median(ks_simulated), ls=':', lw=3, c='k', label='Median simulated ' +  r'$D$')
+    ax.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    ax.set_ylabel('Probability density',  fontsize=11)
+
+    ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[3 + treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
+
+
+    if treatment_idx == 0:
+        ax.legend(loc="upper right", fontsize=8)
 
 
 
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/afd_with_simulation.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/afd_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

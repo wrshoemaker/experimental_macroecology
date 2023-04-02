@@ -8,7 +8,7 @@ from scipy.stats import gamma
 
 import utils
 import plot_utils
-
+import slm_simulation_utils
 
 from matplotlib import cm
 
@@ -17,18 +17,19 @@ zeros = True
 
 np.random.seed(123456789)
 
-migration_innocula = [('No_migration',4), ('Global_migration',4), ('Parent_migration',4)]
+migration_innocula = [('No_migration',4), ('Parent_migration',4), ('Global_migration',4)]
 
-fig = plt.figure(figsize = (16, 14)) #
+fig = plt.figure(figsize = (12, 12)) #
 #fig = plt.figure(figsize = (16, 8)) #
 fig.subplots_adjust(bottom= 0.15)
 
 
+
+t_slope_all = []
 plot_count = 0
 for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula):
 
     sys.stdout.write("Running analyses for %s treatment\n" % (migration_innoculum[0]))
-
 
     moments_dict = {}
 
@@ -44,16 +45,16 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(means), np.log10(variances))
 
 
-        ax_plot = plt.subplot2grid((4, 4), (trasfer_idx, migration_innoculum_idx), colspan=1)
+        ax_plot = plt.subplot2grid((3, 3), (trasfer_idx, migration_innoculum_idx), colspan=1)
 
-        ax_plot.scatter(means, variances, alpha=0.8, c=utils.color_dict[migration_innoculum].reshape(1,-1), edgecolors='k')#, c='#87CEEB')
+        ax_plot.scatter(means, variances, alpha=0.8, c=utils.color_dict_range[migration_innoculum][transfer-2].reshape(1,-1), edgecolors='k')#, c='#87CEEB')
 
         x_log10_range =  np.linspace(min(np.log10(means)) , max(np.log10(means)) , 10000)
         y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
         y_log10_null_range = 10 ** (utils.slope_null*x_log10_range + intercept)
 
-        ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression")
-        ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Taylor's law")
+        ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression slope")
+        ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Slope = 2")
 
         ax_plot.set_xscale('log', basex=10)
         ax_plot.set_yscale('log', basey=10)
@@ -91,8 +92,11 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
             ax_plot.text(-0.3,0.5, 'Transfer %d' % transfer, fontsize=12, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax_plot.transAxes )
 
+        
+        #ax_plot.text(-0.1, 1.04, plot_utils.sub_plot_labels[3*migration_innoculum_idx + trasfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_plot.transAxes)
+        ax_plot.text(-0.1, 1.04, plot_utils.sub_plot_labels[migration_innoculum_idx + 3*trasfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_plot.transAxes)
 
-        ax_plot.text(-0.1, 1.04, plot_utils.sub_plot_labels[plot_count], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_plot.transAxes)
+        
         plot_count+=1
 
         # save for paired t-test
@@ -152,7 +156,77 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
     sys.stdout.write("Slope difference test, t = %g, P = %g\n" % (t_slope, p_value_slope))
     sys.stdout.write("Intercept difference test, t = %g, P = %g\n" % (t_intercept, p_value_intercept))
 
+    t_slope_all.append(t_slope)
 
+
+
+
+treatments_no_innoculum = ['no_migration', 'parent_migration', 'global_migration']
+
+def run_best_parameter_simulations():
+
+    simulation_all_migration_abc_dict = slm_simulation_utils.load_simulation_all_migration_abc_dict()
+
+    tau_all = np.asarray(simulation_all_migration_abc_dict['tau_all'])
+    sigma_all = np.asarray(simulation_all_migration_abc_dict['sigma_all'])
+
+    for treatment_idx, treatment in enumerate(treatments_no_innoculum):
+        
+        slope_t_test_simulation = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18'][treatment]['slope_t_test'])
+
+        euc_dist = np.sqrt((t_slope_all[treatment_idx] - slope_t_test_simulation)**2)
+        min_parameter_idx = np.argmin(euc_dist)
+
+        tau_best = tau_all[min_parameter_idx]
+        sigma_best = sigma_all[min_parameter_idx]
+        
+        label = '%s_taylors' % treatment
+        slm_simulation_utils.run_simulation_all_migration_fixed_parameters(tau_best, sigma_best, label, n_iter=1000)
+
+
+
+for treatment_idx, treatment in enumerate(treatments_no_innoculum):
+
+    label = '%s_taylors' % treatment
+    simulation_all_migration_fixed_parameters_dict = slm_simulation_utils.load_simulation_all_migration_fixed_parameters_dict(label)
+    
+    slope_t_test = np.asarray(simulation_all_migration_fixed_parameters_dict['slope_12_vs_18'][treatment]['slope_t_test'])
+
+    tau_best = simulation_all_migration_fixed_parameters_dict['tau_all']
+    sigma_best = simulation_all_migration_fixed_parameters_dict['sigma_all']
+
+    ax = plt.subplot2grid((3, 3), (2, treatment_idx), colspan=1)
+
+    p_value = sum(slope_t_test > t_slope_all[treatment_idx])/len(slope_t_test)
+    print(p_value)
+
+    ax.hist(slope_t_test, lw=3, alpha=0.8, bins=10, color=utils.color_dict[migration_innocula[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
+    ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')
+    ax.axvline(x=t_slope_all[treatment_idx], ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
+    ax.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    ax.set_ylabel('Probability density',  fontsize=11)
+
+    ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[6 + treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
+
+
+    if treatment_idx == 0:
+        ax.legend(loc="upper right", fontsize=8)
+
+
+
+
+#slope_t_test_simulation_no_migration = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18']['no_migration']['slope_t_test'])
+#slope_t_test_simulation_parent_migration = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18']['parent_migration']['slope_t_test'])
+#slope_t_test_simulation_global_migration = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18']['global_migration']['slope_t_test'])
+
+#t_slope_all = np.asarray(t_slope_all)
+#slope_t_test_simulation = np.asarray([slope_t_test_simulation_no_migration, slope_t_test_simulation_parent_migration, slope_t_test_simulation_global_migration])
+
+#t_slope_all = np.asarray([t_slope_all[1]])
+#slope_t_test_simulation = np.asarray([slope_t_test_simulation_parent_migration])
+
+
+#best_tau, best_sigma = utils.weighted_euclidean_distance(tau_all, sigma_all, t_slope_all, slope_t_test_simulation)
 
 
 

@@ -374,9 +374,9 @@ ax_slope_rho_error.xaxis.set_major_formatter(plot_utils.fake_log)
 
 
 ax_rho.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_rho.transAxes)
-ax_slope_rho.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_slope_rho.transAxes)
+ax_slope_rho.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_slope_rho.transAxes)
 
-ax_rho_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_rho_error.transAxes)
+ax_rho_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_rho_error.transAxes)
 ax_slope_rho_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_slope_rho_error.transAxes)
 
 

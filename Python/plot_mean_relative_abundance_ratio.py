@@ -308,31 +308,36 @@ print('Change in t-statistic', t_slope, p_t_slope)
 # plot the simulations #
 ########################
 
-# identify parameter regime with lowest error
-simulation_parent_rho_abc_dict = slm_simulation_utils.load_simulation_parent_rho_abc_dict()
+def run_best_parameter_simulations():
 
-tau_all = np.asarray(simulation_parent_rho_abc_dict['tau_all'])
-sigma_all = np.asarray(simulation_parent_rho_abc_dict['sigma_all'])
+    # identify parameter regime with lowest error
+    simulation_parent_rho_abc_dict = slm_simulation_utils.load_simulation_parent_rho_abc_dict()
+
+    tau_all = np.asarray(simulation_parent_rho_abc_dict['tau_all'])
+    sigma_all = np.asarray(simulation_parent_rho_abc_dict['sigma_all'])
 
 
-# change in correlation
-z_all = np.asarray(simulation_parent_rho_abc_dict['rho_12_vs_18']['Z'])
-t_slope_all = np.asarray(simulation_parent_rho_abc_dict['slope_12_vs_18']['mad_slope_t_test'])
+    # change in correlation
+    z_all = np.asarray(simulation_parent_rho_abc_dict['rho_12_vs_18']['Z'])
+    t_slope_all = np.asarray(simulation_parent_rho_abc_dict['slope_12_vs_18']['mad_slope_t_test'])
 
-obs = np.asarray([z, t_slope])
-pred = np.asarray([z_all, t_slope_all])
+    obs = np.asarray([z, t_slope])
+    pred = np.asarray([z_all, t_slope_all])
 
-best_tau, best_sigma = utils.weighted_euclidean_distance(tau_all, sigma_all, obs, pred)
+    best_tau, best_sigma = utils.weighted_euclidean_distance(tau_all, sigma_all, obs, pred)
 
-# run simulations
-sys.stderr.write("Running simulation with optimal parameters...\n")
-#slm_simulation_utils.run_simulation_parent_rho_fixed_parameters(best_tau, best_sigma, n_iter=1000)
-sys.stderr.write("Done!\n")
+    # run simulations
+    sys.stderr.write("Running simulation with optimal parameters...\n")
+    slm_simulation_utils.run_simulation_parent_rho_fixed_parameters(best_tau, best_sigma, n_iter=1000)
+    sys.stderr.write("Done!\n")
+
 
 sys.stderr.write("Loading simulation dictionary...\n")
 simulation_parent_rho_fixed_parameters_dict = slm_simulation_utils.load_simulation_parent_rho_fixed_parameters_dict()
 
-#print(simulation_parent_rho_fixed_parameters_dict.keys())
+best_tau = simulation_parent_rho_fixed_parameters_dict['tau_all']
+best_sigma = simulation_parent_rho_fixed_parameters_dict['sigma_all']
+
 z_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict['rho_12_vs_18']['Z']
 t_slope_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict['slope_12_vs_18']['mad_slope_t_test']
 

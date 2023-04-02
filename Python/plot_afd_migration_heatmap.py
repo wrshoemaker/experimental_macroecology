@@ -244,7 +244,7 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     pcm_slope = ax_ks.pcolor(x_axis_log10, y_axis, ks_rescaled_12_vs_18_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=observed-delta_range, vcenter=observed, vmax=observed+delta_range))
     #fmt = lambda x, pos: '{:.1%}'.format(x)
     clb_slope = plt.colorbar(pcm_slope, ax=ax_ks)
-    clb_slope.set_label(label='Disance between AFDs, ' + r'$D$' , fontsize=9)
+    clb_slope.set_label(label='KS disance between AFDs, ' + r'$D$' , fontsize=9)
     ax_ks.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
     ax_ks.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
     ax_ks.xaxis.set_major_formatter(plot_utils.fake_log)
@@ -260,21 +260,16 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     #clb_slope.set_ticklabels(['0.025', '0.055', '0.085', '0.115'])
     original_ticks = list(clb_slope.get_ticks())
     original_ticks = [round(k, 2) for k in original_ticks]
-    print(original_ticks)
 
     if treatment_idx == 0:
         original_ticks.remove(0.06)
 
-    #elif treatment_idx == 1:
-    #    original_ticks.remove(0.1)
-    
-    #elif treatment_idx == 2:
 
-    print(original_ticks)
     clb_slope.set_ticks(original_ticks + [observed])
     clb_slope.set_ticklabels(original_ticks + ['Obs.'])
 
     ax_ks.set_title(utils.titles_str_no_inocula_dict[treatment], fontsize=14)
+    ax_ks.text(-0.1, 1.04, plot_utils.sub_plot_labels[treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_ks.transAxes)
 
 
     
@@ -286,11 +281,13 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     ax_ks_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 11)
     ax_ks_error.xaxis.set_major_formatter(plot_utils.fake_log)
 
+    ax_ks_error.text(-0.1, 1.04, plot_utils.sub_plot_labels[treatment_idx + 3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_ks_error.transAxes)
+
+
+
 
 
 fig.text(0.37, 0.95, "AFD simulations", va='center', fontsize=25)
-
-
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
