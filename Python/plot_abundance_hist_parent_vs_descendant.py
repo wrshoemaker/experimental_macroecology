@@ -111,7 +111,9 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
     ax.legend(loc="upper right", fontsize=8)
 
 
-    ax.text(0.8,0.81, r'$D = {{{}}}$'.format(str(round(ks_statistic, 3))), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes)
+    #ax.text(0.8,0.81, r'$D = {{{}}}$'.format(str(round(ks_statistic, 3))), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes)
+    ax.text(0.8,0.81, r'$\mathrm{KS} = $' + str(round(ks_statistic, 3)), fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes)
+    
     ax.text(0.8,0.73, r'$P < 0.05$', fontsize=11, color='k', ha='center', va='center', transform=ax.transAxes)
 
 

@@ -15,8 +15,6 @@ from scipy.optimize import fsolve
 from scipy.special import erf
 
 
-remove_zeros = True
-
 
 
 prevalence_range = np.logspace(-4, 1, num=1000)

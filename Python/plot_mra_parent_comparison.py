@@ -95,7 +95,9 @@ ax_hist.legend(loc="upper right", fontsize=8)
 ks_statistic = 0.3899878193141073
 p_value = 0
 
-ax_hist.text(0.8,0.81, r'$D = {{{}}}$'.format(str(round(ks_statistic, 3))), fontsize=11, color='k', ha='center', va='center', transform=ax_hist.transAxes)
+#ax_hist.text(0.8,0.81, r'$D = {{{}}}$'.format(str(round(ks_statistic, 3))), fontsize=11, color='k', ha='center', va='center', transform=ax_hist.transAxes)
+ax_hist.text(0.8,0.81, r'$\mathrm{KS} = $' + str(round(ks_statistic, 3)), fontsize=11, color='k', ha='center', va='center', transform=ax_hist.transAxes)
+
 ax_hist.text(0.8,0.73, r'$P < 0.05$', fontsize=11, color='k', ha='center', va='center', transform=ax_hist.transAxes)
 
 

@@ -244,7 +244,8 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     pcm_slope = ax_ks.pcolor(x_axis_log10, y_axis, ks_rescaled_12_vs_18_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=observed-delta_range, vcenter=observed, vmax=observed+delta_range))
     #fmt = lambda x, pos: '{:.1%}'.format(x)
     clb_slope = plt.colorbar(pcm_slope, ax=ax_ks)
-    clb_slope.set_label(label='KS disance between AFDs, ' + r'$D$' , fontsize=9)
+    #clb_slope.set_label(label='KS distance between AFDs, ' + r'$D$' , fontsize=9)
+    clb_slope.set_label(label='KS distance between AFDs' , fontsize=9)
     ax_ks.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 10)
     ax_ks.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 10)
     ax_ks.xaxis.set_major_formatter(plot_utils.fake_log)
@@ -276,7 +277,9 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     # slope error
     pcm_slope_error = ax_ks_error.pcolor(x_axis_log10, y_axis, ks_rescaled_12_vs_18_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(ks_rescaled_12_vs_18_error_all), vcenter=np.median(np.ndarray.flatten(ks_rescaled_12_vs_18_error_all)), vmax=np.amax(ks_rescaled_12_vs_18_error_all)))
     clb_slope_error = plt.colorbar(pcm_slope_error, ax=ax_ks_error)
-    clb_slope_error.set_label(label='Relative error of ' + r'$D$'  + ' from simulated data', fontsize=9)
+    #clb_slope_error.set_label(label='Relative error of ' + r'$D$'  + ' from simulated data', fontsize=9)
+    clb_slope_error.set_label(label='Relative error of ' + r'$\mathrm{KS}$'  + ' from simulated data', fontsize=9)
+
     ax_ks_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 11)
     ax_ks_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 11)
     ax_ks_error.xaxis.set_major_formatter(plot_utils.fake_log)

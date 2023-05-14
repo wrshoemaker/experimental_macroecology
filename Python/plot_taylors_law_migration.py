@@ -54,7 +54,8 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
         y_log10_null_range = 10 ** (utils.slope_null*x_log10_range + intercept)
 
         ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression slope")
-        ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Slope = 2")
+        #ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Slope = 2")
+        ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label=r'$y \sim x^{2}$')
 
         ax_plot.set_xscale('log', basex=10)
         ax_plot.set_yscale('log', basey=10)
@@ -69,6 +70,11 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
             title = utils.titles_no_inocula_dict[migration_innoculum]
             ax_plot.set_title(title, fontsize=12, fontweight='bold' )
+
+
+        if plot_count == 0:
+            ax_plot.legend(loc="lower right", fontsize=8)
+
 
 
         #t_value = (slope - (utils.slope_null))/std_err
@@ -86,7 +92,7 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
         sys.stdout.write("Transfer %d, Intercept = %g\n" % (transfer, intercept))
         #print(slope, intercept)
 
-        ax_plot.legend(loc="lower right", fontsize=8)
+        
 
         if migration_innoculum_idx == 0:
 
@@ -198,7 +204,7 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     ax = plt.subplot2grid((3, 3), (2, treatment_idx), colspan=1)
 
     p_value = sum(slope_t_test > t_slope_all[treatment_idx])/len(slope_t_test)
-    print(p_value)
+    #print(p_value)
 
     ax.hist(slope_t_test, lw=3, alpha=0.8, bins=10, color=utils.color_dict[migration_innocula[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
     ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')

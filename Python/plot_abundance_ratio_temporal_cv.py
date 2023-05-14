@@ -355,7 +355,7 @@ for experiment_idx, experiment in enumerate(experiments):
     print('KS test constrained on ASV identity')
     print(experiment[0], ks_statistic_cv_over_all_species_t, p_perm)
 
-    ax_cv.text(0.2  , 0.9, r'$D = $' + str(round(ks_statistic_cv_over_all_species_t, 3)), fontsize=10, ha='center', va='center', transform=ax_cv.transAxes)
+    ax_cv.text(0.2  , 0.9, r'$\mathrm{KS} = $' + str(round(ks_statistic_cv_over_all_species_t, 3)), fontsize=10, ha='center', va='center', transform=ax_cv.transAxes)
     ax_cv.text(0.2, 0.8, r'$P = $' + str(round(p_perm, 3)), fontsize=10, ha='center', va='center', transform=ax_cv.transAxes)
 
 
@@ -429,15 +429,20 @@ ax_ks_cv_simulation_global_migration = plt.subplot2grid((2, 2), (1, 1), colspan=
 
 
 ax_ks_cv_simulation_no_migration.hist(ks_cv_simulation_no_migration, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('No_migration',4)], histtype='stepfilled', density=True, zorder=2)
-ax_ks_cv_simulation_no_migration.axvline(x=0.1, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
+#ax_ks_cv_simulation_no_migration.axvline(x=0.1, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
+ax_ks_cv_simulation_no_migration.axvline(x=0.1, ls='--', lw=3, c='k', label='Observed ' +  r'$\mathrm{KS}$')
+
 ax_ks_cv_simulation_no_migration.legend(loc="upper right", fontsize=8)
-ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+#ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+
 ax_ks_cv_simulation_no_migration.set_ylabel('Probability density',  fontsize=11)
 
 ax_ks_cv_simulation_global_migration.hist(ks_cv_simulation_global_migration, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Global_migration',4)], histtype='stepfilled', density=True, zorder=2)
 ax_ks_cv_simulation_global_migration.axvline(x=0.2845138055222089, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
 ax_ks_cv_simulation_global_migration.legend(loc="upper right", fontsize=8)
-ax_ks_cv_simulation_global_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+#ax_ks_cv_simulation_global_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_ks_cv_simulation_global_migration.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
 ax_ks_cv_simulation_global_migration.set_ylabel('Probability density',  fontsize=11)
 
 

@@ -208,7 +208,9 @@ for experiment_idx, experiment in enumerate(experiments):
     ks_statistic = ks_dict[experiment][rescaled_status]['D']
     p_value = ks_dict[experiment][rescaled_status]['pvalue']
 
-    ax.text(0.70,0.7, '$D=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    #ax.text(0.70,0.7, '$D=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+    ax.text(0.70,0.7, '$\mathrm{KS}=%0.3f$' % ks_statistic, fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
+
     ax.text(0.68,0.62, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
     ax.set_title(utils.titles_no_inocula_dict[experiment], fontsize=12, fontweight='bold' )
@@ -269,9 +271,15 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
 
     ax.hist(ks_simulated, lw=3, alpha=0.8, bins=10, color=utils.color_dict[experiments[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
     #ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')
-    ax.axvline(x=ks_observed, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
-    ax.axvline(x=np.median(ks_simulated), ls=':', lw=3, c='k', label='Median simulated ' +  r'$D$')
-    ax.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    #ax.axvline(x=ks_observed, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
+    ax.axvline(x=ks_observed, ls='--', lw=3, c='k', label='Observed ' +  r'$\mathrm{KS}$')
+
+    #ax.axvline(x=np.median(ks_simulated), ls=':', lw=3, c='k', label='Median simulated ' +  r'$D$')
+    ax.axvline(x=np.median(ks_simulated), ls=':', lw=3, c='k', label='Median simulated ' +  r'$\mathrm{KS}$')
+
+    #ax.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    ax.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+
     ax.set_ylabel('Probability density',  fontsize=11)
 
     ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[3 + treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
