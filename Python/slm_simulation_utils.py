@@ -3138,13 +3138,16 @@ def load_simulation_all_migration_fixed_parameters_dict(label):
 
 
 
-#run_simulation_global_rho()
-#run_simulation_global_rho_abc(n_iter=10000)
 
-#run_simulation_all_migration()
-#run_simulation_all_migration_abc(n_iter=10000)
+if __name__=='__main__':
+
+    run_simulation_global_rho()
+    run_simulation_global_rho_abc(n_iter=10000)
+
+    run_simulation_all_migration()
+    run_simulation_all_migration_abc(n_iter=10000)
 
 
-#run_simulation_parent_rho()
-#run_simulation_parent_rho_abc(n_iter=10000)
+    run_simulation_parent_rho()
+    run_simulation_parent_rho_abc(n_iter=10000)
 

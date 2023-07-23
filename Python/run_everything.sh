@@ -5,6 +5,9 @@
 source activate macroeco_phylo
 
 
+# run simulations
+python slm_simulation_utils.py
+
 # Figure 1
 python plot_taylors_law.py    
 
