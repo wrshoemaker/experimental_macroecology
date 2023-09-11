@@ -20,18 +20,27 @@ remove_zeros = True
 
 transfers = [12,18]
 
-fig, ax_taylors = plt.subplots(figsize=(4,4))
+#fig, ax_taylors = plt.subplots(figsize=(4,4))
+fig = plt.figure(figsize = (8.5, 4)) #
+ax_taylors = plt.subplot2grid((1, 2), (0, 0), colspan=1)
+ax_taylors_truncation = plt.subplot2grid((1, 2), (0, 1), colspan=1)
+
+
+ax_taylors.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_taylors.transAxes)
+ax_taylors_truncation.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_taylors_truncation.transAxes)
 
 
 
 # get mean and std for rescaling
 all_means = []
 all_vars = []
-
 slope_all = []
 
+taylor_dict = {}
 
 for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
+
+    taylor_dict[migration_innoculum] = {}
         
     for transfer in transfers:
 
@@ -74,14 +83,17 @@ for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_in
         print((2*beta_taylors) / (1+beta_taylors))
 
         slope_all.append(slope)
-
         all_means.extend(means)
         all_vars.extend(variances)
 
+        taylor_dict[migration_innoculum][transfer] = {}
+        taylor_dict[migration_innoculum][transfer]['means'] = means
+        taylor_dict[migration_innoculum][transfer]['variances'] = variances
+
 
 se_slope = np.std(slope_all, ddof=1) / np.sqrt(np.size(slope_all))
-print("Mean slope +/- S.E.")
-print(np.mean(slope_all), se_slope)
+#print("Mean slope +/- S.E.")
+#print(np.mean(slope_all), se_slope)
 
 
 
@@ -109,13 +121,52 @@ mean_range = np.linspace(min(all_means), max(all_means), num=1000)
 variance_range = (1-mean_range) * mean_range
 
 #ax_taylors.plot(mean_range, variance_range, lw=3, ls=':', c = 'k', label='Bhatia–Davis inequality')
-#ax_taylors.plot(mean_range, variance_range, lw=2.5, ls=':', c='k', label='Max. ' + r'$\sigma^{2}_{x}$', zorder=1)
+ax_taylors.plot(mean_range, variance_range, lw=2.5, ls=':', c='k', label='Max. ' + r'$\sigma^{2}_{x}$', zorder=1)
 ax_taylors.legend(loc="lower right", fontsize=6)
 
 
 
+# truncation
+x_max = np.logspace(-3, 0, num=100, endpoint=True, base=10)
+
+all_means = np.asarray(all_means)
+all_vars = np.asarray(all_vars)
+
+for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
+        
+    for transfer in transfers:
+
+        if transfer not in taylor_dict[migration_innoculum]:
+            continue
+
+        means = taylor_dict[migration_innoculum][transfer]['means']
+        variances = taylor_dict[migration_innoculum][transfer]['variances']
+
+        means = np.asarray(means)
+        variances = np.asarray(variances)
+
+        x_max_to_plot = []
+        truncated_slope_all = []
+        for x_max_j in x_max:
+
+            idx_to_keep = (means <= x_max_j)
+
+            if sum(idx_to_keep) < 10:
+                continue
+
+            all_means_j = means[idx_to_keep]
+            all_vars_j = variances[idx_to_keep]
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(all_means_j), np.log10(all_vars_j))
+
+            x_max_to_plot.append(x_max_j)
+            truncated_slope_all.append(slope)
+
+        print(truncated_slope_all)
+
+        ax_taylors_truncation.plot(x_max_to_plot, truncated_slope_all, lw=2.5, ls='-', c='k', zorder=1)
+        ax_taylors_truncation.set_xscale('log', basex=10)
 
 
-fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/taylors_law.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.subplots_adjust(wspace=0.25, hspace=0.25)
+fig.savefig(utils.directory + "/figs/taylors_law_truncation.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

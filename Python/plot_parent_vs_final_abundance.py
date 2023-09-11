@@ -102,7 +102,7 @@ for treatment_idx, treatment in enumerate(['No_migration.4.T12', 'No_migration.4
     ax.set_xscale('log', basex=10)
     ax.set_yscale('log', basey=10)
 
-    ax.set_xlabel('Relative abundance\n' + utils.label_dict['Parent_migration.NA.T0'], fontsize=11)
+    ax.set_xlabel('Relative abundance\n' + "in progenitor community", fontsize=11)
     ax.set_ylabel('Mean relative abundance\n' + utils.label_dict[treatment] + ', transfer ' + treatment.split('.')[-1][1:], fontsize=10)
 
 
