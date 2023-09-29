@@ -547,5 +547,6 @@ for treatment_idx, treatment in enumerate(['no_migration', 'global_migration']):
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

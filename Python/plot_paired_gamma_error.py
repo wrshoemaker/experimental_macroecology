@@ -261,8 +261,8 @@ ax_comparison.set_ylabel('Occupancy relative error, transfer 12', fontsize=12)
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
 
-fig_name = utils.directory + '/figs/paried_gamma_error.png'
-fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+#fig.savefig(utils.directory + '/figs/paried_gamma_error.png', format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+fig.savefig(utils.directory + '/figs/paried_gamma_error.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
 
 

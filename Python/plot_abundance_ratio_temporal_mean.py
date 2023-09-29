@@ -302,5 +302,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + '/figs/abundance_ratio_per_transfer_mean.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()

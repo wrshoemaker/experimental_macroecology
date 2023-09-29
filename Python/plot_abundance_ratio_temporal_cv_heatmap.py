@@ -460,5 +460,6 @@ fig.text(0.16, 0.94, "Global migration simulation statistics", va='center', font
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_cv_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_cv_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + '/figs/abundance_ratio_per_transfer_cv_heatmap.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

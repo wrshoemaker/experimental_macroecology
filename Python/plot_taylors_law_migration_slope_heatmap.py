@@ -142,5 +142,6 @@ fig.text(0.36, 0.95, "Taylor's Law slope simulations", va='center', fontsize=25)
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.25)
-fig.savefig(utils.directory + "/figs/taylors_law_migration_slope_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/taylors_law_migration_slope_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_migration_slope_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

@@ -120,6 +120,7 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
 
 
-fig_name = utils.directory + '/figs/abundance_hist_parent_vs_descendant.png'
-fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+#fig_name = utils.directory + '/figs/abundance_hist_parent_vs_descendant.png'
+#fig.savefig(utils.directory + '/figs/abundance_hist_parent_vs_descendant.png', format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+fig.savefig(utils.directory + '/figs/abundance_hist_parent_vs_descendant.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

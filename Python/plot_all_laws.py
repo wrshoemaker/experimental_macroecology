@@ -314,5 +314,7 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/all_laws.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/all_laws.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/all_laws.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()

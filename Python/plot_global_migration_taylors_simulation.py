@@ -52,6 +52,8 @@ ax.set_xlabel('Transfer', fontsize=12)
 ax.set_ylabel(r'$\Delta \mathrm{Intercept}$', fontsize=12)
 
 
-fig_name = utils.directory + '/figs/global_migration_taylors_simulation.png'
-fig.savefig(fig_name, format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+#fig_name = 
+#fig.savefig(utils.directory + '/figs/global_migration_taylors_simulation.png', format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+fig.savefig(utils.directory + '/figs/global_migration_taylors_simulation.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()

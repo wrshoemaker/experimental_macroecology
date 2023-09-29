@@ -127,5 +127,7 @@ ax_regression.legend(loc="center left", fontsize=8)
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.5)
-fig.savefig(utils.directory + "/figs/mean_rel_abund_parent_comparison.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/mean_rel_abund_parent_comparison.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + '/figs/mean_rel_abund_parent_comparison.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()

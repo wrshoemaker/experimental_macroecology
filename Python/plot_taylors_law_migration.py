@@ -238,5 +238,7 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
 
 
 fig.subplots_adjust(wspace=0.32, hspace=0.4)
-fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()

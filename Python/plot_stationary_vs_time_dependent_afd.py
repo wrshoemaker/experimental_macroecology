@@ -144,6 +144,7 @@ prob_x_t_100 = []
 prob_x_t_10000 = []
 prob_x_migration_all = []
 for x in x_range:
+    #print(x)
     prob_x_t_1.append(prob_x_time_dependent(x, 1, x_0, sigma, tau, k, M))
     prob_x_t_100.append(prob_x_time_dependent(x, 10, x_0, sigma, tau, k, M))
     prob_x_t_10000.append(prob_x_time_dependent(x, 100, x_0, sigma, tau, k, M))
@@ -189,7 +190,8 @@ ax.set_ylabel('Probability density', fontsize=12)
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/stationary_vs_time_dependent_afd.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/stationary_vs_time_dependent_afd.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/stationary_vs_time_dependent_afd.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
 
 

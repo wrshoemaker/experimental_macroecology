@@ -52,7 +52,8 @@ ax.set_ylabel('Probability density', fontsize=12)
 ax.legend(loc="upper left", fontsize=8)
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-fig.savefig(utils.directory + "/figs/n_reads_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/n_reads_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + '/figs/n_reads_hist.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
 
 

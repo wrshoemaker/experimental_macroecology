@@ -99,5 +99,7 @@ ax.legend(handles=legend_elements, loc='upper right', fontsize=8)
 
 
 fig.subplots_adjust(wspace=0.25, hspace=0.2)
-fig.savefig(utils.directory + "/figs/example_langevin.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/example_langevin.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/example_langevin.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()

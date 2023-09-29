@@ -342,7 +342,9 @@ ax_global.set_xlim([0, max(f_global_migration_all)+1])
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/cv_f_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/cv_f_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + '/figs/cv_f_hist.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+
 plt.close()
 
 
