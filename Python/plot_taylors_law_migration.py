@@ -62,7 +62,7 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
         ax_plot.text(0.2,0.9, r'$y \sim x^{{{}}}$'.format(str( round(slope, 3) )), fontsize=11, color='k', ha='center', va='center', transform=ax_plot.transAxes  )
 
-        ax_plot.set_xlabel('Average relative\nabundance', fontsize=12)
+        ax_plot.set_xlabel('Mean relative\nabundance', fontsize=12)
         ax_plot.set_ylabel('Variance of relative abundance', fontsize=10)
 
 
