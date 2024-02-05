@@ -272,8 +272,8 @@ for experiment_idx, experiment in enumerate(experiments):
 
     ax_mean.plot(transfers_mean_mean, mean_mean_to_plot, alpha=1, c=utils.color_dict_range[experiment][13], zorder=3)
 
-    ax_mean.set_xlabel('Transfer, ' + r'$t$', fontsize=12)
-    ax_mean.set_ylabel('Mean relative abundance ratio, ' + r'$\left<  \Delta l \right>$', fontsize=11)
+    ax_mean.set_xlabel('Transfer, ' + r'$k$', fontsize=12)
+    ax_mean.set_ylabel('Mean relative abundance ratio, ' + r'$\left<  \Delta l^{(k)} \right>$', fontsize=11)
     ax_mean.set_title(utils.titles_no_inocula_dict[experiment], fontsize=13)
     #ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -302,7 +302,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + '/figs/abundance_ratio_per_transfer_mean.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
 plt.close()

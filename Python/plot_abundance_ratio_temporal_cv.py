@@ -367,8 +367,8 @@ for experiment_idx, experiment in enumerate(experiments):
 
     ax_cv.plot(transfers_mean_cv, 10**cv_mean_to_plot, alpha=1, c=utils.color_dict_range[experiment][13], zorder=3)
 
-    ax_cv.set_xlabel('Transfer, ' + r'$t$', fontsize=12)
-    ax_cv.set_ylabel('CV of relative abundance ratio, ' + r'$\mathrm{CV}_{\Delta l}$', fontsize=11)
+    ax_cv.set_xlabel('Transfer, ' + r'$k$', fontsize=12)
+    ax_cv.set_ylabel('CV of relative abundance ratio, ' + r'$\mathrm{CV}_{\Delta l}^{(k)}$', fontsize=11)
     ax_cv.set_title(utils.titles_no_inocula_dict[experiment], fontsize=13)
     #ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -385,7 +385,8 @@ for experiment_idx, experiment in enumerate(experiments):
     if experiment_idx == 0:
         ax_cv.legend(handles=legend_elements, fontsize=9, loc='lower right')
 
-    ax_cv.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
+    if experiment_idx == 1:
+        ax_cv.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
 
 
 
@@ -434,15 +435,16 @@ ax_ks_cv_simulation_no_migration.axvline(x=0.1, ls='--', lw=3, c='k', label='Obs
 
 ax_ks_cv_simulation_no_migration.legend(loc="upper right", fontsize=8)
 #ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
-ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+#ax_ks_cv_simulation_no_migration.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' statistic from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_ks_cv_simulation_no_migration.set_xlabel('Predicted ' + r'$\mathrm{KS}$' + ' statistic from optimal\nparameters, ' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
 
 ax_ks_cv_simulation_no_migration.set_ylabel('Probability density',  fontsize=11)
 
 ax_ks_cv_simulation_global_migration.hist(ks_cv_simulation_global_migration, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Global_migration',4)], histtype='stepfilled', density=True, zorder=2)
-ax_ks_cv_simulation_global_migration.axvline(x=0.2845138055222089, ls='--', lw=3, c='k', label='Observed ' +  r'$D$')
-ax_ks_cv_simulation_global_migration.legend(loc="upper right", fontsize=8)
+ax_ks_cv_simulation_global_migration.axvline(x=0.2845138055222089, ls='--', lw=3, c='k', label='Observed ' + r'$\mathrm{KS}$')
+#ax_ks_cv_simulation_global_migration.legend(loc="upper right", fontsize=8)
 #ax_ks_cv_simulation_global_migration.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
-ax_ks_cv_simulation_global_migration.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_ks_cv_simulation_global_migration.set_xlabel('Predicted ' + r'$\mathrm{KS}$' + ' statistic from optimal\nparameters, ' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
 ax_ks_cv_simulation_global_migration.set_ylabel('Probability density',  fontsize=11)
 
 
@@ -451,11 +453,11 @@ ax_ks_cv_simulation_no_migration.text(-0.1, 1.04, plot_utils.sub_plot_labels[2],
 ax_ks_cv_simulation_global_migration.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_ks_cv_simulation_global_migration.transAxes)
 
 
-fig.text(0.19, 0.94, "Global migration simulation statistics", va='center', fontsize=20)
+fig.text(0.3, 0.94, "Global migration statistics", va='center', fontsize=20)
 
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_cv.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_cv.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + '/figs/abundance_ratio_per_transfer_cv.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

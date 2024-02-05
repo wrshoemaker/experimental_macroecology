@@ -74,7 +74,7 @@ label_dict = {'Parent_migration.4.T12': 'Regional migration, low inoculum',
                 'No_migration.4.T18': 'No migration, low inoculum',
                 'No_migration.40.T18': 'No migration, high inoculum',
                 'Global_migration.4.T18': 'Global migration, low inoculum',
-                'Parent_migration.NA.T0': 'Regional community'}
+                'Parent_migration.NA.T0': 'Progenitor community'}
 
 
 
@@ -558,7 +558,8 @@ def get_p_value(p_value, alpha=0.05):
 
     if p_value >= alpha:
 
-        return r'$P \, \nless 0.05$'
+        #return r'$P \, \nless 0.05$'
+        return r'$P \, \geq 0.05$'
 
     else:
         return r'$P < 0.05$'
@@ -1317,10 +1318,11 @@ def get_relative_s_by_s_migration(transfer=18,migration='No_migration',inocula=4
 
 
 
-def get_s_by_s_migration_test_singleton(transfer=18,migration='No_migration',inocula=40, communities=None):
+def get_s_by_s_migration_test_singleton(transfer=18, migration='No_migration', inocula=40, communities=None):
     # migration options, 'No_migration', 'Parent_migration', 'Global_migration'
 
-    otu = open(directory + '/data/migration_data_table_totabund_all_singleton_mapped_20210501.csv')
+    #otu = open(directory + '/data/migration_data_table_totabund_all_singleton_mapped_20210501.csv')
+    otu = open(directory + '/data/migration_data_table_totabund_all_singleton_mapped_full_wT0_20210918.csv')    
     otu_first_line = otu.readline()
     otu_first_line = otu_first_line.strip().split(',')
 

@@ -278,7 +278,8 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     ax.axvline(x=np.median(ks_simulated), ls=':', lw=3, c='k', label='Median simulated ' +  r'$\mathrm{KS}$')
 
     #ax.set_xlabel('Simulated ' + r'$D$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
-    ax.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    #ax.set_xlabel('Simulated ' + r'$\mathrm{KS}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    ax.set_xlabel('Predicted ' + r'$\mathrm{KS}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
 
     ax.set_ylabel('Probability density',  fontsize=11)
 
@@ -293,6 +294,6 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/afd_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/afd_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/afd_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

@@ -315,7 +315,9 @@ ax_no.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='b
 ax_global.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_global.transAxes)
 
 ax_no.hist(f_no_migration_all, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('No_migration',4)], histtype='stepfilled', label="Observed",  density=True, zorder=2)
-ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Null', density=True, zorder=1)
+ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Permutation-based null', density=True, zorder=1)
+#ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Predicted', density=True, zorder=1)
+
 # survival distribution
 #x_range = np.logspace(0, max(), num=100, endpoint=True, base=10.0)
 
@@ -342,7 +344,7 @@ ax_global.set_xlim([0, max(f_global_migration_all)+1])
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/cv_f_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/cv_f_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + '/figs/cv_f_hist.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
 plt.close()

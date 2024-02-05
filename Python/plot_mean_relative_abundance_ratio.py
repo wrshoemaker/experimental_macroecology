@@ -174,7 +174,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     if p_value < 0.05:
         p_value_text = r'$P < 0.05$'
     else:
-        p_value_text = r'$P \nless 0.05$'
+        p_value_text = r'$P \geq 0.05$'
 
     #ax_parent.text(0.2,0.92, r'$\rho^{2}=$' + str(round(r_value**2,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
     #ax_parent.text(0.2,0.8, p_value_text, fontsize=10, color='k', ha='center', va='center', transform=ax_parent.transAxes )
@@ -352,7 +352,9 @@ ax_z_simulation.hist(z_simulation_best_parameters, lw=3, alpha=0.8, bins=10, col
 ax_z_simulation.axvline(x=z, ls='--', lw=3, c='k', label='Observed ' +  r'$Z_{\rho}$')
 ax_z_simulation.legend(loc="upper right", fontsize=8)
 #ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + '\nfrom optimal ' + r'$\tau$' + ' and ' + r'$\sigma$', fontsize=11)
-ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+#ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_z_simulation.set_xlabel('Predicted ' + r'$Z_{\rho}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+
 ax_z_simulation.set_ylabel('Probability density',  fontsize=11)
 
 
@@ -360,17 +362,19 @@ ax_t_slope_simulation.hist(t_slope_simulation_best_parameters, lw=3, alpha=0.8, 
 ax_t_slope_simulation.axvline(x=t_slope, ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
 ax_t_slope_simulation.legend(loc="upper right", fontsize=8)
 #ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + 'from optimal ' + r'$\tau$' + ' and ' + r'$\sigma$', fontsize=11)
-ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+#ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+ax_t_slope_simulation.set_xlabel('Predicted ' + r'$t_{\mathrm{slope}}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
+
 ax_t_slope_simulation.set_ylabel('Probability density',  fontsize=11)
 ax_z_simulation.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_z_simulation.transAxes)
 ax_t_slope_simulation.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_t_slope_simulation.transAxes)
 
 
 
-fig.text(0.15, 0.925, "Regional migration simulation statistics", va='center', fontsize=20)
+fig.text(0.27, 0.925, "Regional migration statistics", va='center', fontsize=20)
 
 
 fig.subplots_adjust(wspace=0.4, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

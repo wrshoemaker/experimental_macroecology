@@ -69,7 +69,7 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
         if trasfer_idx == 0:
 
             title = utils.titles_no_inocula_dict[migration_innoculum]
-            ax_plot.set_title(title, fontsize=12, fontweight='bold' )
+            ax_plot.set_title(title, fontsize=18, fontweight='bold' )
 
 
         if plot_count == 0:
@@ -96,11 +96,11 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
 
         if migration_innoculum_idx == 0:
 
-            ax_plot.text(-0.3,0.5, 'Transfer %d' % transfer, fontsize=12, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax_plot.transAxes )
+            ax_plot.text(-0.35,0.5, 'Transfer %d' % transfer, fontsize=18, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax_plot.transAxes )
 
         
         #ax_plot.text(-0.1, 1.04, plot_utils.sub_plot_labels[3*migration_innoculum_idx + trasfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_plot.transAxes)
-        ax_plot.text(-0.1, 1.04, plot_utils.sub_plot_labels[migration_innoculum_idx + 3*trasfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_plot.transAxes)
+        ax_plot.text(-0.1, 1.05, plot_utils.sub_plot_labels[migration_innoculum_idx + 3*trasfer_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_plot.transAxes)
 
         
         plot_count+=1
@@ -134,6 +134,8 @@ for migration_innoculum_idx, migration_innoculum in enumerate(migration_innocula
     idx_slope = np.arange(n_12 + n_18)
 
     slope_18, slope_12, t_slope, intercept_18, intercept_12, t_intercept, r_value_18, r_value_12 = utils.t_statistic_two_slopes(mean_log10_18, variance_log10_18, mean_log10_12, variance_log10_12)
+    
+    print(10**intercept_18, 10**intercept_12)
     t_slope_null_all = []
     t_intercept_null_all = []
     iter_ = 10000
@@ -209,14 +211,20 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     ax.hist(slope_t_test, lw=3, alpha=0.8, bins=10, color=utils.color_dict[migration_innocula[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
     ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')
     ax.axvline(x=t_slope_all[treatment_idx], ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
-    ax.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    ax.set_xlabel('Predicted ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n parameters, ' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
     ax.set_ylabel('Probability density',  fontsize=11)
+    
 
-    ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[6 + treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
+    ax.text(-0.1, 1.05, plot_utils.sub_plot_labels[6 + treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
 
 
     if treatment_idx == 0:
         ax.legend(loc="upper right", fontsize=8)
+
+        ax.text(-0.41,0.5, 'Difference in slopes b/w\ntransfers 18 and 12', fontsize=18, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax.transAxes )
+
+
+
 
 
 
@@ -232,13 +240,10 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
 #slope_t_test_simulation = np.asarray([slope_t_test_simulation_parent_migration])
 
 
-#best_tau, best_sigma = utils.weighted_euclidean_distance(tau_all, sigma_all, t_slope_all, slope_t_test_simulation)
-
-
 
 
 fig.subplots_adjust(wspace=0.32, hspace=0.4)
-#fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/taylors_law_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
 plt.close()

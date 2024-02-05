@@ -472,7 +472,9 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     ax.hist(slope_t_test, lw=3, alpha=0.8, bins=10, color=utils.color_dict[migration_innocula[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
     ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')
     ax.axvline(x=t_slope_all[treatment_idx], ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
-    ax.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=18)
+    #ax.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=18)
+    ax.set_xlabel('Predicted ' + r'$t_{\mathrm{slope}}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=18)
+
     ax.set_ylabel('Probability density',  fontsize=20)
 
     ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[12 + treatment_idx], fontsize=18, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
@@ -487,6 +489,6 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.25)
-#fig.savefig(utils.directory + "/figs/afd_and_taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/afd_and_taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/afd_and_taylors_law_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

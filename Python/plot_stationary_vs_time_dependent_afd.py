@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 
 
+
 def A(sigma, k):
 
     return ((2/(k*sigma))**(1 + (2/sigma)*(1-sigma))) / gamma(((2/sigma)*(1-sigma)) + 1)
@@ -110,6 +111,11 @@ def prob_x_migration(x, sigma, tau, k):
 
 
 
+def prob_x(x, sigma, k):
+
+
+    return (1/gamma( (2/sigma)-1 )) * ((2/(k*sigma))**((2/sigma)-1)) * np.exp(- x*2/(k*sigma)) * (x**((2/sigma)-2) )
+
 
 
 
@@ -143,6 +149,8 @@ prob_x_t_1 = []
 prob_x_t_100 = []
 prob_x_t_10000 = []
 prob_x_migration_all = []
+
+prob_x_t_infty = []
 for x in x_range:
     #print(x)
     prob_x_t_1.append(prob_x_time_dependent(x, 1, x_0, sigma, tau, k, M))
@@ -151,6 +159,11 @@ for x in x_range:
 
     prob_x_migration_all.append(prob_x_migration(x, sigma, tau, k))
 
+
+    prob_x_t_infty.append(prob_x(x, sigma, k))
+
+
+print(prob_x_t_infty)
 
 #p_t_4  = np.asarray([])
 
@@ -169,18 +182,23 @@ prob_x_migration_all = np.asarray(prob_x_migration_all)
 
 
 x_range = np.asarray(x_range)
-ax.plot(x_range/N_total, prob_x_t_1, ls='-', c='lightskyblue', label=r'$\frac{t}{\tau} = 10^{0}$' )
-ax.plot(x_range/N_total, prob_x_t_100, ls='-', c='cornflowerblue', label=r'$\frac{t}{\tau} = 10^{1}$')
-ax.plot(x_range/N_total, prob_x_t_10000, ls='-', c='royalblue', label=r'$\frac{t}{\tau} = 10^{2}$')
+ax.plot(x_range/N_total, prob_x_t_1, ls='-', c='lightskyblue', label= "Migration as an initial condition, " + r'$\frac{t}{\tau} = 10^{0}$' )
+ax.plot(x_range/N_total, prob_x_t_100, ls='-', c='cornflowerblue', label= "Migration as an initial condition, " + r'$\frac{t}{\tau} = 10^{1}$')
+ax.plot(x_range/N_total, prob_x_t_10000, ls='-', c='royalblue', label="Migration as an initial condition, " + r'$\frac{t}{\tau} = 10^{2}$')
 
-ax.plot(x_range/N_total, prob_x_migration_all, ls='-', c='firebrick', label="Constant migration")
+ax.plot(x_range/N_total, prob_x_migration_all, ls='-', c='firebrick', label="Stationary AFD, constant migration")
 
+
+
+#prob_x_t_infty = 
+
+ax.plot(x_range/N_total, prob_x_t_infty, ls=':',  c='k', label= "Stationary AFD, no migration")
 
 
 ax.set_ylim([1/N_total, 1])
 #ax.set_ylim([1e-4, 1])
 ax.set_ylim([1e-8, 5e-3])
-ax.legend(loc="lower left", fontsize=8)
+ax.legend(loc="lower left", fontsize=7)
 
 ax.set_xscale('log', basex=10)
 ax.set_yscale('log', basey=10)
@@ -190,7 +208,7 @@ ax.set_ylabel('Probability density', fontsize=12)
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/stationary_vs_time_dependent_afd.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/stationary_vs_time_dependent_afd.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/stationary_vs_time_dependent_afd.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
 

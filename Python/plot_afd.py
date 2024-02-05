@@ -12,7 +12,7 @@ import utils
 from matplotlib import cm
 
 from itertools import combinations
-import statsmodels.stats.multitest as multitest
+#import statsmodels.stats.multitest as multitest
 
 
 #afd_migration_transfer_12

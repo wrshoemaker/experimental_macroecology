@@ -204,8 +204,8 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     ax_cv.text(0.2,0.9, r'$\rho=$' + str(round(rho,3)), fontsize=10, color='k', ha='center', va='center', transform=ax_cv.transAxes )
     ax_cv.text(0.18,0.8, p_value_to_plot, fontsize=10, color='k', ha='center', va='center', transform=ax_cv.transAxes )
 
-    ax_cv.set_xlabel('No migration coefficient of variation, ' + r'$\mathrm{CV}_{x_{i}}(t)$', fontsize=10)
-    ax_cv.set_ylabel('Global migration coefficient of variation, ' + r'$\mathrm{CV}_{x_{i}}(t)$', fontsize=9)
+    ax_cv.set_xlabel('No migration coefficient of variation, ' + r'$\mathrm{CV}_{x_{i}}$', fontsize=10)
+    ax_cv.set_ylabel('Global migration coefficient of variation, ' + r'$\mathrm{CV}_{x_{i}}$', fontsize=9)
 
     ax_cv.set_xscale('log', basex=10)
     ax_cv.set_yscale('log', basey=10)
@@ -272,7 +272,7 @@ for measure in ['mean', 'CV']:
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_global.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_global.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + '/figs/mean_relative_abundance_comparison_global.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
 

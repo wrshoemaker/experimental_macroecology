@@ -67,25 +67,32 @@ ax.plot(t_range, mean_x_T, ls='-', c='steelblue', lw=2)
 ax.set_xlim([0, len(mean_x_T)-1]) 
 ax.set_ylim([4e-2, 1])
 ax.set_yscale('log', basey=10)
-ax.set_xlabel("Cumulative generations", fontsize=12)
+#ax.set_xlabel("Cumulative generations", fontsize=12)
+ax.set_xlabel("Transfer, " + r'$k$', fontsize=12)
 ax.set_ylabel('Relative abundance, ' + r'$x_{i}$', fontsize=12)
 
 ax.axhline(y=K, lw=2, ls=':', c='k')
 ax.axvline(x=7, lw=2, ls='-', c='k')
 ax.axvline(x=14, lw=2, ls='-', c='k')
 
+ax.axhline(y=x_0, lw=2, ls='--', c='k')
+
+
+
 ax.set_xticks([0, 7, 14, 21])
-ax.set_xticklabels(['0', '7', '14', '21'])
+#ax.set_xticklabels(['0', '7', '14', '21'])
+ax.set_xticklabels(['0', '1', '2', '3'])
 
 #ax.axhline(1, lw=1.5, ls=':',color='k', zorder=1)
 
 
-legend_elements = [Line2D([0], [0], color='lightblue', lw=2, label='Replicate'),
-                   Line2D([0], [0], color='steelblue', lw=2, label='Ensemble mean')]
+legend_elements = [Line2D([0], [0], color='lightblue', lw=2, label='One replicate community'),
+                   Line2D([0], [0], color='steelblue', lw=2, label='Mean over all replicates'),
+                   Line2D([0], [0], color='k', lw=2, ls='--', label=r'$x_{i, \mathrm{progenitor}}$')]
 
 # Line2D([0], [0], color='k', lw=2, ls='--', label='Carrying capacity, ' + r'$K_{i}$')
 
-ax.legend(handles=legend_elements, loc='upper right', fontsize=8)
+ax.legend(handles=legend_elements, loc='upper right', fontsize=8, framealpha=0.9)
 
 
 # ax.annotate("", xy=(0, 0.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
@@ -99,7 +106,7 @@ ax.legend(handles=legend_elements, loc='upper right', fontsize=8)
 
 
 fig.subplots_adjust(wspace=0.25, hspace=0.2)
-#fig.savefig(utils.directory + "/figs/example_langevin.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/example_langevin.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/example_langevin.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
 plt.close()

@@ -111,7 +111,7 @@ def plot_rarefaction():
 
     ax.legend(loc="lower right", fontsize=8)
 
-    #fig.savefig(utils.directory + '/figs/rarefied_richness.png', format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
+    fig.savefig(utils.directory + '/figs/rarefied_richness.png', format='png', bbox_inches = "tight", pad_inches = 0.4, dpi = 600)
     fig.savefig(utils.directory + '/figs/rarefied_richness.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
     plt.close()

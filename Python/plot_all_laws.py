@@ -156,7 +156,10 @@ ax_afd.set_xlabel('Rescaled log relative abundance', fontsize=12)
 ax_afd.set_ylabel('Probability density', fontsize=12)
 
 
-x_range = np.linspace(min(afd_log10_rescaled_all_cutoff) , max(afd_log10_rescaled_all_cutoff) , 10000)
+#x_range = np.linspace(min(afd_log10_rescaled_all_cutoff), max(afd_log10_rescaled_all_cutoff) , 10000)
+x_range = np.linspace(min(afd_log10_rescaled_all_cutoff), 3, 10000)
+
+#print(x_range)
 #x_range_log_rescaled = (np.log10(x_range) - afd_log_all_mean) / afd_log_all_std
 #gammalog  <- function(x, k) { (1.13*x - 0.9 * exp(x)) + 0.5 }
 #gammalog  <- function(x, k = 1.7) { ( k*trigamma(k)*x - exp( sqrt(trigamma(k))*x+ digamma(k)) ) - log(gamma(k)) + k*digamma(k) + log10(exp(1)) }
@@ -252,7 +255,7 @@ bins_occupancies = np.asarray(bins_occupancies)
 bins_mean_all_to_keep_no_nan = bins_mean_all_to_keep[(~np.isnan(bins_mean_all_to_keep)) & (~np.isnan(bins_occupancies))]
 bins_occupancies_no_nan = bins_occupancies[(~np.isnan(bins_mean_all_to_keep)) & (~np.isnan(bins_occupancies))]
 
-ax_mad_vs_occupancy.plot(10**bins_mean_all_to_keep_no_nan, 10**bins_occupancies_no_nan, lw=2,ls='-',c='k',zorder=2, label='Prediction')
+ax_mad_vs_occupancy.plot(10**bins_mean_all_to_keep_no_nan, 10**bins_occupancies_no_nan, lw=2,ls='-',c='k',zorder=2, label='Predicted occupancy')
 ax_mad_vs_occupancy.set_xscale('log', basex=10)
 ax_mad_vs_occupancy.set_yscale('log', basey=10)
 ax_mad_vs_occupancy.set_xlabel('Mean relative abundance', fontsize=12)
@@ -314,7 +317,7 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/all_laws.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + "/figs/all_laws.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/all_laws.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/all_laws.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
 plt.close()
