@@ -60,8 +60,12 @@ def get_color_attractor(attractor, transfer):
 
 
 
-color_dict_range = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green, ('No_migration',40): rgb_orange}
-color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_red[12], ('Parent_migration', 4):rgb_green[12], ('No_migration',40):rgb_orange[12] }
+#color_dict_range = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green, ('No_migration',40): rgb_orange}
+#color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_red[12], ('Parent_migration', 4):rgb_green[12], ('No_migration',40):rgb_orange[12] }
+
+color_dict_range = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_green, ('Parent_migration', 4):rgb_red, ('No_migration',40): rgb_orange}
+color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_green[12], ('Parent_migration', 4):rgb_red[12], ('No_migration',40):rgb_orange[12] }
+
 
 attractor_latex_dict = {'Alcaligenaceae': r'$Alcaligenaceae$', 'Pseudomonadaceae': r'$Pseudomonadaceae$'}
 
