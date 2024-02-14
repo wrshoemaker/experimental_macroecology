@@ -211,7 +211,7 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     ax.hist(slope_t_test, lw=3, alpha=0.8, bins=10, color=utils.color_dict[migration_innocula[treatment_idx]], histtype='stepfilled', density=True, zorder=2)
     ax.axvline(x=0, ls=':', lw=3, c='k', label='Null')
     ax.axvline(x=t_slope_all[treatment_idx], ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
-    ax.set_xlabel('Predicted ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n parameters, ' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
+    ax.set_xlabel('Predicted ' + r'$t_{\mathrm{exponent}}$' + ' from optimal\n parameters, ' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=11)
     ax.set_ylabel('Probability density',  fontsize=11)
     
 
@@ -221,7 +221,7 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     if treatment_idx == 0:
         ax.legend(loc="upper right", fontsize=8)
 
-        ax.text(-0.41,0.5, 'Difference in slopes b/w\ntransfers 18 and 12', fontsize=18, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax.transAxes )
+        ax.text(-0.41,0.5, 'Difference in exponents\nb/w transfers 18 and 12', fontsize=18, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax.transAxes )
 
 
 

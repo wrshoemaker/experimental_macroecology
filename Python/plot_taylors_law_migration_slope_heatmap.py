@@ -105,7 +105,7 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     delta_range = max([t_test_dict[treatment]['slope']  - np.amin(tau_t_test_slope_all),  np.amax(tau_t_test_slope_all) - t_test_dict[treatment]['slope'] ])
     pcm_slope = ax_slope.pcolor(x_axis_log10, y_axis, tau_t_test_slope_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=t_test_dict[treatment]['slope']-delta_range, vcenter=t_test_dict[treatment]['slope'], vmax=t_test_dict[treatment]['slope']+delta_range))
     clb_slope = plt.colorbar(pcm_slope, ax=ax_slope)
-    clb_slope.set_label(label='Change in slope after cessation of migration, ' + r'$t_{\mathrm{slope}}$' , fontsize=10)
+    clb_slope.set_label(label='Change in exponent after cessation of migration, ' + r'$t_{\mathrm{exponent}}$' , fontsize=10)
     ax_slope.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 12)
     ax_slope.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 12)
     ax_slope.xaxis.set_major_formatter(plot_utils.fake_log)
@@ -129,7 +129,7 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     # slope error
     pcm_slope_error = ax_slope_error.pcolor(x_axis_log10, y_axis, tau_t_test_slope_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(tau_t_test_slope_error_all), vcenter=np.median(np.ndarray.flatten(tau_t_test_slope_error_all)), vmax=np.amax(tau_t_test_slope_error_all)))
     clb_slope_error = plt.colorbar(pcm_slope_error, ax=ax_slope_error)
-    clb_slope_error.set_label(label='Relative error of ' + r'$t_{\mathrm{slope}}$'  + ' from simulated data', fontsize=10)
+    clb_slope_error.set_label(label='Relative error of ' + r'$t_{\mathrm{exponent}}$'  + ' from simulated data', fontsize=10)
     ax_slope_error.set_xlabel("Strength of growth rate fluctuations, " + r'$\sigma$', fontsize = 12)
     ax_slope_error.set_ylabel("Timescale of growth, " + r'$\tau$', fontsize = 12)
     ax_slope_error.xaxis.set_major_formatter(plot_utils.fake_log)
@@ -137,11 +137,11 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
 
 
 
-fig.text(0.36, 0.95, "Taylor's Law slope simulations", va='center', fontsize=25)
+fig.text(0.36, 0.95, "Taylor's Law exponent simulations", va='center', fontsize=25)
 
 
 
 fig.subplots_adjust(wspace=0.3, hspace=0.25)
-#fig.savefig(utils.directory + "/figs/taylors_law_migration_slope_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/taylors_law_migration_slope_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/taylors_law_migration_slope_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
