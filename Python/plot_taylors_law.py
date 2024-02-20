@@ -106,6 +106,7 @@ se_cv = np.std(all_cvs, ddof=1) / np.sqrt(np.size(all_cvs))
 print("Mean CV +/- S.E.")
 print(np.mean(all_cvs), se_cv)
 
+
 intercept = np.mean(np.log10(all_vars) - 2*np.log10(all_means))
 x_log10_range =  np.linspace(min(np.log10(all_means)) , max(np.log10(all_means)) , 10000)
 y_log10_null_range = 10 ** (2*x_log10_range + intercept)
