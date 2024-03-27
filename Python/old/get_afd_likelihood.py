@@ -351,10 +351,10 @@ def calculate_all_likelihoods(carbon_source, alfapriorq_list, betapriorq_all):
     sys.stderr.write("Done with %s species!\n" % carbon_source)
     sys.stderr.write("Writing intermediate file...\n")
     intermediate_filename = "%s/data/%s_gamma_likelihood.csv" % (utils.directory, carbon_source)
-    file = open(intermediate_filename,"w")
+    file_ = open(intermediate_filename,"w")
     record_str = "\n".join(record_strs)
-    file.write(record_str)
-    file.close()
+    file_.write(record_str)
+    file_.close()
     sys.stderr.write("Done!\n")
 
 

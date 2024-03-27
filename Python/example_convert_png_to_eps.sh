@@ -1,0 +1,1 @@
+convert rarefied_richness.png eps3:rarefied_richness.eps

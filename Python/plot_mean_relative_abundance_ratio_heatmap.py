@@ -385,6 +385,6 @@ fig.text(0.2, 0.95, "Regional migration statistics", va='center', fontsize=25)
 
 
 fig.subplots_adjust(wspace=0.4, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()
