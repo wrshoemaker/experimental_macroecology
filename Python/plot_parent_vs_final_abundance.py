@@ -71,7 +71,7 @@ for treatment_idx, treatment in enumerate(['No_migration.4.T12', 'No_migration.4
 
 
     ax.plot([0.9*(10**-7),1.01], [0.9*(10**-7),1.01], lw=3,ls='--',c='k',zorder=1, label='1:1')
-    ax.scatter(source, final, alpha=0.8, c=color_dict[treatment].reshape(1,-1), zorder=2)#, c='#87CEEB')
+    ax.scatter(source, final, alpha=0.8, c=color_dict[treatment].reshape(1,-1), zorder=2, label='One ASV')#, c='#87CEEB')
 
     # regressions
     #slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(source), np.log10(final))

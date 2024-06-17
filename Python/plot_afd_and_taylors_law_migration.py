@@ -476,7 +476,6 @@ for treatment_idx, treatment in enumerate(treatments_no_innoculum):
     ax.set_xlabel('Predicted ' + r'$t_{\mathrm{slope}}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(tau_best, 2)) + ' and ' + r'$\sigma = $' + str(round(sigma_best, 3)), fontsize=18)
 
     ax.set_ylabel('Probability density',  fontsize=20)
-
     ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[12 + treatment_idx], fontsize=18, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
 
     if treatment_idx == 0:

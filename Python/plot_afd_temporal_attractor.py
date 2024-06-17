@@ -47,6 +47,11 @@ transfers = [12, 18]
 
 
 attractor_dict = utils.get_attractor_status(migration='No_migration', inocula=4)
+n_Alcaligenaceae = len(attractor_dict['Alcaligenaceae'])
+n_Pseudomonadaceae = len(attractor_dict['Pseudomonadaceae'])
+
+print(n_Alcaligenaceae, n_Pseudomonadaceae)
+
 
 afd_dict_merged_attractors = {}
 
@@ -78,6 +83,7 @@ for attractor_idx, attractor in enumerate(attractor_dict.keys()):
         attractor_species_idx = [~np.all(relative_s_by_s_attractor == 0, axis=1)][0]
         attractor_species = np.asarray(species)[attractor_species_idx]
         relative_s_by_s_attractor = relative_s_by_s_attractor[attractor_species_idx]
+        print(attractor, transfer, relative_s_by_s_attractor.shape[1])
 
         afd, rescaled_afd = utils.get_flat_rescaled_afd(relative_s_by_s_attractor)
 
@@ -87,7 +93,7 @@ for attractor_idx, attractor in enumerate(attractor_dict.keys()):
         #afd = np.log10(afd)
 
 
-        afd_dict[attractor][transfer] = relative_s_by_s_attractor
+        afd_dict[attractor][transfer] = rescaled_afd
 
 
 
@@ -111,9 +117,8 @@ for combo in treatment_combinations:
         afd_experiment_1 = afd_dict[combo[0]][transfer]
         afd_experiment_2 = afd_dict[combo[1]][transfer]
 
-        print(afd_dict.keys())
-        print(afd_experiment_1)
-
+        #print(afd_experiment_1)
+        #print(afd_experiment_2)
 
         D, pvalue = stats.ks_2samp(afd_experiment_1, afd_experiment_2)
 
@@ -136,6 +141,8 @@ for attractor in attractor_dict.keys():
     treatment_combinations.append((attractor, 'All'))
 
     for transfer in transfers:
+
+
 
         afd_merged_attractors = distances_dict[(attractor, 'All')][transfer] = {}
 
@@ -186,7 +193,7 @@ for experiment_idx, experiment in enumerate(list(attractor_dict.keys())):
     ax.legend(loc="upper right", fontsize=8)
     ax.set_xlabel('Relative abundance, ' +  r'$\mathrm{log}_{10}$' , fontsize=12)
     ax.set_ylabel('Probability density', fontsize=12)
-    ax.set_xlim(-5.5, 0.2)
+    #ax.set_xlim(-5.5, 0.2)
 
 
 #ax.set_xscale('log', basex=10)

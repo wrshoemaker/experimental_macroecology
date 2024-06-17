@@ -21,7 +21,7 @@ python plot_example_langevin.py
 #python plot_afd_with_simulation.py
 python plot_afd_migration.py
 
-# Figure 5
+# Figure 5 Taylor's law with simulation 
 python plot_taylors_law_migration.py
 
 # Figure 6

@@ -280,15 +280,10 @@ for experiment_idx, experiment in enumerate(experiments):
     cv_over_all_species_t_before = np.asarray(list(itertools.chain(*cv_over_all_species_t_before)))
     cv_over_all_species_t_after = np.asarray(list(itertools.chain(*cv_over_all_species_t_after)))
 
-    species_over_all_species_t_before_flat = np.asarray(list(itertools.chain(*species_over_all_species_t_before)))
-    species_over_all_species_t_after_flat = np.asarray(list(itertools.chain(*species_over_all_species_t_after)))
-
     #print(len(cv_over_all_species_t_before), len(cv_over_all_species_t_after))
-    n_paired_events = 0
-
 
     ks_statistic_cv_over_all_species_t, p_value_cv_over_all_species_t = utils.run_permutation_ks_test(cv_over_all_species_t_before, cv_over_all_species_t_after, n=2)
-    #(experiment, len(cv_over_all_species_t_before), len(cv_over_all_species_t_after), len(np.intersect1d(species_over_all_species_t_before_flat, species_over_all_species_t_after_flat ) ))
+    
 
     treatment_str = experiment[0].lower()
     ks_test_dict[treatment_str] = {}
@@ -345,7 +340,6 @@ for experiment_idx, experiment in enumerate(experiments):
             cv_over_all_species_t_after_null = np.asarray(cv_over_all_species_t_after_null)
 
             #ks_statistic_cv_over_all_species_t_null, p_value_cv_over_all_species_t_null = utils.run_permutation_ks_test(cv_over_all_species_t_before_null, cv_over_all_species_t_after_null)
-
             ks_statistic_cv_over_all_species_t_null, p_value_cv_over_all_species_t_null = stats.ks_2samp(cv_over_all_species_t_before_null, cv_over_all_species_t_after_null)
             ks_statistic_cv_over_all_species_t_null_all.append(ks_statistic_cv_over_all_species_t_null)
 

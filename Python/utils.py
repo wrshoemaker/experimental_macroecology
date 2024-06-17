@@ -63,8 +63,11 @@ def get_color_attractor(attractor, transfer):
 #color_dict_range = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_red, ('Parent_migration', 4):rgb_green, ('No_migration',40): rgb_orange}
 #color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_red[12], ('Parent_migration', 4):rgb_green[12], ('No_migration',40):rgb_orange[12] }
 
+experiments = [('No_migration',4), ('Global_migration',4), ('Parent_migration', 4), ('No_migration',40)]
 color_dict_range = {('No_migration',4):rgb_blue, ('Global_migration',4):rgb_green, ('Parent_migration', 4):rgb_red, ('No_migration',40): rgb_orange}
 color_dict = {('No_migration',4):rgb_blue[12], ('Global_migration',4):rgb_green[12], ('Parent_migration', 4):rgb_red[12], ('No_migration',40):rgb_orange[12] }
+
+experiments_no_inocula = [ 'no_migration', 'global_migration', 'parent_migration']
 
 
 attractor_latex_dict = {'Alcaligenaceae': r'$Alcaligenaceae$', 'Pseudomonadaceae': r'$Pseudomonadaceae$'}
@@ -233,6 +236,8 @@ def bootstrap_estimate_ks(array_1, array_2, size=50, n=10000):
 
 
 def t_statistic_two_slopes(x_1, y_1, x_2, y_2):
+
+    # difference is between (1 - 2)
 
     slope_1, intercept_1, r_value_1, p_value_1, std_err_1 = stats.linregress(x_1, y_1)
     slope_2, intercept_2, r_value_2, p_value_2, std_err_2 = stats.linregress(x_2, y_2)
@@ -1342,8 +1347,6 @@ def get_s_by_s_migration_test_singleton(transfer=18, migration='No_migration', i
 
         if (int(line[4]) == transfer) and (treatment_line == migration) and (int(line[3]) == inocula):
 
-            #print(line)
-
             sample_line = line[5]
             sample_line = sample_line.strip()
             sample_line = re.sub(r'["]', '', sample_line)
@@ -2209,7 +2212,103 @@ def weighted_euclidean_distance(tau_all, sigma_all, obs, pred):
     return best_tau, best_sigma
 
 
+
+def get_flat_rescaled_afd(s_by_s, min_occupancy=0):
+
+    rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+    occupancy = np.sum(rel_s_by_s>0, axis=0)/s_by_s.shape[0]
+
+    rel_s_by_s_subset = rel_s_by_s[:,occupancy>=min_occupancy]
+
+    afd_log10_all = []
+    rescaled_afd_log10_all = []
+    for afd in rel_s_by_s_subset.T:
+        
+        afd_log10 = np.log10(afd[afd>0])
+        rescaled_afd_log10 = (afd_log10 - np.mean(afd_log10))/np.std(afd_log10)
+        afd_log10_all.append(afd_log10)
+        rescaled_afd_log10_all.append(rescaled_afd_log10)
+
+
+    afd_log10_all = np.concatenate(afd_log10_all, axis=0 )
+    rescaled_afd_log10_all = np.concatenate(rescaled_afd_log10_all, axis=0 )
+    
+    return afd_log10_all, rescaled_afd_log10_all
+
+
+
+
+
 # fasta code
 
+def get_rep_number_and_read_count_dict():
 
+    # 20 reps in ('No_migration',4) transfer 12
+    # 92 reps in ('No_migration',4) transfer 18
+
+    # get a dictionary specifying sample IDs, number of reps, and number of reads
+
+    #experiments = [('No_migration',4), ('Parent_migration', 4) , ('Global_migration',4), ('No_migration',40)]
+
+    rep_number_and_read_count_dict = {}
+    for experiment in experiments:
+
+        rep_number_and_read_count_dict[experiment] = {}
+
+        for t in range(1,19):
+
+            s_by_s, species, comm_rep_list = get_s_by_s_migration_test_singleton(transfer=t, migration=experiment[0], inocula=experiment[1])
+            n_reads = np.sum(s_by_s, axis=0)
+
+            if len(comm_rep_list) == 0:
+                continue
+
+            comm_rep_list = np.asarray(comm_rep_list)
+            comm_rep_list = comm_rep_list.astype(int)
+            # index start at zero
+            #comm_rep_list = comm_rep_list
+            #comm_rep_list = np.sort(comm_rep_list)
+
+            # index start at zero
+            rep_number_and_read_count_dict[experiment][t-1] = {}
+            rep_number_and_read_count_dict[experiment][t-1]['community_reps'] = comm_rep_list
+            # index starts at zero and communities are numbered starting at one
+            rep_number_and_read_count_dict[experiment][t-1]['community_reps_idx'] = comm_rep_list - 1
+            rep_number_and_read_count_dict[experiment][t-1]['n_reads'] = n_reads
+            rep_number_and_read_count_dict[experiment][t-1]['n_samples'] = len(comm_rep_list)
+
+
+    return rep_number_and_read_count_dict
+
+
+
+
+def get_sample_intersect_12_18_dict():
+
+    intersection_dict = {}
+    intersection_dict['intersection'] = {}
+    intersection_dict['intersection_idx'] = {}
+    for experiment in experiments:
+        comm_rep_list_12 = get_s_by_s_migration_test_singleton(transfer=12, migration=experiment[0], inocula=experiment[1])[2]
+        comm_rep_list_18 = get_s_by_s_migration_test_singleton(transfer=18, migration=experiment[0], inocula=experiment[1])[2]
+        comm_rep_intersect = np.intersect1d(comm_rep_list_12, comm_rep_list_18)
+        intersection_dict['intersection'][experiment] = comm_rep_intersect
+
+
+    # get the indices of the elements in the intersection for each community...
+    for experiment in experiments:
+        intersection_array = intersection_dict['intersection'][experiment]
+        intersection_dict['intersection_idx'][experiment] = {}
+        for t in [12,18]:
+            comm_rep_list = get_s_by_s_migration_test_singleton(transfer=t, migration=experiment[0], inocula=experiment[1])[2]
+            comm_rep_list = np.asarray(comm_rep_list)
+            intersection_t_idx = np.asarray([np.where(comm_rep_list==k)[0][0] for k in intersection_array])
+            intersection_dict['intersection_idx'][experiment][t] = intersection_t_idx
+            
+
+    return intersection_dict
+
+
+
+#get_rep_number_and_read_count_dict()
 

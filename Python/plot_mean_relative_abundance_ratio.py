@@ -128,7 +128,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
     color = utils.color_dict_range[('Parent_migration', 4)][transfer-1].reshape(1,-1)
 
-    ax_compare.scatter(no_migration_treatment_all, migration_treatment_all, alpha=0.8, c=color, zorder=2)
+    ax_compare.scatter(no_migration_treatment_all, migration_treatment_all, alpha=0.8, c=color, zorder=2, label='One ASV')
     ax_compare_min = min(no_migration_treatment_all + migration_treatment_all)
     ax_compare_max = max(no_migration_treatment_all + migration_treatment_all)
 
@@ -156,7 +156,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     ax_compare.set_yscale('log', basey=10)
     #ax_compare.legend(loc="lower right", fontsize=8)
 
-    ax_parent.scatter(parent_all, ratios_all, alpha=0.8, c=color, zorder=2)
+    ax_parent.scatter(parent_all, ratios_all, alpha=0.8, c=color, zorder=2, label='One ASV')
     ax_parent.axhline(1, lw=1.5, ls=':',color='k', zorder=1, label='Null')
     #ax_parent.set_xlim(0.6*min(obs), 2*max(obs))
     #ax_parent.set_ylim(0.6*min(obs), 2*max(obs))
@@ -203,7 +203,7 @@ for transfer_idx, transfer in enumerate(utils.transfers):
     
     if transfer_idx == 0:
         ax_compare.legend(loc="lower right", fontsize=8) 
-        ax_parent.legend(loc="lower right", fontsize=8)
+        ax_parent.legend(loc="lower left", fontsize=8)
 
 
 
@@ -343,32 +343,43 @@ t_slope_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict
 
 
 
+
+
 ax_z_simulation = plt.subplot2grid((3, 2), (2, 0), colspan=1)
 ax_t_slope_simulation = plt.subplot2grid((3, 2), (2, 1), colspan=1)
 
 
+z_simulation_best_parameters = np.sort(z_simulation_best_parameters)
+lower_ci_z = z_simulation_best_parameters[int(0.025*len(z_simulation_best_parameters))]
+upper_ci_z = z_simulation_best_parameters[int(0.975*len(z_simulation_best_parameters))]
 
 ax_z_simulation.hist(z_simulation_best_parameters, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Parent_migration',4)], histtype='stepfilled', density=True, zorder=2)
 ax_z_simulation.axvline(x=z, ls='--', lw=3, c='k', label='Observed ' +  r'$Z_{\rho}$')
-ax_z_simulation.legend(loc="upper right", fontsize=8)
 #ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + '\nfrom optimal ' + r'$\tau$' + ' and ' + r'$\sigma$', fontsize=11)
 #ax_z_simulation.set_xlabel('Simulated ' + r'$Z_{\rho}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
 ax_z_simulation.set_xlabel('Predicted ' + r'$Z_{\rho}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
-
 ax_z_simulation.set_ylabel('Probability density',  fontsize=11)
+ax_z_simulation.axvline(x=lower_ci_z, ls=':', lw=3, c='k', label='95% CIs')
+ax_z_simulation.axvline(x=upper_ci_z, ls=':', lw=3, c='k')
+ax_z_simulation.legend(loc="upper right", fontsize=8)
 
+
+
+t_slope_simulation_best_parameters = np.sort(t_slope_simulation_best_parameters)
+lower_ci_t = t_slope_simulation_best_parameters[int(0.025*len(t_slope_simulation_best_parameters))]
+upper_ci_t = t_slope_simulation_best_parameters[int(0.975*len(t_slope_simulation_best_parameters))]
 
 ax_t_slope_simulation.hist(t_slope_simulation_best_parameters, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Parent_migration',4)], histtype='stepfilled', density=True, zorder=2)
 ax_t_slope_simulation.axvline(x=t_slope, ls='--', lw=3, c='k', label='Observed ' +  r'$t_{\mathrm{slope}}$')
-ax_t_slope_simulation.legend(loc="upper right", fontsize=8)
 #ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + 'from optimal ' + r'$\tau$' + ' and ' + r'$\sigma$', fontsize=11)
 #ax_t_slope_simulation.set_xlabel('Simulated ' + r'$t_{\mathrm{slope}}$' + ' from optimal\n' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
 ax_t_slope_simulation.set_xlabel('Predicted ' + r'$t_{\mathrm{slope}}$' + ' from optimal\nparameters, ' + r'$\tau = $' + str(round(best_tau, 2)) + ' and ' + r'$\sigma = $' + str(round(best_sigma, 3)), fontsize=11)
-
 ax_t_slope_simulation.set_ylabel('Probability density',  fontsize=11)
 ax_z_simulation.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_z_simulation.transAxes)
 ax_t_slope_simulation.text(-0.1, 1.04, plot_utils.sub_plot_labels[5], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_t_slope_simulation.transAxes)
-
+ax_t_slope_simulation.axvline(x=lower_ci_t, ls=':', lw=3, c='k', label='95% CIs')
+ax_t_slope_simulation.axvline(x=upper_ci_t, ls=':', lw=3, c='k')
+ax_t_slope_simulation.legend(loc="upper right", fontsize=8)
 
 
 fig.text(0.27, 0.925, "Regional migration statistics", va='center', fontsize=20)

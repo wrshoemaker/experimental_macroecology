@@ -292,9 +292,10 @@ for experiment_idx, experiment in enumerate(experiments):
     if experiment_idx == 0:
         ax_mean.legend(handles=legend_elements, fontsize=9, loc='upper left')
 
-    #if experiment_idx == 1:
     ax_mean.axhline(y=0, color='k', linestyle='--', lw = 3, zorder=1)
-    ax_mean.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
+
+    if experiment_idx == 1:
+        ax_mean.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
 
 
 
