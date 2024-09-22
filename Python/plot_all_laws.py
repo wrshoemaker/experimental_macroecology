@@ -199,6 +199,15 @@ x_mean_range_log = np.log(x_mean_range)
 #mu_to_plot = all_mu[4]
 mu_to_plot = -10.198
 sigma_to_plot = 3.7983
+
+s_by_s_no_mig_18, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration='No_migration', inocula=4, transfer=18)
+rel_s_by_s_no_mig_18 = (s_by_s_no_mig_18/s_by_s_no_mig_18.sum(axis=0))
+mad_no_mig_18 = np.mean(rel_s_by_s_no_mig_18, axis=1)
+mu_no_mig_18, sigma_no_mig_18 = utils.Klogn(mad_no_mig_18, 0.00001)
+
+print(mu_no_mig_18, sigma_no_mig_18)
+
+
 #c = 10**-20
 #lognorm_pdf = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, c)
 lognorm_pdf_ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-8)
@@ -325,6 +334,5 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
 fig.savefig(utils.directory + "/figs/all_laws.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + "/figs/all_laws.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-
+#fig.savefig(utils.directory + "/figs/all_laws.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

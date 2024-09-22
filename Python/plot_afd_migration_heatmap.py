@@ -144,14 +144,11 @@ def make_ks_dict():
                 distances_dict[combo][transfer][rescaled_status]['pvalue'] = p_value
 
 
-
     for experiment_idx, experiment in enumerate(experiments):
 
         distances_dict[experiment] = {}
 
         for rescaled_status in rescaled_status_all:
-
-            #print(experiment, rescaled_status)
 
             ks_statistic, p_value = utils.run_permutation_ks_test(afd_dict[experiment][transfers[0]][rescaled_status], afd_dict[experiment][transfers[1]][rescaled_status], n=1000)
 
@@ -160,9 +157,7 @@ def make_ks_dict():
             distances_dict[experiment][rescaled_status]['pvalue'] = p_value
 
 
-
         ks_statistic, p_value = utils.run_permutation_ks_test_control(afd_paired_dict[experiment])
-
         distances_dict[experiment]['afd_rescaled_and_paired'] = {}
         distances_dict[experiment]['afd_rescaled_and_paired']['D'] = ks_statistic
         distances_dict[experiment]['afd_rescaled_and_paired']['pvalue'] = p_value
@@ -204,8 +199,6 @@ y_axis = tau_all
 x_axis_log10 = np.log10(x_axis)
 
 for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', 'global_migration' ]):
-
-    
 
     observed = ks_dict[(treatment.capitalize(), 4)][rescaled_status]['D']
 
@@ -294,6 +287,6 @@ fig.text(0.37, 0.95, "AFD simulations", va='center', fontsize=25)
 
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
-#fig.savefig(utils.directory + "/figs/afd_migration_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + "/figs/afd_migration_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/afd_migration_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/afd_migration_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

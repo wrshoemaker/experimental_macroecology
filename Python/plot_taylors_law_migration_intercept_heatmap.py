@@ -116,20 +116,20 @@ for treatment_idx, treatment in enumerate(['no_migration', 'parent_migration', '
     original_ticks = [round(k, 3) for k in original_ticks]
     # remove overlapping ticks
 
-    if treatment_idx == 0:
-        original_ticks.remove(-0.6)
+    #if treatment_idx == 0:
+    #    original_ticks.remove(-0.6)
 
-    elif treatment_idx == 2:
+    #elif treatment_idx == 2:
+    #    original_ticks.remove(-0.4)
+
+    if treatment_idx == 2:
         original_ticks.remove(-0.4)
 
 
     ax_intercept.text(-0.1, 1.04, plot_utils.sub_plot_labels[treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_intercept.transAxes)
     clb_intercept.set_ticks(original_ticks + [t_test_dict[treatment]['intercept']])
     clb_intercept.set_ticklabels(original_ticks + ['Obs.'])
-
     ax_intercept.set_title(utils.titles_str_no_inocula_dict[treatment], fontsize=16)
-
-
 
     # intercept error
     pcm_intercept_error = ax_intercept_error.pcolor(x_axis_log10, y_axis, tau_t_test_intercept_error_all, cmap='YlOrRd', norm=colors.TwoSlopeNorm(vmin=np.amin(tau_t_test_intercept_error_all), vcenter=np.median(np.ndarray.flatten(tau_t_test_intercept_error_all)), vmax=np.amax(tau_t_test_intercept_error_all)))
@@ -147,6 +147,6 @@ fig.text(0.35, 0.95, "Taylor's Law intercept simulations", va='center', fontsize
 
 fig.subplots_adjust(wspace=0.3, hspace=0.25)
 fig.savefig(utils.directory + "/figs/taylors_law_migration_intercept_heatmap.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + "/figs/taylors_law_migration_intercept_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/taylors_law_migration_intercept_heatmap.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
 plt.close()

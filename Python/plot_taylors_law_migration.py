@@ -162,15 +162,16 @@ def make_plot():
         
         slope_t_test_simulation = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18'][treatment]['slope_t_test'])
 
-        euc_dist = np.sqrt((t_slope_all[treatment_idx] - slope_t_test_simulation)**2)
+        euc_dist = np.sqrt(((t_slope_all[treatment_idx] - slope_t_test_simulation)/t_slope_all[treatment_idx])**2)
         min_parameter_idx = np.argmin(euc_dist)
 
         tau_best = tau_all[min_parameter_idx]
         sigma_best = sigma_all[min_parameter_idx]
+
+        print(treatment, tau_best, sigma_best, euc_dist[min_parameter_idx])
         
         label = '%s_taylors' % treatment
-        #if treatment == 'parent_migration':
-        slm_simulation_utils.run_simulation_all_migration_fixed_parameters(tau_best, sigma_best, label, n_iter=1000)
+        #slm_simulation_utils.run_simulation_all_migration_abc(n_iter=1000, tau=tau_best, sigma=sigma_best, label=label)
 
 
 
@@ -181,8 +182,8 @@ def make_plot():
         
         slope_t_test = np.asarray(simulation_all_migration_fixed_parameters_dict['slope_12_vs_18'][treatment]['slope_t_test'])
 
-        tau_best = simulation_all_migration_fixed_parameters_dict['tau_all']
-        sigma_best = simulation_all_migration_fixed_parameters_dict['sigma_all']
+        tau_best = simulation_all_migration_fixed_parameters_dict['tau_all'][0]
+        sigma_best = simulation_all_migration_fixed_parameters_dict['sigma_all'][0]
 
         ax = plt.subplot2grid((3, 3), (2, treatment_idx), colspan=1)
 
@@ -212,19 +213,10 @@ def make_plot():
             ax.text(-0.41,0.5, 'Difference in exponents\nb/w transfers 18 and 12', fontsize=18, fontweight='bold', color='k', ha='center', rotation=90, va='center', transform=ax.transAxes )
 
 
-    #slope_t_test_simulation_no_migration = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18']['no_migration']['slope_t_test'])
-    #slope_t_test_simulation_parent_migration = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18']['parent_migration']['slope_t_test'])
-    #slope_t_test_simulation_global_migration = np.asarray(simulation_all_migration_abc_dict['slope_12_vs_18']['global_migration']['slope_t_test'])
-
-    #t_slope_all = np.asarray(t_slope_all)
-    #slope_t_test_simulation = np.asarray([slope_t_test_simulation_no_migration, slope_t_test_simulation_parent_migration, slope_t_test_simulation_global_migration])
-
-    #t_slope_all = np.asarray([t_slope_all[1]])
-    #slope_t_test_simulation = np.asarray([slope_t_test_simulation_parent_migration])
 
     fig.subplots_adjust(wspace=0.32, hspace=0.4)
     fig.savefig(utils.directory + "/figs/taylors_law_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-    fig.savefig(utils.directory + "/figs/taylors_law_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    #fig.savefig(utils.directory + "/figs/taylors_law_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
     plt.close()
 

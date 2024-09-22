@@ -19,6 +19,9 @@ np.random.seed(123456789)
 np.seterr(divide='ignore', invalid='ignore')
 
 
+migration_status_dict = {('No_migration', 4): 'no_migration', ('Global_migration', 4):'global_migration'}
+
+
 # parameters for simulations
 n_reads = 10**4.4
 c=0.000001
@@ -2216,13 +2219,12 @@ def weighted_euclidean_distance(tau_all, sigma_all, obs, pred):
 def get_flat_rescaled_afd(s_by_s, min_occupancy=0):
 
     rel_s_by_s = (s_by_s/s_by_s.sum(axis=0))
-    occupancy = np.sum(rel_s_by_s>0, axis=0)/s_by_s.shape[0]
-
-    rel_s_by_s_subset = rel_s_by_s[:,occupancy>=min_occupancy]
+    occupancy = np.sum(rel_s_by_s>0, axis=1)/s_by_s.shape[1]
+    rel_s_by_s_subset = rel_s_by_s[occupancy>=min_occupancy,:]
 
     afd_log10_all = []
     rescaled_afd_log10_all = []
-    for afd in rel_s_by_s_subset.T:
+    for afd in rel_s_by_s_subset:
         
         afd_log10 = np.log10(afd[afd>0])
         rescaled_afd_log10 = (afd_log10 - np.mean(afd_log10))/np.std(afd_log10)
@@ -2307,6 +2309,11 @@ def get_sample_intersect_12_18_dict():
             
 
     return intersection_dict
+
+
+
+#def ks_2samp_weighted(array_1, array_2):
+
 
 
 

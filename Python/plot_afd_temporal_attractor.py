@@ -40,60 +40,125 @@ import statsmodels.stats.multitest as multitest
 
 #experiments = [('No_migration',4)]#, ('Parent_migration', 4)  ]
 
-experiments = [('No_migration',4)]#, ('Parent_migration', 4)  ]
-
-transfers = [12, 18]
 
 
+#print(n_Alcaligenaceae, n_Pseudomonadaceae)
 
-attractor_dict = utils.get_attractor_status(migration='No_migration', inocula=4)
-n_Alcaligenaceae = len(attractor_dict['Alcaligenaceae'])
-n_Pseudomonadaceae = len(attractor_dict['Pseudomonadaceae'])
+def make_attractor_dict():
 
-print(n_Alcaligenaceae, n_Pseudomonadaceae)
+    experiments = [('No_migration',4)]
 
+    #afd_dict[experiment][transfer]['afd_rescaled_occupancy_one']
+    attractor_afd_dict = {}
+    attractor_afd_dict['merged'] = {}
+    attractor_afd_dict['per_asv'] = {}
 
-afd_dict_merged_attractors = {}
+    attractor_dict = utils.get_attractor_status(migration='No_migration', inocula=4)
+    n_Alcaligenaceae = len(attractor_dict['Alcaligenaceae'])
+    n_Pseudomonadaceae = len(attractor_dict['Pseudomonadaceae'])
 
-for transfer in transfers:
+    afd_dict_merged_attractors = {}
 
-    s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration='No_migration',inocula=4)
-    #relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
-    #afd = relative_s_by_s.flatten()
-    #afd = afd[afd>0]
-    #afd = np.log10(afd)
-
-    afd, rescaled_afd = utils.get_flat_rescaled_afd(s_by_s)
-
-    afd_dict_merged_attractors[transfer] = rescaled_afd
-
-
-afd_dict = {}
-
-for attractor_idx, attractor in enumerate(attractor_dict.keys()):
-
-    afd_dict[attractor] = {}
-
-    for transfer in transfers:
+    for transfer in [12, 18]:
 
         s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration='No_migration',inocula=4)
-        relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
-        attractor_idxs = [comm_rep_list.index(comm_rep) for comm_rep in comm_rep_list if comm_rep in attractor_dict[attractor] ]
-        relative_s_by_s_attractor = relative_s_by_s[:, attractor_idxs]
-        attractor_species_idx = [~np.all(relative_s_by_s_attractor == 0, axis=1)][0]
-        attractor_species = np.asarray(species)[attractor_species_idx]
-        relative_s_by_s_attractor = relative_s_by_s_attractor[attractor_species_idx]
-        print(attractor, transfer, relative_s_by_s_attractor.shape[1])
-
-        afd, rescaled_afd = utils.get_flat_rescaled_afd(relative_s_by_s_attractor)
-
-
-        #afd = relative_s_by_s_attractor.flatten()
+        #relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+        #afd = relative_s_by_s.flatten()
         #afd = afd[afd>0]
         #afd = np.log10(afd)
 
+        afd, rescaled_afd = utils.get_flat_rescaled_afd(s_by_s)
 
-        afd_dict[attractor][transfer] = rescaled_afd
+        afd_dict_merged_attractors[transfer] = rescaled_afd
+
+
+    for attractor_idx, attractor in enumerate(attractor_dict.keys()):
+
+        attractor_afd_dict['merged'][attractor] = {}
+
+        for transfer in [12, 18]:
+
+            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration='No_migration',inocula=4)
+            relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+            attractor_idxs = [comm_rep_list.index(comm_rep) for comm_rep in comm_rep_list if comm_rep in attractor_dict[attractor] ]
+            relative_s_by_s_attractor = relative_s_by_s[:, attractor_idxs]
+            attractor_species_idx = [~np.all(relative_s_by_s_attractor == 0, axis=1)][0]
+            attractor_species = np.asarray(species)[attractor_species_idx]
+            relative_s_by_s_attractor = relative_s_by_s_attractor[attractor_species_idx]
+
+            afd, rescaled_afd = utils.get_flat_rescaled_afd(relative_s_by_s_attractor)
+            afd_occupancy_one, rescaled_afd_occupancy_one = utils.get_flat_rescaled_afd(relative_s_by_s_attractor, min_occupancy=1)
+
+
+            attractor_afd_dict['merged'][attractor][transfer]['afd'] = afd
+            attractor_afd_dict['merged'][attractor][transfer]['afd_rescaled'] = rescaled_afd
+
+            attractor_afd_dict['merged'][attractor][transfer]['afd_occupancy_one'] = afd_occupancy_one
+            attractor_afd_dict['merged'][attractor][transfer]['afd_rescaled_occupancy_one'] = rescaled_afd_occupancy_one
+
+
+
+
+    for attractor_idx, attractor in enumerate(attractor_dict.keys()):
+
+        attractor_afd_dict['per_asv'][attractor] = {}
+        attractor_afd_dict['per_asv'][attractor]['asv'] = {}
+
+
+        for transfer in [12, 18]:
+
+            s_by_s, species, comm_rep_list = utils.get_s_by_s_migration_test_singleton(transfer=transfer,migration='Parent_migration',inocula=4)
+            relative_s_by_s = (s_by_s/s_by_s.sum(axis=0))
+            attractor_idxs = [comm_rep_list.index(comm_rep) for comm_rep in comm_rep_list if comm_rep in attractor_dict[attractor] ]
+            relative_s_by_s_attractor = relative_s_by_s[:, attractor_idxs]
+
+            asv_to_keep_idx = (np.sum(relative_s_by_s_attractor>0, axis=1) == relative_s_by_s_attractor.shape[1])
+
+            species = np.asarray(species)
+            asv_to_keep = species[asv_to_keep_idx]
+            relative_s_by_s_attractor_to_keep = relative_s_by_s_attractor[asv_to_keep_idx,:]
+
+            for asv_idx, asv in enumerate(asv_to_keep):
+                if asv not in attractor_afd_dict['per_asv'][attractor]['asv']:
+                    attractor_afd_dict['per_asv'][attractor]['asv'][asv] = {}
+
+                attractor_afd_dict['per_asv'][attractor]['asv'][asv][transfer] = relative_s_by_s_attractor_to_keep[asv_idx,:]
+
+        asv_attractor = list(attractor_afd_dict['per_asv'][attractor]['asv'].keys())
+
+        ks_stat_all = []
+        for asv in asv_attractor:
+            
+            # occupancy of one at both timepoints
+            if len(attractor_afd_dict['per_asv'][attractor]['asv'][asv]) != 2:
+                continue
+
+            afd_12 = attractor_afd_dict['per_asv'][attractor]['asv'][asv][12]
+            afd_18 = attractor_afd_dict['per_asv'][attractor]['asv'][asv][18]
+
+            afd_log10_12 = np.log10(afd_12)
+            afd_log10_18 = np.log10(afd_18)
+
+            rescaled_afd_log10_12 = (afd_log10_12 - np.mean(afd_log10_12))/np.std(afd_log10_12)
+            rescaled_afd_log10_18 = (afd_log10_18 - np.mean(afd_log10_18))/np.std(afd_log10_18)
+
+
+            D, pvalue = stats.ks_2samp(rescaled_afd_log10_12, rescaled_afd_log10_18)
+            scaled_d = D*np.sqrt(len(rescaled_afd_log10_12)*len(rescaled_afd_log10_18)/ (len(rescaled_afd_log10_12) + len(rescaled_afd_log10_18)))
+
+            ks_stat_all.append(scaled_d)
+
+            # mean scaled ks 
+            # Alcaligenaceae 0.7786122309834377
+            # Pseudomonadaceae 0.554024732920621
+
+
+        attractor_afd_dict['per_asv'][attractor]['ks_stats'] = {}
+        attractor_afd_dict['per_asv'][attractor]['ks_stats']['mean_ks_over_rescald_afds'] = np.mean(ks_stat_all)
+
+
+
+
 
 
 
@@ -279,5 +344,7 @@ fig.suptitle('No migration', x =0.52, fontsize=14, fontweight='bold')
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 #  bbox_inches = "tight",
-fig.savefig(utils.directory + "/figs/afd_temporal_attractor.pdf", format='pdf',pad_inches = 0.5, dpi = 600)
+fig.savefig(utils.directory + "/figs/afd_temporal_attractor.png", format='png',pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/afd_temporal_attractor.pdf", format='pdf',pad_inches = 0.5, dpi = 600)
+
 plt.close()

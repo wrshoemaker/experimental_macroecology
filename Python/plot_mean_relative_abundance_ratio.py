@@ -213,9 +213,6 @@ for transfer_idx, transfer in enumerate(utils.transfers):
 
 
 
-
-
-
 iter_ = 10000
 # test for correlation change 
 
@@ -250,7 +247,6 @@ for i in range(iter_):
 
     rho_12_null, rho_18_null, z_null = utils.compare_rho_fisher_z(merged_mad_no_migration_18, merged_mad_parent_migration_18, merged_mad_no_migration_12, merged_mad_parent_migration_12)
 
-    #rho_12_null, rho_18_null, z_null = utils.compare_rho_fisher_z(merged_mad_18[:n_no_migration_18], merged_mad_18[n_no_migration_18:], merged_mad_12[:n_no_migration_12], merged_mad_12[n_no_migration_12:])
     z_null_all.append(z_null)
 
 
@@ -300,7 +296,7 @@ t_slope_null_all = np.asarray(t_slope_null_all)
 p_t_slope = sum(t_slope_null_all < t_slope)/iter_
 
 
-print('Change in t-statistic', t_slope, p_t_slope)
+print('t-statistic', t_slope, p_t_slope)
 
 
 
@@ -328,15 +324,20 @@ def run_best_parameter_simulations():
 
     # run simulations
     sys.stderr.write("Running simulation with optimal parameters...\n")
-    slm_simulation_utils.run_simulation_parent_rho_fixed_parameters(best_tau, best_sigma, n_iter=1000)
+    #slm_simulation_utils.run_simulation_parent_rho_fixed_parameters(best_tau, best_sigma, n_iter=1000)
+    slm_simulation_utils.run_simulation_parent_rho_abc(tau=best_tau, sigma=best_sigma, n_iter=1000)
     sys.stderr.write("Done!\n")
+
+
+run_best_parameter_simulations()
 
 
 sys.stderr.write("Loading simulation dictionary...\n")
 simulation_parent_rho_fixed_parameters_dict = slm_simulation_utils.load_simulation_parent_rho_fixed_parameters_dict()
 
-best_tau = simulation_parent_rho_fixed_parameters_dict['tau_all']
-best_sigma = simulation_parent_rho_fixed_parameters_dict['sigma_all']
+best_tau = simulation_parent_rho_fixed_parameters_dict['tau_all'][0]
+best_sigma = simulation_parent_rho_fixed_parameters_dict['sigma_all'][0]
+
 
 z_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict['rho_12_vs_18']['Z']
 t_slope_simulation_best_parameters = simulation_parent_rho_fixed_parameters_dict['slope_12_vs_18']['mad_slope_t_test']
@@ -352,6 +353,7 @@ ax_t_slope_simulation = plt.subplot2grid((3, 2), (2, 1), colspan=1)
 z_simulation_best_parameters = np.sort(z_simulation_best_parameters)
 lower_ci_z = z_simulation_best_parameters[int(0.025*len(z_simulation_best_parameters))]
 upper_ci_z = z_simulation_best_parameters[int(0.975*len(z_simulation_best_parameters))]
+
 
 ax_z_simulation.hist(z_simulation_best_parameters, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('Parent_migration',4)], histtype='stepfilled', density=True, zorder=2)
 ax_z_simulation.axvline(x=z, ls='--', lw=3, c='k', label='Observed ' +  r'$Z_{\rho}$')
@@ -387,5 +389,5 @@ fig.text(0.27, 0.925, "Regional migration statistics", va='center', fontsize=20)
 
 fig.subplots_adjust(wspace=0.4, hspace=0.3)
 fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/mean_relative_abundance_comparison_parent.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

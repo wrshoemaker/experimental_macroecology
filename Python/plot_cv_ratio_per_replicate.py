@@ -22,56 +22,18 @@ random.seed(123456789)
 n_iter = 1000
 
 count_dict = utils.get_otu_dict()
+taxonomy_dict = utils.make_taxonomy_dict()
 
 
 samples = list(count_dict.keys())
-
-samples_dict = {}
-
 treatments = ['no_migration', 'global_migration']
 
-for treatment_idx, treatment in enumerate(['No_migration.4.T%s', 'Global_migration.4.T%s']):
-
-    treatment_transfer = treatment % str(9)
-
-    samples_dict[treatments[treatment_idx]] = [x.split('.')[-1] for x in samples if treatment_transfer in x]
+t_range_to_test = np.arange(8, 19)
 
 
+cv_ratio_per_replicate_dict_path = utils.directory + "/data/cv_ratio_per_replicate_dict.pickle"
 
-# relative abundances of all species
-abundnace_dict = {}
-for treatment in treatments:
 
-    replicates = samples_dict[treatment]
-
-    for r in replicates:
-
-        for t in range(8, 19):
-
-            treatment_replicate_t = 'No_migration.4.T%s.%s' % (str(t), r)
-
-            if treatment_replicate_t not in count_dict:
-                continue
-
-            treatment_replicate_t_count_dict = count_dict[treatment_replicate_t]
-
-            n_reads = sum(treatment_replicate_t_count_dict.values())
-
-            for asv, count in treatment_replicate_t_count_dict.items():
-
-                if asv not in abundnace_dict:
-                    abundnace_dict[asv] = {}
-
-                if treatment not in abundnace_dict[asv]:
-                    abundnace_dict[asv][treatment] = {}
-                    
-                if r not in abundnace_dict[asv][treatment]:
-                    abundnace_dict[asv][treatment][r] = {}
-
-                abundnace_dict[asv][treatment][r][t] = count/n_reads
-                #print(asv, counts/n_reads)
-
-            
 
 def calculate_f_statistic_cv(x_1, x_2):
 
@@ -87,6 +49,7 @@ def calculate_f_statistic_cv(x_1, x_2):
     F = ((cv_x_1**2)/(1 + (cv_x_1**2)*(n_1-1)/n_1))/((cv_x_2**2)/(1 + (cv_x_2**2)*(n_2-1)/n_2))
 
     return cv_x_1, cv_x_2, F
+
 
 
 
@@ -131,222 +94,410 @@ def run_permutation_unpaired_t_test(x_1, x_2, n_iter=10000):
 
 
 
-# calculate CV of log-ratio
-asv_all = abundnace_dict.keys()
-cv_dict = {}
-for asv in asv_all:
+def make_cv_dict():
 
-    for treatment in abundnace_dict[asv].keys():
+    samples_dict = {}
+    for treatment_idx, treatment in enumerate(['No_migration.4.T%s', 'Global_migration.4.T%s']):
+        treatment_transfer = treatment % str(9)
+        samples_dict[treatments[treatment_idx]] = [x.split('.')[-1] for x in samples if treatment_transfer in x]
 
-        for replicate in abundnace_dict[asv][treatment].keys():
+    # relative abundances of all species
+    abundnace_dict = {}
+    for treatment in treatments:
 
-            if len(abundnace_dict[asv][treatment][replicate]) < 11:
+        replicates = samples_dict[treatment]
+
+        for r in replicates:
+
+            for t in t_range_to_test:
+
+                treatment_replicate_t = 'No_migration.4.T%s.%s' % (str(t), r)
+
+                if treatment_replicate_t not in count_dict:
+                    continue
+
+                treatment_replicate_t_count_dict = count_dict[treatment_replicate_t]
+
+                n_reads = sum(treatment_replicate_t_count_dict.values())
+
+                for asv, count in treatment_replicate_t_count_dict.items():
+
+                    if asv not in abundnace_dict:
+                        abundnace_dict[asv] = {}
+
+                    if treatment not in abundnace_dict[asv]:
+                        abundnace_dict[asv][treatment] = {}
+                        
+                    if r not in abundnace_dict[asv][treatment]:
+                        abundnace_dict[asv][treatment][r] = {}
+
+                    abundnace_dict[asv][treatment][r][t] = count/n_reads
+
+
+    # calculate CV of log-ratio
+    asv_all = abundnace_dict.keys()
+    cv_dict = {}
+    cv_dict['asv'] = {}
+    cv_dict['stats'] = {}
+    for asv in asv_all:
+
+        for treatment in abundnace_dict[asv].keys():
+
+            for replicate in abundnace_dict[asv][treatment].keys():
+
+                if len(abundnace_dict[asv][treatment][replicate]) < len(t_range_to_test):
+                    continue
+
+                x_trajectory = np.asarray([abundnace_dict[asv][treatment][replicate][t] for t in t_range_to_test])
+                log_ratio_x_trajectory = np.log10(x_trajectory[1:]/x_trajectory[:-1])
+                log_ratio_x_trajectory_before = log_ratio_x_trajectory[(t_range_to_test[:-1] <= 12)]
+                log_ratio_x_trajectory_after = log_ratio_x_trajectory[(t_range_to_test[:-1] > 12)]
+                cv_after, cv_before, F = calculate_f_statistic_cv(log_ratio_x_trajectory_after, log_ratio_x_trajectory_before)
+
+                if asv not in cv_dict['asv']:
+                    cv_dict['asv'][asv] = {}
+
+                if treatment not in cv_dict['asv'][asv]:
+                    cv_dict['asv'][asv][treatment] = {}
+
+
+                # get null F
+                F_null_all = []
+                for i in range(n_iter):
+                    x_trajectory_null = np.random.permutation(x_trajectory)
+                    log_ratio_x_trajectory_null = np.log10(x_trajectory_null[1:]/x_trajectory_null[:-1])
+                    log_ratio_x_trajectory_before_null = log_ratio_x_trajectory_null[(t_range_to_test[:-1] <= 12)]
+                    log_ratio_x_trajectory_after_null = log_ratio_x_trajectory_null[(t_range_to_test[:-1] > 12)]
+                    cv_after_null, cv_before_null, F_null = calculate_f_statistic_cv(log_ratio_x_trajectory_after_null, log_ratio_x_trajectory_before_null)
+                    F_null_all.append(F_null)
+
+                F_null_all = np.asarray(F_null_all)
+                p_value = sum(F_null_all>F)/n_iter
+
+                cv_dict['asv'][asv][treatment][replicate] = {}
+                cv_dict['asv'][asv][treatment][replicate]['cv_log_ratio_before'] = cv_before
+                cv_dict['asv'][asv][treatment][replicate]['cv_log_ratio_after'] = cv_after
+                cv_dict['asv'][asv][treatment][replicate]['F_cv'] = F
+                cv_dict['asv'][asv][treatment][replicate]['F_cv_null_all'] = F_null_all.tolist()
+                cv_dict['asv'][asv][treatment][replicate]['p_value'] = p_value
+
+                
+    # save dictionary
+    for asv in cv_dict['asv'].keys():
+
+        if len(cv_dict['asv'][asv]) < 2:
+            continue
+
+        if (len(cv_dict['asv'][asv]['no_migration']) < 3) or len(cv_dict['asv'][asv]['global_migration']) < 3:
+            continue
+
+        #if (len(cv_dict[asv]['no_migration']) == 20) and len(cv_dict[asv]['global_migration']) == 3:
+        #    print(cv_dict[asv][treatment][replicate]['cv_log_ratio_before'], cv_dict[asv][treatment][replicate]['cv_log_ratio_after'])
+        #    continue
+        
+        f_cv_global_migration = np.asarray([cv_dict['asv'][asv]['global_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['global_migration'].keys()])
+        f_cv_no_migration = np.asarray([cv_dict['asv'][asv]['no_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['no_migration'].keys()])
+
+        t_observed, p_value = run_permutation_unpaired_t_test(f_cv_global_migration, f_cv_no_migration)
+
+        # generate null distribution of t-statistics
+        asv_cv_dict = cv_dict['asv'][asv]
+        reps_no_migration = asv_cv_dict['no_migration'].keys()
+        reps_global_migration = asv_cv_dict['global_migration'].keys()
+        t_null_all = []
+        for i in range(n_iter):
+
+            f_cv_no_migration_null = np.asarray([asv_cv_dict['no_migration'][r]['F_cv_null_all'][i] for r in reps_no_migration])
+            f_cv_global_migration_null = np.asarray([asv_cv_dict['global_migration'][r]['F_cv_null_all'][i] for r in reps_global_migration])
+
+            t_null = unpaired_t_test(f_cv_global_migration_null, f_cv_no_migration_null)
+            t_null_all.append(t_null)
+
+        t_null_all = np.asarray(t_null_all)
+        p_value_t = sum(t_null_all>t_observed)/n_iter
+
+        cv_dict['asv'][asv]['t_stat'] = t_observed
+        cv_dict['asv'][asv]['p_value_t_stat'] = p_value_t
+
+
+
+    # repeat test, but constrain on attractor status
+    # only look at Alcaligenaceae, since all global migration populations are in this attractor state
+    attractor_status_no_migration = utils.get_attractor_status('No_migration', inocula=4)
+    #attractor_status_global_migration = utils.get_attractor_status('Global_migration', inocula=4)
+
+    for asv in cv_dict['asv'].keys():
+
+        if len(cv_dict['asv'][asv]) < 2:
+            continue
+
+        if (len(cv_dict['asv'][asv]['no_migration']) < 3) or len(cv_dict['asv'][asv]['global_migration']) < 3:
+            continue
+
+
+        f_cv_global_migration = np.asarray([cv_dict['asv'][asv]['global_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['global_migration'].keys()])
+        no_migration_reps = [r[1:] for r in cv_dict['asv'][asv]['no_migration'].keys()]
+        
+        reps_to_keep = list(set(no_migration_reps) & set(attractor_status_no_migration['Alcaligenaceae']))
+        reps_to_keep = ['R'+r for r in reps_to_keep]
+        f_cv_no_migration = np.asarray([cv_dict['asv'][asv]['no_migration'][r]['F_cv'] for r in reps_to_keep])
+
+        #print(np.mean(f_cv_no_migration), np.mean(f_cv_global_migration))
+        
+        t_observed, p_value = run_permutation_unpaired_t_test(f_cv_global_migration, f_cv_no_migration)
+
+        # generate null distribution of t-statistics
+        asv_cv_dict = cv_dict['asv'][asv]
+        reps_global_migration = asv_cv_dict['global_migration'].keys()
+        t_null_all = []
+        for i in range(n_iter):
+
+            f_cv_no_migration_null = np.asarray([asv_cv_dict['no_migration'][r]['F_cv_null_all'][i] for r in reps_to_keep])
+            f_cv_global_migration_null = np.asarray([asv_cv_dict['global_migration'][r]['F_cv_null_all'][i] for r in reps_global_migration])
+
+            t_null = unpaired_t_test(f_cv_global_migration_null, f_cv_no_migration_null)
+            t_null_all.append(t_null)
+
+        t_null_all = np.asarray(t_null_all)
+        p_value_t = sum(t_null_all>t_observed)/n_iter
+        
+
+        cv_dict['asv'][asv]['t_stat_attractor'] = t_observed
+        cv_dict['asv'][asv]['p_value_t_stat_attractor'] = p_value_t
+
+
+
+    # compare F statistics between no and global migration *constrained* on ASV identity.
+
+    # observed stat
+    f_cv_no_migration_all = []
+    f_cv_global_migration_all = []
+    for asv in cv_dict['asv'].keys():
+
+        if len(cv_dict['asv'][asv]) < 2:
+            continue
+
+        if (len(cv_dict['asv'][asv]['no_migration']) < 3) or len(cv_dict['asv'][asv]['global_migration']) < 3:
+            continue
+
+        f_cv_no_migration = [cv_dict['asv'][asv]['no_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['no_migration'].keys()]
+        f_cv_global_migration = [cv_dict['asv'][asv]['global_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['global_migration'].keys()]
+
+        f_cv_no_migration_all.extend(f_cv_no_migration)
+        f_cv_global_migration_all.extend(f_cv_global_migration)
+
+
+    t_stat_constrain_on_asv_null_all = []
+    ks_stat_null_all = []
+    for n in range(n_iter):
+
+        f_cv_no_migration_null_all = []
+        f_cv_global_migration_null_all = []
+
+        for asv in cv_dict['asv'].keys():
+
+            if len(cv_dict['asv'][asv]) < 2:
                 continue
 
-            x_trajectory = np.asarray([abundnace_dict[asv][treatment][replicate][t] for t in range(8, 19)])
-            log_ratio_x_trajectory = np.log10(x_trajectory[1:]/x_trajectory[:-1])
-            log_ratio_x_trajectory_before = log_ratio_x_trajectory[:5]
-            log_ratio_x_trajectory_after = log_ratio_x_trajectory[5:]
+            if (len(cv_dict['asv'][asv]['no_migration']) < 3) or len(cv_dict['asv'][asv]['global_migration']) < 3:
+                continue
 
-            cv_after, cv_before, F = calculate_f_statistic_cv(log_ratio_x_trajectory_after, log_ratio_x_trajectory_before)
+            f_cv_no_migration = [cv_dict['asv'][asv]['no_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['no_migration'].keys()]
+            f_cv_global_migration = [cv_dict['asv'][asv]['global_migration'][r]['F_cv'] for r in cv_dict['asv'][asv]['global_migration'].keys()]
 
-            if asv not in cv_dict:
-                cv_dict[asv] = {}
+            f_cv_pooled = f_cv_global_migration + f_cv_no_migration
+            random.shuffle(f_cv_pooled)
 
-            if treatment not in cv_dict[asv]:
-                cv_dict[asv][treatment] = {}
+            f_cv_no_migration_null_all.extend(f_cv_pooled[:len(f_cv_no_migration)])
+            f_cv_global_migration_null_all.extend(f_cv_pooled[len(f_cv_no_migration):])
+
+        
+        # t test
+        t_stat_constrain_on_asv_null_all.append(stats.ttest_ind(f_cv_global_migration_null_all, f_cv_no_migration_null_all, equal_var=True)[0])
+        ks_stat_null_all.append(stats.ks_2samp(f_cv_global_migration_null_all, f_cv_no_migration_null_all)[0])
+    
+    t_stat_constain_on_asv = stats.ttest_ind(f_cv_global_migration_all, f_cv_no_migration_all, equal_var=True)[0]
+    
+    t_stat_constrain_on_asv_null_all = np.asarray(t_stat_constrain_on_asv_null_all)
+    p_value_t_stat_constain_on_asv = sum(t_stat_constain_on_asv > t_stat_constrain_on_asv_null_all)/n_iter
+
+    # try ks test
+    ks_stat_constrain_on_asv, p_value = stats.ks_2samp(f_cv_global_migration_all, f_cv_no_migration_all)
+    p_value_ks_stat_constrain_on_asv = sum(ks_stat_constrain_on_asv > np.asarray(ks_stat_null_all))/n_iter
+
+    cv_dict['stats']['t_stat_constain_on_asv'] = t_stat_constain_on_asv
+    cv_dict['stats']['p_value_t_stat_constain_on_asv'] = p_value_t_stat_constain_on_asv
+
+    cv_dict['stats']['ks_stat_constrain_on_asv'] = ks_stat_constrain_on_asv
+    cv_dict['stats']['p_value_ks_stat_constrain_on_asv'] = p_value_ks_stat_constrain_on_asv
 
 
-            # get null F
-            F_null_all = []
-            for i in range(n_iter):
-                x_trajectory_null = np.random.permutation(x_trajectory)
-                log_ratio_x_trajectory_null = np.log10(x_trajectory_null[1:]/x_trajectory_null[:-1])
-                log_ratio_x_trajectory_before_null = log_ratio_x_trajectory_null[:5]
-                log_ratio_x_trajectory_after_null = log_ratio_x_trajectory_null[5:]
+    sys.stderr.write("Saving dictionary...\n")
+    with open(cv_ratio_per_replicate_dict_path, 'wb') as handle:
+        pickle.dump(cv_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-                cv_after_null, cv_before_null, F_null = calculate_f_statistic_cv(log_ratio_x_trajectory_after_null, log_ratio_x_trajectory_before_null)
-                F_null_all.append(F_null)
 
-            F_null_all = np.asarray(F_null_all)
-            p_value = sum(F_null_all>F)/n_iter
 
-            cv_dict[asv][treatment][replicate] = {}
-            cv_dict[asv][treatment][replicate]['cv_log_ratio_before'] = cv_before
-            cv_dict[asv][treatment][replicate]['cv_log_ratio_after'] = cv_after
-            cv_dict[asv][treatment][replicate]['F_cv'] = F
-            cv_dict[asv][treatment][replicate]['F_cv_null_all'] = F_null_all.tolist()
-            cv_dict[asv][treatment][replicate]['p_value'] = p_value
 
+
+
+
+def make_plot():
+
+    # get observed and null F to plot
+
+    f_no_migration_all = []
+    f_no_migration_null_all = []
+    f_global_migration_all = []
+    f_global_migration_null_all = []
+
+    for k1,v1 in cv_dict.items(): # the basic way
+        for k2,v2 in v1.items():
+
+            for k3,v3 in v2.items():
+
+                if k2 == 'no_migration':
+                    f_no_migration_all.append(v3['F_cv'])
+                    f_no_migration_null_all.extend(v3['F_cv_null_all'])
             
+                else:
+                    f_global_migration_all.append(v3['F_cv'])
+                    f_global_migration_null_all.extend(v3['F_cv_null_all'])
 
 
 
+    #cv_dict[asv][treatment][replicate]['F_cv_null_all'] = F_null_all.tolist()
 
-taxonomy_dict = utils.make_taxonomy_dict()
 
+    # plot
 
-print('All replicates')
+    fig, ax = plt.subplots(figsize=(5,4))
 
+    fig = plt.figure(figsize = (8.5, 4))
+    fig.subplots_adjust(bottom= 0.15)
 
-for asv in cv_dict.keys():
 
-    if len(cv_dict[asv]) < 2:
-        continue
+    ax_no = plt.subplot2grid((1, 2), (0, 0), colspan=1)
+    ax_global = plt.subplot2grid((1, 2), (0, 1), colspan=1)
 
-    if (len(cv_dict[asv]['no_migration']) < 3) or len(cv_dict[asv]['global_migration']) < 3:
-        continue
-    
-    f_cv_global_migration = np.asarray([cv_dict[asv]['global_migration'][r]['F_cv'] for r in cv_dict[asv]['global_migration'].keys()])
-    f_cv_no_migration = np.asarray([cv_dict[asv]['no_migration'][r]['F_cv'] for r in cv_dict[asv]['no_migration'].keys()])
 
-    t_observed, p_value = run_permutation_unpaired_t_test(f_cv_global_migration, f_cv_no_migration)
+    ax_no.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_no.transAxes)
+    ax_global.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_global.transAxes)
 
-    # generate null distribution of t-statistics
-    asv_cv_dict = cv_dict[asv]
-    reps_no_migration = asv_cv_dict['no_migration'].keys()
-    reps_global_migration = asv_cv_dict['global_migration'].keys()
-    t_null_all = []
-    for i in range(n_iter):
+    ax_no.hist(f_no_migration_all, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('No_migration',4)], histtype='stepfilled', label="Observed",  density=True, zorder=2)
+    ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Permutation-based null', density=True, zorder=1)
+    #ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Predicted', density=True, zorder=1)
 
-        
+    # survival distribution
+    #x_range = np.logspace(0, max(), num=100, endpoint=True, base=10.0)
 
-        f_cv_no_migration_null = np.asarray([asv_cv_dict['no_migration'][r]['F_cv_null_all'][i] for r in reps_no_migration])
-        f_cv_global_migration_null = np.asarray([asv_cv_dict['global_migration'][r]['F_cv_null_all'][i] for r in reps_global_migration])
+    #survival_error = [sum(error_no_nan >= i)/len(error_no_nan) for i in x_range]
+    #survival_slm_error = [sum(error_slm_no_nan >= i)/len(error_slm_no_nan) for i in x_range]
 
-        t_null = unpaired_t_test(f_cv_global_migration_null, f_cv_no_migration_null)
-        t_null_all.append(t_null)
 
-    t_null_all = np.asarray(t_null_all)
-    p_value_t = sum(t_null_all>t_observed)/n_iter
 
-    print(asv, t_observed, p_value_t)
+    ax_no.set_xlabel('Change in CV between\ntransfers 12 and 18, ' + r'$F_{\mathrm{CV}}$', fontsize=12)
+    ax_no.set_ylabel('Probability density', fontsize=12)
+    ax_no.legend(loc="upper right", fontsize=8)
+    ax_no.set_title(utils.titles_no_inocula_dict[('No_migration',4)], fontsize=14)
+    ax_no.set_xlim([0, max(f_no_migration_all)+1])
 
 
+    ax_global.hist(f_global_migration_all, lw=3, alpha=0.8, bins= 10, color=utils.color_dict[('Global_migration',4)], histtype='stepfilled', label="Observed",  density=True, zorder=2)
+    ax_global.hist(f_global_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Null', density=True, zorder=1)
+    ax_global.set_xlabel('Change in CV between\ntransfers 12 and 18, ' + r'$F_{\mathrm{CV}}$', fontsize=12)
+    ax_global.set_ylabel('Probability density', fontsize=12)
+    ax_global.legend(loc="upper right", fontsize=8)
+    ax_global.set_title(utils.titles_no_inocula_dict[('Global_migration',4)], fontsize=14)
+    ax_global.set_xlim([0, max(f_global_migration_all)+1])
 
 
-# repeat test, but constrain on attractor status
-# only look at Alcaligenaceae, since all global migration populations are in this attractor state
-attractor_status_no_migration = utils.get_attractor_status('No_migration', inocula=4)
-attractor_status_global_migration = utils.get_attractor_status('Global_migration', inocula=4)
 
-print('Constrain analysis on attractor status')
+    fig.subplots_adjust(wspace=0.35, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/cv_f_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    #fig.savefig(utils.directory + '/figs/cv_f_hist.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
 
-for asv in cv_dict.keys():
 
-    if len(cv_dict[asv]) < 2:
-        continue
 
-    if (len(cv_dict[asv]['no_migration']) < 3) or len(cv_dict[asv]['global_migration']) < 3:
-        continue
 
+def plot_cv_before_vs_after():
 
-    f_cv_global_migration = np.asarray([cv_dict[asv]['global_migration'][r]['F_cv'] for r in cv_dict[asv]['global_migration'].keys()])
-    no_migration_reps = [r[1:] for r in cv_dict[asv]['no_migration'].keys()]
-    
-    reps_to_keep = list(set(no_migration_reps) & set(attractor_status_no_migration['Alcaligenaceae']))
-    reps_to_keep = ['R'+r for r in reps_to_keep]
-    f_cv_no_migration = np.asarray([cv_dict[asv]['no_migration'][r]['F_cv'] for r in reps_to_keep])
-    
-    t_observed, p_value = run_permutation_unpaired_t_test(f_cv_global_migration, f_cv_no_migration)
+    fig = plt.figure(figsize = (8.5, 4))
+    fig.subplots_adjust(bottom= 0.15)
 
-    # generate null distribution of t-statistics
-    asv_cv_dict = cv_dict[asv]
-    reps_global_migration = asv_cv_dict['global_migration'].keys()
-    t_null_all = []
-    for i in range(n_iter):
+    ax_no = plt.subplot2grid((1, 2), (0, 0), colspan=1)
+    ax_global = plt.subplot2grid((1, 2), (0, 1), colspan=1)
 
-        f_cv_no_migration_null = np.asarray([asv_cv_dict['no_migration'][r]['F_cv_null_all'][i] for r in reps_to_keep])
-        f_cv_global_migration_null = np.asarray([asv_cv_dict['global_migration'][r]['F_cv_null_all'][i] for r in reps_global_migration])
+    # get ASVs present in all reps
 
-        t_null = unpaired_t_test(f_cv_global_migration_null, f_cv_no_migration_null)
-        t_null_all.append(t_null)
+    with open(cv_ratio_per_replicate_dict_path, 'rb') as handle:
+        cv_dict = pickle.load(handle) 
 
-    t_null_all = np.asarray(t_null_all)
-    p_value_t = sum(t_null_all>t_observed)/n_iter
-    
+    cv_no_all = []
+    cv_global_all = []
+    for asv in cv_dict.keys():
 
-    print(asv, t_observed, p_value_t)
+        if len(cv_dict[asv]) < 2:
+            continue
 
+        #if (len(cv_dict[asv]['no_migration']) < 20) or len(cv_dict[asv]['global_migration']) < 3:
+        #s    continue
 
+        #print(asv)
 
+        no_migration_reps = list(cv_dict[asv]['no_migration'].keys())
+        global_migration_reps = list(cv_dict[asv]['global_migration'].keys())
 
+        cv_before_no = [cv_dict[asv]['no_migration'][r]['cv_log_ratio_before'] for r in no_migration_reps]
+        cv_after_no = [cv_dict[asv]['no_migration'][r]['cv_log_ratio_after'] for r in no_migration_reps]
 
+        cv_before_global = [cv_dict[asv]['global_migration'][r]['cv_log_ratio_before'] for r in global_migration_reps]
+        cv_after_global = [cv_dict[asv]['global_migration'][r]['cv_log_ratio_after'] for r in global_migration_reps]
 
 
-# get observed and null F to plot
+        f_no = [cv_dict[asv]['no_migration'][r]['F_cv'] for r in no_migration_reps]
+        f_global = [cv_dict[asv]['global_migration'][r]['F_cv'] for r in global_migration_reps]
 
-f_no_migration_all = []
-f_no_migration_null_all = []
-f_global_migration_all = []
-f_global_migration_null_all = []
+        print(np.mean(f_no), np.mean(f_global))
 
-for k1,v1 in cv_dict.items(): # the basic way
-    for k2,v2 in v1.items():
 
-        for k3,v3 in v2.items():
+        ax_no.scatter(cv_before_no, cv_after_no, c='k', s=8, alpha=0.5)
+        ax_global.scatter(cv_before_global, cv_after_global, c='k', s=8, alpha=0.5)
 
-            if k2 == 'no_migration':
-                f_no_migration_all.append(v3['F_cv'])
-                f_no_migration_null_all.extend(v3['F_cv_null_all'])
-        
-            else:
-                f_global_migration_all.append(v3['F_cv'])
-                f_global_migration_null_all.extend(v3['F_cv_null_all'])
 
+        cv_no_all.extend(cv_before_no)
+        cv_no_all.extend(cv_after_no)
 
+        cv_global_all.extend(cv_before_global)
+        cv_global_all.extend(cv_after_global)
 
-#cv_dict[asv][treatment][replicate]['F_cv_null_all'] = F_null_all.tolist()
 
+    ax_no.set_xscale('log', basex=10)
+    ax_no.set_yscale('log', basey=10)
 
-# plot
+    ax_global.set_xscale('log', basex=10)
+    ax_global.set_yscale('log', basey=10)
 
-fig, ax = plt.subplots(figsize=(5,4))
+    ax_no.set_xlim([min(cv_no_all)*0.9, max(cv_no_all)*1.1])
+    ax_no.set_ylim([min(cv_no_all)*0.9, max(cv_no_all)*1.1])
 
-fig = plt.figure(figsize = (8.5, 4))
-fig.subplots_adjust(bottom= 0.15)
+    ax_global.set_xlim([min(cv_global_all)*0.9, max(cv_global_all)*1.1])
+    ax_global.set_ylim([min(cv_global_all)*0.9, max(cv_global_all)*1.1])
 
 
-ax_no = plt.subplot2grid((1, 2), (0, 0), colspan=1)
-ax_global = plt.subplot2grid((1, 2), (0, 1), colspan=1)
 
 
-ax_no.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_no.transAxes)
-ax_global.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_global.transAxes)
+    fig.subplots_adjust(wspace=0.35, hspace=0.3)
+    fig.savefig(utils.directory + "/figs/cv_before_vs_after.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    plt.close()
 
-ax_no.hist(f_no_migration_all, lw=3, alpha=0.8, bins=10, color=utils.color_dict[('No_migration',4)], histtype='stepfilled', label="Observed",  density=True, zorder=2)
-ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Permutation-based null', density=True, zorder=1)
-#ax_no.hist(f_no_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Predicted', density=True, zorder=1)
 
-# survival distribution
-#x_range = np.logspace(0, max(), num=100, endpoint=True, base=10.0)
+if __name__=='__main__':
 
-#survival_error = [sum(error_no_nan >= i)/len(error_no_nan) for i in x_range]
-#survival_slm_error = [sum(error_slm_no_nan >= i)/len(error_slm_no_nan) for i in x_range]
+    print("Running per-replicate log-ratio CV analysis....")
 
+    make_cv_dict()
 
-
-ax_no.set_xlabel('Change in CV between\ntransfers 12 and 18, ' + r'$F_{\mathrm{CV}}$', fontsize=12)
-ax_no.set_ylabel('Probability density', fontsize=12)
-ax_no.legend(loc="upper right", fontsize=8)
-ax_no.set_title(utils.titles_no_inocula_dict[('No_migration',4)], fontsize=14)
-ax_no.set_xlim([0, max(f_no_migration_all)+1])
-
-
-ax_global.hist(f_global_migration_all, lw=3, alpha=0.8, bins= 10, color=utils.color_dict[('Global_migration',4)], histtype='stepfilled', label="Observed",  density=True, zorder=2)
-ax_global.hist(f_global_migration_null_all, lw=3, alpha=0.8, bins=200, color='grey', histtype='stepfilled', label='Null', density=True, zorder=1)
-ax_global.set_xlabel('Change in CV between\ntransfers 12 and 18, ' + r'$F_{\mathrm{CV}}$', fontsize=12)
-ax_global.set_ylabel('Probability density', fontsize=12)
-ax_global.legend(loc="upper right", fontsize=8)
-ax_global.set_title(utils.titles_no_inocula_dict[('Global_migration',4)], fontsize=14)
-ax_global.set_xlim([0, max(f_global_migration_all)+1])
-
-
-
-fig.subplots_adjust(wspace=0.35, hspace=0.3)
-fig.savefig(utils.directory + "/figs/cv_f_hist.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + '/figs/cv_f_hist.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-
-plt.close()
-
+    #plot_cv_before_vs_after()
 
