@@ -631,7 +631,7 @@ def make_plot_across_reps_and_within_rep_plot():
             f_rank_dict[asv][experiment] = f_dist
 
 
-        ax_cv_compare.scatter(cv_before_all, cv_after_all, color=utils.color_dict[experiment], s=12, alpha=0.5, zorder=2)
+        ax_cv_compare.scatter(cv_before_all, cv_after_all, color=utils.color_dict[experiment], s=12, alpha=0.5, zorder=2, label='ASV x community')
         ax_cv_compare.set_xscale('log', basex=10)
         ax_cv_compare.set_yscale('log', basey=10)
 
@@ -649,14 +649,13 @@ def make_plot_across_reps_and_within_rep_plot():
         ax_cv_compare.set_ylabel(r'$\mathrm{CV}^{>}_{\Delta \ell}$' + ' after cessation of migration',  fontsize=axis_label_fontsize)
         ax_cv_compare.text(-0.1, 1.04, plot_utils.sub_plot_labels[4+experiment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_cv_compare.transAxes)
 
-
         # plot F distribution
         ax_f_dist.hist(f_dist_all, lw=3, alpha=0.4, bins=10, color=utils.color_dict[experiment], histtype='stepfilled', density=True, zorder=2)
     
     
     ax_f_dist.axvline(x=1, ls=':', lw=3, c='k', label='No change', zorder=3)
     ax_f_dist.legend(loc="upper right", fontsize=legend_fontsize)
-    ax_f_dist.set_xlabel('Change in ' + r'$\mathrm{CV}^{<}_{\Delta \ell}$' + '\nafter cessation of migration, ' + r'$F$',  fontsize=axis_label_fontsize)
+    ax_f_dist.set_xlabel('Change in ' + r'$\mathrm{CV}^{<}_{\Delta \ell}$' + '\nafter cessation of migration, ' + r'$F_{\mathrm{CV}}$',  fontsize=axis_label_fontsize)
     ax_f_dist.set_ylabel('Probability density',  fontsize=axis_label_fontsize)
     ax_f_dist.text(-0.1, 1.04, plot_utils.sub_plot_labels[5+experiment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_f_dist.transAxes)
     ax_f_dist.text(0.7  , 0.83, r'$\mathrm{KS} = $' + str(round(cv_within_dict['stats']['ks_stat_constrain_on_asv'], 3)), fontsize=12, ha='center', va='center', transform=ax_f_dist.transAxes)
@@ -689,7 +688,7 @@ def make_plot_across_reps_and_within_rep_plot():
         family_labels_idx.append(idx_count - 1.5)
 
 
-    ax_f_rank.set_xlabel('Change in ' + r'$\mathrm{CV}^{<}_{\Delta \ell}$' + '\nafter cessation of migration, ' + r'$F$',  fontsize=axis_label_fontsize)
+    ax_f_rank.set_xlabel('Change in ' + r'$\mathrm{CV}^{<}_{\Delta \ell}$' + '\nafter cessation of migration, ' + r'$F_{\mathrm{CV}}$',  fontsize=axis_label_fontsize)
     ax_f_rank.axvline(x=1, ls=':', lw=3, c='k', label='No change', zorder=1)
     
     ax_f_rank.set_yticks(family_labels_idx)

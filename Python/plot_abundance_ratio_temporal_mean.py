@@ -35,28 +35,13 @@ ks_test_dict = {}
 
 for experiment_idx, experiment in enumerate(experiments):
 
-    delta_cv_all = []
-
-    cv_before_all = []
-    cv_after_all = []
-
     mean_mean_dict = {}
-    mean_cv_dict = {}
-
-    cv_delta_null_dict = {}
-
-    cv_over_time_dict = {}
-    cv_over_time_dict['cv_delta'] = {}
-    cv_over_time_dict['cv'] = {}
 
     communities = utils.get_migration_time_series_community_names(migration=experiment[0], inocula=experiment[1])
     communities_keep = [str(key) for key, value in communities.items() if len(value) == 18]
 
     ax_mean = plt.subplot2grid((1,2), (0, experiment_idx), colspan=1)
-
     ax_mean.text(-0.1, 1.04, plot_utils.sub_plot_labels[experiment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mean.transAxes)
-    
-
 
     species_relative_abundances_dict = {}
     for transfer in range(1, 18+1):
@@ -144,30 +129,6 @@ for experiment_idx, experiment in enumerate(experiments):
                 log_abundance_ratio_dict[t].append(log_abundance_ratio[t_idx])
 
 
-        if (len(log_abundance_ratio_before_all)>0) and (len(log_abundance_ratio_after_all)>0):
-
-            log_abundance_ratio_before_flat = np.concatenate(log_abundance_ratio_before_all).ravel()
-            log_abundance_ratio_after_flat = np.concatenate(log_abundance_ratio_after_all).ravel()
-
-            log_abundance_ratio_flat = np.concatenate(log_abundance_ratio_all).ravel()
-            transfers_flat = np.concatenate(transfers_all).ravel()
-
-            if (len(log_abundance_ratio_before_flat) >= 10) and (len(log_abundance_ratio_after_flat) >= 10):
-
-                cv_before =  np.std(log_abundance_ratio_before_flat)/np.absolute(np.mean(log_abundance_ratio_before_flat))
-                cv_after = np.std(log_abundance_ratio_after_flat)/np.absolute(np.mean(log_abundance_ratio_after_flat))
-                delta_cv = cv_after - cv_before
-
-                cv_before_all.append(cv_before)
-                cv_after_all.append(cv_after)
-                delta_cv_all.append(delta_cv)
-
-
-                # get null CV  before/after
-                if species_i not in cv_delta_null_dict:
-                    cv_delta_null_dict[species_i] = []
-
-  
         trasnfers_ratio = list(log_abundance_ratio_dict.keys())
         trasnfers_ratio.sort()
 
@@ -187,91 +148,95 @@ for experiment_idx, experiment in enumerate(experiments):
                 mean_mean_dict[t_]['measure'] = []
                 mean_mean_dict[t_]['species'] = []
 
-            if t_ not in mean_cv_dict:
-                mean_cv_dict[t_] = {}
-                mean_cv_dict[t_]['measure'] = []
-                mean_cv_dict[t_]['species'] = []
-
             mean_mean_dict[t_]['species'].append(species_i)
-            mean_cv_dict[t_]['species'].append(species_i)
-
             mean_mean_dict[t_]['measure'].append(mean_log_abundance_ratio[t_idx])
-            mean_cv_dict[t_]['measure'].append(cv_log_abundance_ratio[t_idx])
-
 
 
         mean_log_abundance_ratio = np.asarray(mean_log_abundance_ratio)
-
         ax_mean.plot(trasnfers_ratio, mean_log_abundance_ratio, alpha=0.6, c=utils.color_dict_range[experiment][7], zorder=2)
-
-
-    # ks test for the distribution of CVs over *species* before/after manipulation.
-    # Each CV is over all replicates and all transfers before/after manipulation for a given species
-
-    cv_before_all = np.asarray(cv_before_all)
-    cv_after_all = np.asarray(cv_after_all)
-    delta_cv_all = np.asarray(delta_cv_all)
-    mean_delta_cv = np.mean(delta_cv_all)
-
-    # get null distribution
-    #cv_delta_null_dict_keys = list(cv_delta_null_dict.keys())
-    #mean_delta_cv_null = []
-    #for i in range(10000):
-    #    mean_delta_cv_null.append(np.mean([cv_delta_null_dict[s][i] for s in cv_delta_null_dict_keys]))
-
-    #mean_delta_cv_null = np.asarray(mean_delta_cv_null)
-    #p_mean_delta_cv = sum(mean_delta_cv>mean_delta_cv_null)/10000
-    #print(mean_delta_cv, p_mean_delta_cv)
-
-
-    #cv_before_after_all = np.column_stack((cv_before_all, cv_after_all))
-    #mean_delta_cv = np.mean(delta_cv_all)
-    #mean_delta_cv_null_all = []
-    #for i in range(1000):
-
-    #    cv_before_after_all_null = np.apply_along_axis(np.random.permutation, axis=1, arr=cv_before_after_all)
-    #    mean_delta_cv_null = cv_before_after_all_null[:,1] - cv_before_after_all_null[:,0]
-    #    mean_delta_cv_null_all.append(np.mean(mean_delta_cv_null))
-
-    #mean_delta_cv_null_all = np.asarray(mean_delta_cv_null_all)
-    #p_mean_delta_cv = sum(mean_delta_cv_null_all<mean_delta_cv)/1000
-    #print(mean_delta_cv, p_mean_delta_cv)
 
 
 
     transfers_mean_mean = list(mean_mean_dict.keys())
     transfers_mean_mean.sort()
 
-    transfers_mean_cv = list(mean_cv_dict.keys())
-    transfers_mean_cv.sort()
-
-    mean_mean_to_plot = [np.mean(mean_mean_dict[t]['measure']) for t in transfers_mean_mean]
-    cv_mean_to_plot = [np.mean(np.log10(mean_cv_dict[t]['measure'])) for t in transfers_mean_cv]
-
-    mean_mean_to_plot = np.asarray(mean_mean_to_plot)
-    cv_mean_to_plot = np.asarray(cv_mean_to_plot)
+    mean_mean_to_plot = np.asarray([np.mean(mean_mean_dict[t]['measure']) for t in transfers_mean_mean])
 
     # ks test for the distribution of CVs over time for all species before/after end of manipulation
     mean_over_all_species_t_before = [mean_mean_dict[t]['measure'] for t in transfers_mean_mean if (t <= 12) and (t > 7)]
     mean_over_all_species_t_after = [mean_mean_dict[t]['measure'] for t in transfers_mean_mean if t > 12]
 
+    # t-test per treatment
+
+    asv_mean_dict = {}
+    for t_ in mean_mean_dict.keys():
+
+        if t_ <= 6:
+            continue
+
+        for asv_idx, asv in enumerate(mean_mean_dict[t_]['species']):
+
+            if asv not in asv_mean_dict:
+                asv_mean_dict[asv] = {}
+                asv_mean_dict[asv]['before'] = []
+                asv_mean_dict[asv]['after'] = []
+
+            if (t_ <= 12) and (t_ > 7):
+                asv_mean_dict[asv]['before'].append(mean_mean_dict[t_]['measure'][asv_idx])
+
+            elif (t_ > 12):
+                asv_mean_dict[asv]['after'].append(mean_mean_dict[t_]['measure'][asv_idx])
+
+            else:
+                continue
+
+
+
+    asv_keys = list(asv_mean_dict.keys())
+    for asv in asv_keys:
+
+        if (len(asv_mean_dict[asv]['before']) < 5) or (len(asv_mean_dict[asv]['after']) < 5):
+            del asv_mean_dict[asv]
+
+    #for asv in asv_mean_dict.keys():
+
+    #    before_asv = asv_mean_dict[asv]['before']
+    #    after_asv = asv_mean_dict[asv]['after']
+
+    #    print(len(before_asv), len(after_asv))
+
+    #    t_test_all.append()
+
+
+    mean_t_test = np.mean([stats.ttest_ind(asv_mean_dict[asv]['after'], asv_mean_dict[asv]['before'], equal_var=True)[0] for asv in asv_mean_dict.keys()])
+
+    mean_t_test_null_all = []
+    for n in range(n_iter):
+
+        t_test_null_all = []
+        for asv in asv_mean_dict.keys():
+
+            before_asv = asv_mean_dict[asv]['before']
+            after_asv = asv_mean_dict[asv]['after']
+
+            merged_asv = before_asv + after_asv
+            random.shuffle(merged_asv)
+
+            t_test_null_all.append(stats.ttest_ind(merged_asv[:len(after_asv)], merged_asv[len(after_asv):], equal_var=True)[0])
+
+        mean_t_test_null_all.append(np.mean(t_test_null_all))
+
+    mean_t_test_null_all = np.asarray(mean_t_test_null_all)
+
+    p_value_mean_t_test = sum(mean_t_test > np.absolute(mean_t_test_null_all))/n_iter
+
+    print(experiment, mean_t_test, p_value_mean_t_test)
+
+
     mean_over_all_species_t_before = np.asarray(list(itertools.chain(*mean_over_all_species_t_before)))
     mean_over_all_species_t_after = np.asarray(list(itertools.chain(*mean_over_all_species_t_after)))
 
-    cv_over_all_species_t_before = [mean_cv_dict[t]['measure'] for t in transfers_mean_cv if (t <= 12) and (t > 5)]
-    cv_over_all_species_t_after = [mean_cv_dict[t]['measure'] for t in transfers_mean_cv if (t > 12) and (t > 5)]
-
-    species_over_all_species_t_before = [mean_cv_dict[t]['species'] for t in transfers_mean_cv if (t <= 12) and (t > 5)]
-    species_over_all_species_t_after = [mean_cv_dict[t]['species'] for t in transfers_mean_cv if (t > 12) and (t > 5)]
-
-    cv_over_all_species_t_before = np.asarray(list(itertools.chain(*cv_over_all_species_t_before)))
-    cv_over_all_species_t_after = np.asarray(list(itertools.chain(*cv_over_all_species_t_after)))
-
-    #print(len(cv_over_all_species_t_before), len(cv_over_all_species_t_after))
-
-
     ax_mean.plot(transfers_mean_mean, mean_mean_to_plot, alpha=1, c=utils.color_dict_range[experiment][13], zorder=3)
-
     ax_mean.set_xlabel('Transfer, ' + r'$k$', fontsize=12)
     ax_mean.set_ylabel('Mean relative abundance ratio, ' + r'$\left<  \Delta l^{(k)} \right>$', fontsize=11)
     ax_mean.set_title(utils.titles_no_inocula_dict[experiment], fontsize=13)
@@ -297,6 +262,10 @@ for experiment_idx, experiment in enumerate(experiments):
     if experiment_idx == 1:
         ax_mean.axvline(x=12, color='k', linestyle=':', lw = 3, zorder=1)
 
+    
+    ax_mean.text(0.2 , 0.25, r'$\bar{t} = $' + str(round(mean_t_test, 3)), fontsize=10, ha='center', va='center', transform=ax_mean.transAxes)
+    ax_mean.text(0.2, 0.15, r'$P = $' + str(round(p_value_mean_t_test, 3)), fontsize=10, ha='center', va='center', transform=ax_mean.transAxes)
+
 
 
 
@@ -304,6 +273,5 @@ for experiment_idx, experiment in enumerate(experiments):
 
 fig.subplots_adjust(wspace=0.35, hspace=0.3)
 fig.savefig(utils.directory + "/figs/abundance_ratio_per_transfer_mean.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-fig.savefig(utils.directory + '/figs/abundance_ratio_per_transfer_mean.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-
+#fig.savefig(utils.directory + '/figs/abundance_ratio_per_transfer_mean.eps', format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

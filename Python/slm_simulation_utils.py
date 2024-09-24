@@ -3389,17 +3389,11 @@ if __name__=='__main__':
 
     # heatmaps
     #run_simulation_all_migration_heatmap(n_iter=100)
+    #run_simulation_global_rho_heatmap(n_iter=100)
     
     
-    # RUNNING
-    #run_simulation_global_rho_abc(n_iter=1000)
-
+    # RUNNING    
     
-    # TO-DO    
-    run_simulation_global_rho_heatmap(n_iter=100)
-
-   
-
     #run_simulation_all_migration_afd_heatmap(n_iter=100)
     
     
