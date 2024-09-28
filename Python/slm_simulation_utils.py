@@ -1359,6 +1359,7 @@ def run_simulation_global_rho_heatmap(n_iter=100):
                 continue
 
 
+
             for t in transfers:
 
                 rho_dict[tau_i][sigma_i]['per_transfer_stats'][t] = {}
@@ -3211,16 +3212,23 @@ def run_simulation_all_migration_afd_heatmap(n_iter=100):
 
     rho_dict = {}
     #for tau_i in [tau_all[3]]:
-    for tau_i in tau_all:
+
+    #tau_all_1_3 = tau_all[:3]
+    #tau_all_3_4 = tau_all[3:4]
+    #tau_all_4_5 = tau_all[4:5]
+    #tau_all_5 = [tau_all[5]]
+    #tau_all_6 = [tau_all[6]]
+    #tau_all_7 = [tau_all[7]]
+    #tau_all_8 = [tau_all[8]]
+    tau_all_9 = [tau_all[9]]
+
+
+    for tau_i in tau_all_9:
 
         rho_dict[tau_i] = {}
 
         for sigma_i in sigma_all:
             #for sigma_i in [0.33049817624300415]:
-
-            if tau_i in max_sigma_dict:
-                if sigma_i > max_sigma_dict[tau_i]:
-                    continue
 
             #if sigma_i < 0.33049817624300415:
             #    continue
@@ -3234,6 +3242,14 @@ def run_simulation_all_migration_afd_heatmap(n_iter=100):
                 rho_dict[tau_i][sigma_i][s] = {}
                 for treatment in ['global_migration', 'parent_migration', 'no_migration']:
                     rho_dict[tau_i][sigma_i][s][treatment] = []
+
+
+            if tau_i in max_sigma_dict:
+                if sigma_i > max_sigma_dict[tau_i]:
+                    continue
+
+            if sigma_i == 1.9:
+                continue
 
 
             while len(rho_dict[tau_i][sigma_i]['ks_rescaled_12_vs_18']['global_migration']) < n_iter:
@@ -3259,7 +3275,10 @@ def run_simulation_all_migration_afd_heatmap(n_iter=100):
 
 
     sys.stderr.write("Saving dictionary...\n")
-    with open(simulation_migration_all_afd_path, 'wb') as handle:
+    
+    simulation_migration_all_afd_path_ = utils.directory + "/data/simulation_migration_all_afd_9.pickle"
+
+    with open(simulation_migration_all_afd_path_, 'wb') as handle:
         pickle.dump(rho_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -3270,6 +3289,15 @@ def load_simulation_parent_rho_dict():
     with open(simulation_parent_rho_path, 'rb') as handle:
         dict_ = pickle.load(handle)
     return dict_
+
+
+
+def load_simulation_migration_all_afd_dict():
+
+    with open(simulation_migration_all_afd_path, 'rb') as handle:
+        dict_ = pickle.load(handle)
+    return dict_
+
 
 
 
@@ -3370,7 +3398,7 @@ def load_simulation_all_migration_fixed_parameters_afd_dict(label):
 
 if __name__=='__main__':
 
-    print("running simulations")
+    print("Running simulations....")
 
     # DONE
 
@@ -3394,8 +3422,7 @@ if __name__=='__main__':
     
     # RUNNING    
     
-    #run_simulation_all_migration_afd_heatmap(n_iter=100)
-    
+    run_simulation_all_migration_afd_heatmap(n_iter=100)
     
 
 

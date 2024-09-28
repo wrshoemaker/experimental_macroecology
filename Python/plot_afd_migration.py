@@ -211,7 +211,7 @@ def make_per_asv_ks_dict():
         distances_dict[experiment]['mean_over_asv_ks_12_vs_18'] = np.mean(ks_statistic_all)
         distances_dict[experiment]['mean_over_asv_ks_rescaled_12_vs_18'] = np.mean(ks_statistic_rescaled_all)
 
-        print(experiment, np.mean(ks_statistic_rescaled_all))
+        #print(experiment, np.mean(ks_statistic_rescaled_all))
 
         #print(experiment, np.mean(ks_statistic_rescaled_all), len(ks_statistic_rescaled_all))
 
