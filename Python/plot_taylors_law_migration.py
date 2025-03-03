@@ -27,6 +27,19 @@ fig.subplots_adjust(bottom= 0.15)
 treatments_no_innoculum = ['no_migration', 'parent_migration', 'global_migration']
 
 
+min_mean = 6.875777718870038e-07
+max_mean = 0.7400479659722368
+
+min_var = 1e-12
+max_var = 0.07280969644994893
+
+
+#min_mean_all = []
+#max_mean_all = []
+
+#min_var_all = []
+#max_var_all = []
+
 def make_plot():
 
     t_slope_all = []
@@ -57,6 +70,9 @@ def make_plot():
             ax_plot.plot(10**x_log10_range, y_log10_fit_range, c='k', lw=2.5, linestyle='-', zorder=2, label="OLS regression slope")
             #ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label="Slope = 2")
             ax_plot.plot(10**x_log10_range, y_log10_null_range, c='k', lw=2.5, linestyle='--', zorder=2, label=r'$y \sim x^{2}$')
+
+            ax_plot.set_xlim([min_mean*0.5, 1.1])
+            ax_plot.set_ylim([min_var*0.5, 0.8])
 
             ax_plot.set_xscale('log', basex=10)
             ax_plot.set_yscale('log', basey=10)
@@ -219,6 +235,7 @@ def make_plot():
     #fig.savefig(utils.directory + "/figs/taylors_law_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 
     plt.close()
+
 
 
 

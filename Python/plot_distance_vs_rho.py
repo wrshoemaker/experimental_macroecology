@@ -192,6 +192,9 @@ ensemble_distance = []
 ensemble_rho = []
 temporal_distance = []
 temporal_rho = []
+
+target_migration_innoculum = ('No_migration', 4)
+
 for key, value in distance_rho_dict.items():
 
     distance = value['distance']
@@ -200,27 +203,27 @@ for key, value in distance_rho_dict.items():
         
         migration_innoculum = value['ensemble_rho'].keys()
 
-        #print(migration_innoculum)
-
         for m in migration_innoculum:
 
-            ensemble_rho_m = list(value['ensemble_rho'][m].values())
-            ensemble_distance.extend([distance] * len(ensemble_rho_m))
-            ensemble_rho.extend(ensemble_rho_m)
+            if m == target_migration_innoculum:
+
+                ensemble_rho_m = list(value['ensemble_rho'][m].values())
+                ensemble_distance.extend([distance] * len(ensemble_rho_m))
+                ensemble_rho.extend(ensemble_rho_m)
 
 
     if 'temporal_rho' in value:
 
         migration_innoculum = value['temporal_rho'].keys()
 
-        #print(migration_innoculum)
-
         for m in migration_innoculum:
 
-            temporal_rho_m = list(value['temporal_rho'][m].values())
+            if m == target_migration_innoculum:
 
-            temporal_distance.extend([distance] * len(temporal_rho_m))
-            temporal_rho.extend(temporal_rho_m)
+                temporal_rho_m = list(value['temporal_rho'][m].values())
+
+                temporal_distance.extend([distance] * len(temporal_rho_m))
+                temporal_rho.extend(temporal_rho_m)
 
 
 

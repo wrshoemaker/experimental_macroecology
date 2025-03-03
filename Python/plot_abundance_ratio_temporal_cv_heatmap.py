@@ -450,6 +450,7 @@ for experiment_idx, experiment in enumerate(experiments):
 
 
     # ax_simulation_cv
+    print(tau_delta_cv_all)
     #delta_range = max([observed_ks_cv - np.amin(tau_delta_cv_all),  np.amax(tau_delta_cv_all) - observed_ks_cv])
     delta_range = max([observed_ks_cv - np.min(tau_delta_cv_all_flat),  np.max(tau_delta_cv_all_flat) - observed_ks_cv])
     pcm_slope_rho = ax_simulation_cv.pcolor(x_axis_log10, y_axis, tau_delta_cv_all, cmap='coolwarm', norm=colors.TwoSlopeNorm(vmin=observed_ks_cv - delta_range, vcenter=observed_ks_cv, vmax=observed_ks_cv + delta_range))

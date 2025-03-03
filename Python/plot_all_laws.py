@@ -18,6 +18,9 @@ from scipy.special import erf
 remove_zeros = True
 
 
+# /Applications/Inkscape.app/Contents/MacOS/inkscape input.pdf --export-filename=output.eps
+
+
 
 prevalence_range = np.logspace(-4, 1, num=1000)
 
@@ -33,10 +36,10 @@ ax_mad_params = plt.subplot2grid((2, 2), (1,1), colspan=1)
 
 
 
-ax_afd.text(-0.1, 1.04, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_afd.transAxes)
-ax_mad_vs_occupancy.text(-0.1, 1.04, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
-ax_mad.text(-0.1, 1.04, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
-ax_mad_params.text(-0.1, 1.04, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_params.transAxes)
+ax_afd.text(-0.1, 1.05, plot_utils.sub_plot_labels[0], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_afd.transAxes)
+ax_mad_vs_occupancy.text(-0.1, 1.05, plot_utils.sub_plot_labels[1], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_vs_occupancy.transAxes)
+ax_mad.text(-0.1, 1.05, plot_utils.sub_plot_labels[2], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad.transAxes)
+ax_mad_params.text(-0.1, 1.05, plot_utils.sub_plot_labels[3], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax_mad_params.transAxes)
 
 
 
@@ -59,6 +62,9 @@ all_sigma = []
 all_observed_occupancies = []
 
 
+afd_bins_mean_all = []
+afd_hist_all = []
+
 for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_innocula):
 
     for transfer in transfers:
@@ -68,21 +74,16 @@ for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_in
 
         #rel_s_by_s_subset = rel_s_by_s[:,occupancy>=0.9]
 
-
-
         #print(migration_innoculum, transfer , s_by_s.shape, len(comm_rep_list))
 
-        afd = rel_s_by_s.flatten()
-        afd_log10 = np.log(afd[afd>0])
-        afd_log10_rescaled = (afd_log10 - np.mean(afd_log10)) / np.std(afd_log10)
-        afd_log10_all, afd_log10_rescaled = utils.get_flat_rescaled_afd(s_by_s)
-
+        #afd = rel_s_by_s.flatten()
+        #afd_log10 = np.log(afd[afd>0])
+        #afd_log10_rescaled = (afd_log10 - np.mean(afd_log10)) / np.std(afd_log10)
+        afd_log10_all, afd_log10_rescaled = utils.get_flat_rescaled_afd(s_by_s, min_occupancy=0.5)
 
 
         color_ = utils.color_dict_range[migration_innoculum][transfer-3]
         color_ = color_.reshape(1,-1)
-
-
 
         hist, bin_edges = np.histogram(afd_log10_rescaled, density=True, bins=10)
         #bins_mean = [0.5 * (bin_edges[i] + bin_edges[i+1]) for i in range(0, len(bin_edges)-1 )]
@@ -98,6 +99,8 @@ for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_in
         label = utils.titles_abbreviated_dict[migration_innoculum] + ', transfer ' + str(transfer)
         ax_afd.scatter(bins_mean, hist, alpha=0.8, c=color_, label=label)
 
+        afd_bins_mean_all.append(bins_mean)
+        afd_hist_all.append(hist)
 
         # taylors law
         means = []
@@ -115,6 +118,7 @@ for migration_innoculum_idx, migration_innoculum in enumerate(utils.migration_in
 
         # mad
         mad = np.mean(rel_s_by_s, axis=1)
+        #mad_log10 = np.log(mad)
         mad_log10 = np.log(mad)
         mad_log10_rescaled = (mad_log10 - np.mean(mad_log10)) / np.std(mad_log10)
 
@@ -159,14 +163,15 @@ afd_log10_rescaled_all_cutoff = afd_log10_rescaled_all[afd_log10_rescaled_all<1.
 all_mads = np.asarray(all_mads)
 
 
-ax_afd.set_xlabel('Rescaled log relative abundance', fontsize=12)
+ax_afd.set_xlabel('Rescaled ' + r'$\mathrm{log}_{10}$' + ' relative abundance', fontsize=12)
 ax_afd.set_ylabel('Probability density', fontsize=12)
 
 
 #x_range = np.linspace(min(afd_log10_rescaled_all_cutoff), max(afd_log10_rescaled_all_cutoff) , 10000)
-x_range = np.linspace(min(afd_log10_rescaled_all_cutoff), 3, 10000)
+#x_range = np.linspace(min(afd_log10_rescaled_all_cutoff), 3, 10000)
 
-#print(x_range)
+x_range = np.linspace(min(afd_log10_rescaled_all_cutoff), max(afd_log10_rescaled_all), 10000)
+
 #x_range_log_rescaled = (np.log10(x_range) - afd_log_all_mean) / afd_log_all_std
 #gammalog  <- function(x, k) { (1.13*x - 0.9 * exp(x)) + 0.5 }
 #gammalog  <- function(x, k = 1.7) { ( k*trigamma(k)*x - exp( sqrt(trigamma(k))*x+ digamma(k)) ) - log(gamma(k)) + k*digamma(k) + log10(exp(1)) }
@@ -175,19 +180,34 @@ k = 2.3
 k_digamma = special.digamma(k)
 k_trigamma = special.polygamma(1,k)
 
+from scipy.stats import loggamma, mode
+
+afd_log10_rescaled_all_to_fit = afd_log10_rescaled_all #afd_log10_rescaled_all[afd_log10_rescaled_all<=3]
+#print(mode(afd_log10_rescaled_all_to_fit))
+#loggamma_fit = loggamma.fit(afd_log10_rescaled_all_to_fit, floc=0)
+afd_bins_mean_all = np.concatenate(afd_bins_mean_all).ravel()
+afd_hist_all = np.concatenate(afd_hist_all).ravel()
+
+loggamma_fit = loggamma.fit(afd_log10_rescaled_all_to_fit)
+
 gammalog = k*k_trigamma*x_range - np.exp(np.sqrt(k_trigamma)*x_range + k_digamma) - np.log(special.gamma(k)) + k*k_digamma + np.log10(np.exp(1))
 
-ax_afd.plot(x_range, 10**gammalog, 'k', label='Gamma', lw=2)
-ax_afd.legend(loc="upper right", fontsize=5)
+
+#ax_afd.plot(x_range, 10**gammalog, 'k', label='Gamma', lw=2)
+ax_afd.plot(x_range, loggamma(loggamma_fit[0], loggamma_fit[1], loggamma_fit[2]).pdf(x_range), 'k', label='Gamma', lw=2)
+
+ax_afd.legend(loc="lower left", fontsize=5)
 #ax_afd.set_yscale('log', basey=10)
 # trigamma = second derivatives of the logarithm of the gamma function
 # digamma = first derivatives of the logarithm of the gamma function
 
 
+ax_afd.set_ylim([0.0006, 1])
+ax_afd.set_yscale('log', basey=10)
 
 # mad
 
-ax_mad.set_xlabel('Rescaled log mean relative abundance', fontsize=12)
+ax_mad.set_xlabel('Rescaled ' + r'$\mathrm{log}_{10}$' + ' mean relative abundance', fontsize=12)
 ax_mad.set_ylabel('Probability density', fontsize=12)
 
 
@@ -197,24 +217,34 @@ x_mean_range = np.logspace(-26, 0, num=100)
 x_mean_range_log = np.log(x_mean_range)
 #print(np.mean(all_mu), np.mean(all_sigma))
 #mu_to_plot = all_mu[4]
+
+
 mu_to_plot = -10.198
 sigma_to_plot = 3.7983
 
-s_by_s_no_mig_18, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration='No_migration', inocula=4, transfer=18)
+
+
+s_by_s_no_mig_18, ESVs, comm_rep_list = utils.get_s_by_s_migration_test_singleton(migration='Parent_migration', inocula=4, transfer=12)
 rel_s_by_s_no_mig_18 = (s_by_s_no_mig_18/s_by_s_no_mig_18.sum(axis=0))
 mad_no_mig_18 = np.mean(rel_s_by_s_no_mig_18, axis=1)
-mu_no_mig_18, sigma_no_mig_18 = utils.Klogn(mad_no_mig_18, 0.00001)
+#print()
+c=min(mad_no_mig_18)*10
+mu_no_mig_18, sigma_no_mig_18 = utils.Klogn(mad_no_mig_18, c)
 
-print(mu_no_mig_18, sigma_no_mig_18)
+#print(mu_no_mig_18, sigma_no_mig_18)
+
+#mu_to_plot = mu_no_mig_18
+#sigma_to_plot = sigma_no_mig_18
 
 
 #c = 10**-20
 #lognorm_pdf = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, c)
-lognorm_pdf_ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-8)
-lognorm_pdf__ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-7)
-lognorm_pdf___ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-6)
-lognorm_pdf____ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-5)
-lognorm_pdf_____ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-4)
+#lognorm_pdf_ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-8)
+##lognorm_pdf__ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-7)
+#10**-6
+lognorm_pdf___ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, c)
+##lognorm_pdf____ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-5)
+#lognorm_pdf_____ = utils.get_lognorma_mad_prediction(x_mean_range_log, mu_to_plot, sigma_to_plot, 10**-4)
 
 
 x_mean_range_log_rescaled = (x_mean_range_log - mu_to_plot)/sigma_to_plot
@@ -228,6 +258,8 @@ ax_mad.plot(x_mean_range_log_rescaled, lognorm_pdf___, c='k', lw=2.5, linestyle=
 ax_mad.set_xlim([-2.5, 4])
 ax_mad.set_ylim([10**-3, 1])
 ax_mad.set_yscale('log', basey=10)
+ax_mad.legend(loc="lower left", fontsize=8)
+
 
 
 
@@ -261,7 +293,8 @@ bins_mean_all_to_keep = []
 bins_occupancies = []
 for i in range(0, len(bin_edges_all)-1 ):
     all_predicted_occupancies_log10_i = all_predicted_occupancies_log10[ (all_mads_occupancies_log10>=bin_edges_all[i]) & (all_mads_occupancies_log10<bin_edges_all[i+1])]
-    bins_mean_all_to_keep.append(bins_mean_all[i])
+    #bins_mean_all_to_keep.append(bins_mean_all[i])
+    bins_mean_all_to_keep.append(bin_edges_all[i])
     bins_occupancies.append(np.mean(all_predicted_occupancies_log10_i))
 
 
@@ -323,7 +356,7 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
         #ax_mad_params.set_title('Lognormal parameters', fontsize=14)
 
         ax_mad_params.set_xlabel('Lognormal location parameter, ' + r'$\mu$', fontsize=12)
-        ax_mad_params.set_ylabel('Lognormal shape parameter, ' + r'$s$', fontsize=12)
+        ax_mad_params.set_ylabel('Lognormal scale parameter, ' + r'$s$', fontsize=12)
 
 
 #ax_mad_params.legend(loc="upper right", fontsize=7)
@@ -334,5 +367,5 @@ for row_idx, row_list in enumerate(migration_innocula_nested_list):
 
 fig.subplots_adjust(wspace=0.3, hspace=0.3)
 fig.savefig(utils.directory + "/figs/all_laws.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-#fig.savefig(utils.directory + "/figs/all_laws.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+#fig.savefig(utils.directory + "/figs/pdf/all_laws.pdf", format='pdf', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
 plt.close()

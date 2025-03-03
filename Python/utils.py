@@ -1423,7 +1423,7 @@ def get_s_by_s_resource(transfer=1,carbon_source_group='single',carbon_source='g
     for line in otu:
         line = line.strip().split(',')
 
-        print(line)
+        #(line)
         continue
 
         treatment_line = line[1]
@@ -2227,6 +2227,10 @@ def get_flat_rescaled_afd(s_by_s, min_occupancy=0):
     for afd in rel_s_by_s_subset:
         
         afd_log10 = np.log10(afd[afd>0])
+
+        if len(afd_log10) < 4:
+            continue
+
         rescaled_afd_log10 = (afd_log10 - np.mean(afd_log10))/np.std(afd_log10)
         afd_log10_all.append(afd_log10)
         rescaled_afd_log10_all.append(rescaled_afd_log10)

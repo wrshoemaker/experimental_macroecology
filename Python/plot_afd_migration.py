@@ -211,7 +211,7 @@ def make_per_asv_ks_dict():
         distances_dict[experiment]['mean_over_asv_ks_12_vs_18'] = np.mean(ks_statistic_all)
         distances_dict[experiment]['mean_over_asv_ks_rescaled_12_vs_18'] = np.mean(ks_statistic_rescaled_all)
 
-        print(experiment, np.mean(ks_statistic_rescaled_all))
+        #print(experiment, np.mean(ks_statistic_rescaled_all))
 
         #print(experiment, np.mean(ks_statistic_rescaled_all), len(ks_statistic_rescaled_all))
 
@@ -550,9 +550,16 @@ def make_plot():
         #ax.text(0.68,0.62, utils.get_p_value(p_value), fontsize=12, color='k', ha='center', va='center', transform=ax.transAxes )
 
         ax.set_title(utils.titles_no_inocula_dict[experiment], fontsize=12, fontweight='bold' )
-        ax.legend(loc="upper right", fontsize=8)
+        
         ax.set_xlabel(x_label, fontsize=12)
         ax.set_ylabel('Probability density', fontsize=12)
+        ax.set_xlim([-7, 5])
+
+        if experiment == ('No_migration', 4):
+            ax.legend(loc="lower left", fontsize=8)
+        else:
+            ax.legend(loc="upper left", fontsize=8)
+
 
         ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[experiment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
 
@@ -596,7 +603,6 @@ def make_plot():
         ax.set_ylabel('Probability density',  fontsize=11)
         ax.text(-0.1, 1.04, plot_utils.sub_plot_labels[3 + treatment_idx], fontsize=10, fontweight='bold', ha='center', va='center', transform=ax.transAxes)
 
-
         if treatment_idx == 0:
             ax.legend(loc="upper right", fontsize=8)
 
@@ -630,8 +636,8 @@ def make_plot():
 
 
     fig.subplots_adjust(wspace=0.35, hspace=0.3)
-    fig.savefig(utils.directory + "/figs/afd_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
-    #fig.savefig(utils.directory + "/figs/afd_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    #fig.savefig(utils.directory + "/figs/afd_migration.png", format='png', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
+    fig.savefig(utils.directory + "/figs/eps/afd_migration.eps", format='eps', bbox_inches = "tight", pad_inches = 0.5, dpi = 600)
     plt.close()
 
 

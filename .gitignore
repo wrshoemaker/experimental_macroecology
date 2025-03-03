@@ -36,3 +36,4 @@ data/simulation_all_migration_fixed_parameters_global_migration_taylors.pickle
 data/simulation_all_migration_fixed_parameters_parent_migration_afd.pickle
 data/simulation_all_migration_fixed_parameters_no_migration_taylors.pickle
 data/sim_old/
+figs/tiff/
