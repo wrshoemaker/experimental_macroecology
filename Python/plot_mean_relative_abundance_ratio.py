@@ -328,12 +328,19 @@ def make_plot():
         ax_z_transfer.scatter(no_migration_treatment_all, migration_treatment_all, alpha=0.8, c=color, zorder=2, label='One ASV')
         ax_compare_min = min(np.concatenate([no_migration_treatment_all, migration_treatment_all]))
 
+<<<<<<< HEAD
         min_ax_z=6.875777718870032e-07
         ax_z_transfer.plot([min_ax_z*0.5, 1.1],[min_ax_z*0.5, 1.1], c='k', ls=':', lw=2, label='1:1')
         ax_z_transfer.set_xlim(min_ax_z*0.5,1.1)
         ax_z_transfer.set_ylim(min_ax_z*0.5, 1.1)
 
 
+=======
+
+        ax_z_transfer.plot([ax_compare_min*0.5, 1.1],[ax_compare_min*0.5, 1.1], c='k', ls=':', lw=2, label='1:1')
+        ax_z_transfer.set_xlim(ax_compare_min*0.5,1.1)
+        ax_z_transfer.set_ylim(ax_compare_min*0.5, 1.1)
+>>>>>>> refs/remotes/origin/master
         ax_z_transfer.set_title('Transfer %s' % transfer, fontsize=14)
 
         rho, p_value = utils.run_permutation_corr(np.log10(no_migration_treatment_all), np.log10(migration_treatment_all))
@@ -352,6 +359,7 @@ def make_plot():
         ax_t_transfer.scatter(parent_all, ratios_all, alpha=0.8, c=color, zorder=2, label='One ASV')
         ax_t_transfer.axhline(1, lw=1.5, ls=':',color='k', zorder=1, label='Null')
 
+<<<<<<< HEAD
         
         #ax_parent_abs_max_y = max(np.absolute(np.log10(ratios_all)))
 
@@ -360,6 +368,13 @@ def make_plot():
         ax_t_transfer.set_title('Transfer %s' % transfer, fontsize=14)
 
 
+=======
+
+        ax_parent_abs_max_y = max(np.absolute(np.log10(ratios_all)))
+        ax_t_transfer.set_ylim(10**(-1.1*ax_parent_abs_max_y), 10**(ax_parent_abs_max_y*1.1))
+        ax_t_transfer.set_title('Transfer %s' % transfer, fontsize=14)
+
+>>>>>>> refs/remotes/origin/master
         slope, intercept, r_value, p_value, std_err = stats.linregress(np.log10(parent_all), np.log10(ratios_all))
         x_log10_range =  np.linspace(min(np.log10(parent_all)) , max(np.log10(parent_all)), 10000)
         y_log10_fit_range = 10 ** (slope*x_log10_range + intercept)
