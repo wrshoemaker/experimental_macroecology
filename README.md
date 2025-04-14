@@ -34,3 +34,12 @@ sh ~/GitHub/experimental_macroecology/Python/run_everything.sh
 
 
 
+### Licenses
+
+Conceptual diagrams were made using BioRender and are under a CC BY 4.0 license.
+
+- [Fig. 1](https://BioRender.com/a78p433)
+- [Fig. 3](https://BioRender.com/j67r579)
+
+
+
